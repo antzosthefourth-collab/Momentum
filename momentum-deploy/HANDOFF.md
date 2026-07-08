@@ -1,5 +1,44 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v3.2.1 · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v4.0 · July 2026*
+
+## New in v4.0 (onboarding overhaul + smart library)
+**Interview restructured (owner review, July 8):**
+- **Experience moved AFTER training-type selection** and split per discipline:
+  lifting / cardio / sport tracks (`profile.exps.{lift,cardio,sport}`), asked only
+  for tracks the user actually picked. `buildSession` volume + plan notes key off
+  the right track. Legacy `profile.exp` kept as fallback; `migrateProfile()` upgrades.
+- **About step = name/age/gender only.**
+- **Soccer removed from goals** — lives in the new **Sports step** (soccer, running,
+  cycling, swimming, basketball, tennis/pickleball, hiking, yoga). Each sport
+  registers a day type (`SP_*` via `SPORT_DAYS`) with sport-tagged library moves;
+  soccer → SKL ball work and auto-adds the Soccer Ball. Sports genuinely shape
+  `weekTypes()`.
+- **Injury context on body areas**: per selected area — injury? avoid-or-rehab?
+  rehab stage? (`profile.areaInfo`). `avoid` areas are filtered out of every built
+  session; `rehab` areas get booster priority + "pain-free range" plan notes.
+- **Gear**: Bodyweight removed as an option (always available in `buildSession`);
+  added Bench Press Machine, Lat Pulldown, Cable Machine, Leg Press, Row Machine,
+  Smith Machine (+11 machine movements with mg tags).
+- **Life step**: 9-to-5 (work) + **5-to-9** (`profile.eve`) + realistic training
+  window (`profile.window`). New eve-derived habits; window lands in plan notes.
+- **Multi-session days**: "Daily boosters" (`profile.boost` 0–2) — ~12-min
+  mobility/rehab micro-sessions on every day incl. rest days. Tracked as
+  `S.microDone`, NOT `S.sessions`; half completion bonus; `micro:true` on acts,
+  templates and sessions.
+- **Movement library 2.0**: ♥ favorites, ★ 1–5 rankings, usage counts
+  (`S.moveMeta[name] = {fav, rank, used, last}`), views: All / Favorites /
+  My ranking / Most used / Muscle group / Activity type. `wPick()` (weighted by
+  `moveScore()`) replaces `pickRandom` in the builder → favorites/ratings/frequency
+  bias every generated session and future plans.
+- **GO HAM visual pass on onboarding**: animated aurora + drifting orbs, gradient
+  progress bar with step meta, gradient-border selection cards with check pips,
+  staggered step-entry reveals, shimmer CTA, per-track experience cards,
+  plan-forging interlude (progress ring + step cascade + confetti burst),
+  `navigator.vibrate` micro-haptics. All pure CSS/JS, `prefers-reduced-motion`
+  respected. `window.__FORGE_MS` overrides forge duration (harness sets 0).
+- validate.js now **94 checks** including the full new interview walkthrough,
+  injury flow, booster accounting, library fav/rank views, avoid-filtering and
+  profile migration.
 
 ## Project folder
 ```
