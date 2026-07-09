@@ -430,6 +430,8 @@ a{color:var(--accent)}
     <div class="pad">
       <h2 style="font-size:20px; margin-top:6px">Build a session</h2>
       <p class="mut">Time + gear + focus. Momentum handles the rest.</p>
+      <div class="sec-label">Quick starts</div>
+      <div class="chips" id="recipeChips"></div>
       <div class="sec-label">Time</div>
       <div class="chips" id="timeChips"></div>
       <div class="sec-label">Equipment</div>
@@ -1668,6 +1670,85 @@ LIB.push(
  {n:"Family bike loop", eq:"Bodyweight", p:"motor", d:"30 min easy", dur:1800, sport:"family", how:"Kid-pace spinning. Zone 1 for you, adventure for them.", b:"main", xp:16}
 );
 
+/* Kettlebell flow + HIIT + core library (v5 Phase 3) — powers the follow-along
+   circuit sessions and the single-kettlebell recipes */
+LIB.push(
+ {n:"KB clean", eq:"Kettlebells", p:"strength", d:"3×6 each", rest:75, cap:"kb", how:"Hike it back, zip it up the body's midline, catch soft in the rack. No banged wrists — tame the arc.", b:"main", xp:18, mg:["legs","glutes","back"]},
+ {n:"KB push press", eq:"Kettlebells", p:"strength", d:"3×6 each", rest:75, cap:"kb", how:"Dip an inch, drive with the legs, punch the bell overhead.", b:"main", xp:18, mg:["shoulders","arms","legs"]},
+ {n:"KB thruster", eq:"Kettlebells", p:"motor", d:"3×8", rest:60, cap:"kb", how:"Front squat straight into an overhead press — one smooth wave of effort.", b:"main", xp:18, mg:["legs","shoulders","core"]},
+ {n:"KB front-rack lunge", eq:"Kettlebells", p:"strength", d:"3×6 each", rest:75, cap:"kb", how:"Bell racked at the chest, step back into a lunge, drive up tall.", b:"main", xp:18, mg:["legs","glutes","core"]},
+ {n:"KB halo", eq:"Kettlebells", p:"armor", d:"2×8 each way", rest:30, cap:"kb", how:"Circle the bell slowly around your head, elbows tight. Shoulder oil.", b:"warmup", xp:10, area:["shoulder","neck"]},
+ {n:"KB around-the-world", eq:"Kettlebells", p:"strength", d:"2×10 each way", rest:30, cap:"kb", how:"Pass the bell around your hips in a circle. Grip, core, coordination.", b:"main", xp:12, mg:["core"]},
+ {n:"Single-arm KB swing", eq:"Kettlebells", p:"motor", d:"4×10 each", rest:45, cap:"kb", how:"Same snap as the two-hand swing — square hips, free hand guards.", b:"main", xp:20, mg:["glutes","back","core"]},
+ {n:"KB floor press", eq:"Kettlebells", p:"strength", d:"3×8 each", rest:75, cap:"kb", how:"On your back, press the bell from the floor to lockout. Shoulder-safe chest work.", b:"main", xp:16, mg:["chest","arms"]},
+ {n:"Half-kneeling KB press", eq:"Kettlebells", p:"strength", d:"3×6 each", rest:60, cap:"kb", how:"One knee down, press strict overhead. The narrow base keeps your core honest.", b:"main", xp:16, mg:["shoulders","core"]},
+ {n:"KB gorilla row", eq:"Kettlebells", p:"strength", d:"3×8 each", rest:60, cap:"kb", how:"Hinge over two bells (or one), row while the other stays planted.", b:"main", xp:16, mg:["back","arms"]},
+ {n:"KB farmer carry", eq:"Kettlebells", p:"strength", d:"3×40m", rest:60, cap:"kb", how:"Heavy bell(s), tall posture, walk like you mean it. Grip and core armor.", b:"main", xp:16, mg:["core","arms"]},
+ {n:"KB suitcase carry", eq:"Kettlebells", p:"strength", d:"3×30m each", rest:45, cap:"kb", how:"One bell, one side — refuse to lean. Anti-lean is the whole exercise.", b:"main", xp:16, mg:["core"]},
+ {n:"KB windmill", eq:"Kettlebells", p:"armor", d:"2×5 each", rest:60, cap:"kb", how:"Bell locked overhead, hinge sideways down your leg, eyes on the bell. Earn this one slowly.", b:"main", xp:16, area:["hip","shoulder"]},
+ {n:"KB goblet hold squat pulse", eq:"Kettlebells", p:"strength", d:"3×30s", dur:30, rest:45, cap:"kb", how:"Sit in the bottom of a goblet squat and pulse small. Quads on fire, form intact.", b:"finisher", xp:14, mg:["legs","glutes"]},
+ {n:"High knees", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:15, how:"Run in place, knees to hip height, quick ground contact.", b:"main", xp:12},
+ {n:"Skater hops", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:15, how:"Bound side to side, land on one leg, stick it a beat.", b:"main", xp:14, mg:["legs","glutes"]},
+ {n:"Plank jacks", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:15, how:"Plank position, jump feet wide and back. Hips level throughout.", b:"main", xp:12, mg:["core"]},
+ {n:"Bear crawl", eq:"Bodyweight", p:"motor", d:"3×30s", dur:30, rest:30, how:"Hands and toes, knees an inch off the floor, crawl forward and back.", b:"main", xp:14, mg:["core","shoulders"]},
+ {n:"Jump squats", eq:"Bodyweight", p:"motor", d:"3×10", rest:45, how:"Squat, explode up, land soft into the next rep.", b:"main", xp:16, mg:["legs","glutes"]},
+ {n:"Hollow hold", eq:"Bodyweight", p:"strength", d:"3×20–30s", dur:25, rest:30, how:"Low back pressed down, arms and legs long and hovering.", b:"main", xp:14, mg:["core"]},
+ {n:"Side plank", eq:"Bodyweight", p:"strength", d:"2×30s each", dur:30, rest:30, how:"Straight line ear to ankle, hips high, top arm to the sky.", b:"main", xp:12, mg:["core"]},
+ {n:"Med ball russian twist", eq:"Medicine Ball", p:"strength", d:"3×10 each side", rest:45, how:"Seated lean-back, rotate the ball side to side with control — no rush.", b:"main", xp:12, mg:["core"]},
+ {n:"Sprawls", eq:"Bodyweight", p:"motor", d:"4×20s", dur:20, rest:40, sport:"martial", how:"Burpee's combat cousin — shoot hips back and down, pop back up.", b:"main", xp:16},
+ {n:"Wall sit", eq:"Bodyweight", p:"strength", d:"3×40s", dur:40, rest:40, how:"Back flat on the wall, thighs parallel. Quiet suffering builds quads.", b:"finisher", xp:12, mg:["legs"]},
+ {n:"Dead hang", eq:"Pull-up Bar", p:"armor", d:"2×30s", dur:30, rest:45, how:"Just hang. Shoulders decompress, grip toughens, spine says thanks.", b:"main", xp:12, area:["shoulder","back"]}
+);
+
+/* ---- v5 metadata: fine muscle groups, movement patterns, difficulty, mods ---- */
+const FINE_DERIVE = { legs:["quads","hamstrings"], glutes:["glutes"], chest:["chest"], back:["back"],
+  shoulders:["shoulders"], arms:["biceps","triceps"], core:["core"] };
+const FINE_MAP = {  /* precision overrides where coarse mapping lies */
+ "EZ bar curl":["biceps","forearms"], "EZ bar skullcrusher":["triceps"], "Cable triceps pushdown":["triceps"],
+ "DB curl to press":["biceps","shoulders"], "Barbell deadlift":["hamstrings","glutes","back","forearms"],
+ "Romanian deadlift":["hamstrings","glutes"], "Kettlebell deadlift":["hamstrings","glutes"],
+ "Smith machine RDL":["hamstrings","glutes"], "Calf raises (slow lowering)":["calves","ankles"],
+ "Tibialis raises":["ankles"], "KB farmer carry":["core","forearms"], "KB suitcase carry":["core","forearms"],
+ "Pull-ups / rows on bar":["back","biceps","forearms"], "Lat pulldown":["back","biceps"],
+ "Dead hang":["forearms","shoulders"], "Back squat":["quads","glutes"], "Leg press":["quads","glutes"],
+ "Chin tucks":["neck/traps"], "Wall slides":["shoulders","neck/traps"], "Thoracic openers":["neck/traps","back"]
+};
+const PATTERN_MAP = {
+ "Back squat":"squat","Goblet squat":"squat","Landmine goblet squat":"squat","Smith machine squat":"squat","Leg press":"squat","Split squat":"squat","DB reverse lunge":"squat","KB front-rack lunge":"squat","Jump squats":"squat","Wall sit":"squat","KB goblet hold squat pulse":"squat","KB thruster":"squat",
+ "Barbell deadlift":"hinge","Romanian deadlift":"hinge","Kettlebell deadlift":"hinge","Smith machine RDL":"hinge","KB swings":"hinge","Single-arm KB swing":"hinge","Glute bridge":"hinge","Single-leg RDL reach":"hinge","KB clean":"hinge",
+ "Bench press":"push","DB bench / floor press":"push","KB floor press":"push","Machine chest press":"push","Smith machine bench":"push","Push-ups":"push","TRX push-ups":"push","Overhead (military) press":"push","KB overhead press":"push","KB push press":"push","Half-kneeling KB press":"push","Band overhead press":"push","Landmine press":"push","Cable triceps pushdown":"push","EZ bar skullcrusher":"push",
+ "Barbell row":"pull","Single-arm KB row":"pull","KB gorilla row":"pull","Band rows":"pull","Cable row (seated)":"pull","Seated row machine":"pull","Lat pulldown":"pull","Pull-ups / rows on bar":"pull","TRX rows":"pull","Cable face pull":"pull","EZ bar curl":"pull",
+ "KB farmer carry":"carry","KB suitcase carry":"carry","Ruck walk (loaded)":"carry",
+ "Landmine rotation":"rotation","Cable woodchopper":"rotation","Med ball rotational throw":"rotation","Med ball russian twist":"rotation","KB around-the-world":"rotation","KB halo":"rotation","KB windmill":"rotation","Golf rotation flow":"rotation"
+};
+const LVL_MAP = {  /* 1 easy default; explicit 2/3 where skill or load demands it */
+ "Back squat":3,"Barbell deadlift":3,"Overhead (military) press":3,"Bench press":2,"Barbell row":2,"Romanian deadlift":2,
+ "KB clean":3,"KB push press":2,"KB thruster":2,"KB windmill":3,"Single-arm KB swing":2,"KB swings":2,"KB snatch":3,
+ "Pull-ups / rows on bar":3,"Burpees":2,"Jump squats":2,"Skater hops":2,"Bear crawl":2,"Hollow hold":2,"TRX pike / knee tuck":3,
+ "Outdoor run: intervals":2,"Outdoor run: tempo":2,"Treadmill: intervals":2,"Bike: sprints":2,"Stairs: sprint intervals":2,
+ "Swim: interval 50s":2,"Ride: hill repeats":2,"Smith machine squat":2,"Leg press":2,"Sprawls":2,"Kick-through / sprawl drill":2
+};
+const MOD_MAP = {  /* easier / harder coaching cues for follow-along mode */
+ "Push-ups":{e:"Drop to knees or hands on a bench", h:"Slow 3-second lowers or add a pause"},
+ "KB swings":{e:"Lighter bell, or hinge-and-hike practice", h:"Heavier bell or single-arm swings"},
+ "Jump squats":{e:"Squat to stand, no jump", h:"Touch the floor each rep"},
+ "Burpees":{e:"Step back instead of jumping", h:"Add a push-up at the bottom"},
+ "High knees":{e:"March in place, big knees", h:"Faster turnover, stay on the balls of your feet"},
+ "Skater hops":{e:"Step side to side, no hop", h:"Bigger bound, hold each landing"},
+ "Plank jacks":{e:"Step feet out and in", h:"Speed up, hips stone-still"},
+ "Bear crawl":{e:"Crawl slower, shorter steps", h:"Crawl backward too"},
+ "Mountain climbers":{e:"Slow the pace, hands on a bench", h:"Sprint the knees"},
+ "Goblet squat":{e:"Lighter bell or box squat", h:"3-second lowering"},
+ "KB thruster":{e:"Split into squat then press", h:"Heavier bell, smooth cycle"},
+ "Hollow hold":{e:"Bend knees, arms by your sides", h:"Arms overhead, legs lower"},
+ "Side plank":{e:"Bottom knee down", h:"Top leg lifted"},
+ "Wall sit":{e:"Higher seat angle", h:"Hold a weight on your thighs"},
+ "Sprawls":{e:"Step back, no pop", h:"Add a tuck jump on the way up"}
+};
+const genericMod = m => m.p==="armor" ? {e:"Shrink the range, stay pain-free", h:"Longer holds, slower tempo"}
+  : m.p==="motor" ? {e:"Slow the pace — keep moving", h:"Push the pace on work intervals"}
+  : {e:"Go lighter or cut 2 reps per set", h:"Add a little load or one rep per set"};
+
 /* ---- sports-science metadata: muscle groups (strength) & body areas (armor) ---- */
 const MG_MAP = {
  "Back squat":["legs","glutes"],"Bench press":["chest","arms"],"Barbell deadlift":["legs","glutes","back"],
@@ -1704,12 +1785,57 @@ const SPORT_TAG = { "Bike: sprints":"cycling", "Bike: steady state":"cycling", "
   "Rower: intervals":"rowing", "Rower: steady 2k–3k":"rowing", "Shadow boxing rounds":"martial",
   "Med ball rotational throw":"golf", "Tag / chase game":"family" };
 LIB.forEach(m=>{ if(MG_MAP[m.n]) m.mg = MG_MAP[m.n]; if(AREA_MAP[m.n]) m.area = AREA_MAP[m.n];
-  if(SPORT_TAG[m.n]) m.sport = SPORT_TAG[m.n]; if(m.eq==="Soccer Ball") m.sport = "soccer"; });
+  if(SPORT_TAG[m.n]) m.sport = SPORT_TAG[m.n]; if(m.eq==="Soccer Ball") m.sport = "soccer";
+  /* v5 metadata enrichment — every move gets fine muscles, pattern, difficulty, mods */
+  m.mgf = FINE_MAP[m.n] || (m.mg ? [...new Set(m.mg.flatMap(g=>FINE_DERIVE[g]||[g]))] : (m.area ? ["mobility/recovery"] : []));
+  if(m.area){ if(m.area.includes("ankle") && !m.mgf.includes("ankles")) m.mgf.push("ankles");
+    if(m.area.includes("hip") && !m.mgf.includes("hips")) m.mgf.push("hips");
+    if(m.area.includes("neck") && !m.mgf.includes("neck/traps")) m.mgf.push("neck/traps"); }
+  if(PATTERN_MAP[m.n]) m.pattern = PATTERN_MAP[m.n];
+  else if(m.p==="motor" && (m.run || m.sport || m.dur>=600)) m.pattern = "locomotion";
+  m.lvl = LVL_MAP[m.n] || (m.b==="warmup" || m.p==="armor" ? 1 : m.eq==="Bodyweight" ? 1 : 2);
+  m.mod = MOD_MAP[m.n] || genericMod(m);
+});
+
+/* ================= WHY ENGINE =================
+   Every selected exercise can explain itself — metadata-composed, plain language. */
+const MG_NICE = { chest:"chest", back:"back", shoulders:"shoulders", biceps:"biceps", triceps:"triceps",
+  forearms:"grip", core:"core", glutes:"glutes", quads:"quads", hamstrings:"hamstrings", calves:"calves",
+  hips:"hips", ankles:"ankles", "neck/traps":"neck & traps", "mobility/recovery":"recovery" };
+const listNice = arr => { const a = arr.map(x=>MG_NICE[x]||x);
+  return a.length<=1 ? (a[0]||"") : a.slice(0,-1).join(", ") + " and " + a[a.length-1]; };
+function whyFor(m, p){
+  p = p || S.profile || {};
+  const g = p.goals||[], pref = (p.eqPref||{})[m.eq], md = (S.moveMeta||{})[m.n]||{};
+  const bits = [];
+  if(m.p==="strength"){
+    const mgs = (m.mgf||[]).filter(x=>x!=="mobility/recovery").slice(0,3);
+    bits.push((m.mgf||[]).length>=3 ? `is a high-value compound pick for ${listNice(mgs)}` : `builds ${listNice(mgs)||"strength"}`);
+    if(g.includes("muscle")||g.includes("aesthetic")) bits.push("feeds your muscle-building goal");
+    else if(g.includes("stronger")||g.includes("power")) bits.push("moves your strength goal forward");
+    else if(g.includes("functional")) bits.push("carries over straight to real life");
+  } else if(m.p==="motor"){
+    bits.push(m.dur>=900 ? "gives you steady engine work" : "packs conditioning into very little time");
+    if(g.includes("heart")) bits.push("exactly what your heart-health goal wants");
+    else if(g.includes("fat")) bits.push("a strong calorie burner for your fat-loss goal");
+    else if(g.includes("run")||g.includes("athletic")) bits.push("builds the engine under your performance goals");
+  } else if(m.p==="armor"){
+    const ar = (m.area||[]).filter(a=>(p.areas||[]).includes(a));
+    bits.push(ar.length ? `keeps your ${ar.join(" and ")} moving well — an area you flagged` : "keeps you mobile and injury-resistant");
+    if((p.areaInfo||{})[(m.area||[])[0]]?.mode==="rehab") bits.push("part of your rehab work");
+  } else if(m.p==="skill"){
+    bits.push("skill work that transfers straight to game day");
+  }
+  if(pref==="love") bits.push(`uses gear you love (${m.eq})`);
+  else if(m.eq==="Bodyweight") bits.push("needs zero equipment");
+  if(md.fav) bits.push("and it's one of your favorites");
+  return `${m.n} is here because it ${bits.slice(0,3).join(", ")}.`;
+}
 
 /* ================= STATE ================= */
 const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0,recharge:0},
   done:0, sessions:0, microDone:0, minutes:0, streak:0, lastDay:"", custom:[], media:[], logs:{}, dayXP:{}, dayMin:{}, moveMeta:{},
-  sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[]},
+  sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", bannerUrl:"", avatarUrl:"", sound:"low"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
@@ -2233,10 +2359,15 @@ function makePlan(p){
     const D = DTYPES[t]; let label = D.t, opts = { focus:D.focus, time:p.len };
     if(t==="STR"){ strCount++;
       const totalStr = [].concat(...perSlot).filter(x=>x==="STR").length;
-      if(totalStr>1){ opts.bias = strCount%2 ? "upper" : "lower"; label = "Strength " + (strCount%2 ? "A · upper focus" : "B · lower focus"); } }
+      if(totalStr>1){ opts.bias = strCount%2 ? "upper" : "lower"; label = "Strength " + (strCount%2 ? "A · upper focus" : "B · lower focus"); }
+      /* training style follows the goal family */
+      opts.style = p.goals.includes("power") ? "power" : p.goals.includes("stronger") ? "strength"
+        : (p.goals.includes("muscle")||p.goals.includes("aesthetic")) ? "hypertrophy"
+        : (p.goals.includes("functional")||p.goals.includes("athletic")) ? "functional" : null;
+      if(opts.style) label += ` · ${STYLES[opts.style].n.toLowerCase()}`; }
     if(t==="ARM" && okAreas.length) opts.areas = okAreas.slice();
     const ok = buildSession(opts);
-    templates[key] = { label, focus:D.focus, names: ok ? S.session.items.map(m=>m.n) : [] };
+    templates[key] = { label, focus:D.focus, style:opts.style||null, names: ok ? S.session.items.map(m=>m.n) : [] };
   }));
   /* daily boosters: short mobility/rehab micro-sessions — rehab areas get priority */
   if(p.boost > 0){
@@ -2323,6 +2454,46 @@ function planToday(){
 const FOCI = ["Full Body","Strength","Cardio","Mobility","Soccer"];
 const FOCUS_SYS = { "Strength":["strength"], "Cardio":["motor"], "Mobility":["armor"], "Soccer":["skill"],
   "Full Body":["strength","motor","armor","skill"] };
+/* training styles change set/rep/rest prescriptions; hiit/kbflow build timed circuits */
+const STYLES = {
+  hypertrophy:{ n:"Hypertrophy", d:"3×10–12", rest:75 },
+  strength:  { n:"Strength",    d:"4×5",     rest:150 },
+  power:     { n:"Power",       d:"5×3",     rest:180 },
+  functional:{ n:"Functional",  d:"3×8",     rest:90 },
+  hiit:      { n:"HIIT circuit", circuit:true, work:40, rest:20 },
+  kbflow:    { n:"KB circuit",   circuit:true, work:40, rest:20 }
+};
+function applyStyle(items, style){
+  const st = STYLES[style]; if(!st || st.circuit) return items;
+  return items.map(m=>{
+    if(m.p!=="strength" || m.b!=="main" || m.dur) return m;
+    return {...m, d: st.d + (/each/.test(m.d)?" each":""), rest: st.rest};
+  });
+}
+/* smart autofill — one-tap session recipes ("Only kettlebells", "Desk posture reset"…) */
+const RECIPES = [
+ {id:"kb20",   n:"🔔 20-min KB full body",  o:{ focus:"Full Body", style:"kbflow", time:20, eqOnly:"Kettlebells", focusLabel:"KB full body" }},
+ {id:"kb15",   n:"⚡ 15-min one-KB hit",     o:{ focus:"Full Body", style:"kbflow", time:15, eqOnly:"Kettlebells", focusLabel:"One-KB quick hit" }},
+ {id:"kbnr",   n:"🔁 20-min no-repeat KB",  o:{ focus:"Full Body", style:"kbflow", time:20, eqOnly:"Kettlebells", noRepeat:true, focusLabel:"No-repeat KB" }},
+ {id:"kbpush", n:"💪 KB chest·shoulders·tris", o:{ focus:"Strength", style:"hypertrophy", time:30, eqOnly:"Kettlebells", mg:["chest","shoulders","arms"], focusLabel:"KB push day" }},
+ {id:"kbfun",  n:"🧰 Functional KB strength", o:{ focus:"Strength", style:"functional", time:30, eqOnly:"Kettlebells", focusLabel:"Functional KB strength" }},
+ {id:"hiit20", n:"🔥 20-min HIIT, zero gear", o:{ focus:"Cardio", style:"hiit", time:20, eqOnly:"Bodyweight", focusLabel:"Bodyweight HIIT" }},
+ {id:"desk",   n:"🧑‍💻 Desk posture reset",   o:{ focus:"Mobility", time:15, areas:["neck","back","shoulder"], focusLabel:"Desk posture reset" }},
+ {id:"heart",  n:"❤️ Heart health starter",  o:{ focus:"Cardio", time:30, maxLvl:1, focusLabel:"Zone-2 starter" }},
+ {id:"mob",    n:"🛡️ Your problem areas",    o:{ focus:"Mobility", time:20, focusLabel:"Mobility for your areas" }},
+ {id:"soc",    n:"⚽ Soccer conditioning",   o:{ focus:"Soccer", time:30, focusLabel:"Soccer conditioning" }},
+ {id:"runb",   n:"🏃 Running comeback",      o:{ focus:"__runlong", time:30, focusLabel:"Running comeback · easy" }},
+ {id:"fam",    n:"👨‍👩‍👧 Family activity",     o:{ focus:"__sport:family", time:25, focusLabel:"Family activity" }}
+];
+function applyRecipe(id){
+  const r = RECIPES.find(x=>x.id===id); if(!r) return false;
+  if(buildSession(Object.assign({}, r.o))){
+    go("train"); renderSession(); renderMusic();
+    const el=$("#session"); if(el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth"});
+    return true;
+  }
+  return false;
+}
 /* favorites, rankings and usage make the builder smarter over time */
 function moveScore(m){ const md = (S.moveMeta||{})[m.n]||{};
   let s = 1 + (md.fav?1.6:0) + (md.rank||0)*0.45 + Math.min(md.used||0,20)*0.06;
@@ -2347,14 +2518,43 @@ function buildSession(opts={}){
   const avoid = Object.keys(info).filter(k=>info[k].mode==="avoid");
   const noAvoid = m => !m.area || !m.area.some(a=>avoid.includes(a));
   let moves = allMoves().filter(eqOk).filter(noAvoid);
+  /* recipe constraint: a single gear family (+ bodyweight) — "only kettlebells" etc. */
+  if(opts.eqOnly) moves = moves.filter(m=>m.eq===opts.eqOnly || m.eq==="Bodyweight");
 
   /* hydrate a pre-built plan session from stored move names */
   if(opts.fromNames){
     const items = opts.fromNames.map(n=>allMoves().find(m=>m.n===n)).filter(Boolean);
     if(items.length >= 2){
-      S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, items:items.map(m=>({...m, done:false})) };
+      S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style:opts.style||null,
+        items:applyStyle(items, opts.style).map(m=>({...m, done:false})) };
       save(); return true;
     } /* library changed under us — fall through and rebuild fresh */
+  }
+
+  /* follow-along timed circuits (HIIT / kettlebell flow) — Juice&Toya-style pacing:
+     blocks of 4 moves, 2 rounds each, 40s on / 20s off, 30s between blocks */
+  if(opts.style && STYLES[opts.style] && STYLES[opts.style].circuit){
+    const st = STYLES[opts.style];
+    const rounds = opts.noRepeat ? 1 : 2, perBlock = 4;
+    const unit = (st.work+st.rest)*perBlock*rounds/60 + 0.5;
+    const blocks = Math.max(1, Math.round((time-3)/unit));
+    let pool = moves.filter(m=>m.b!=="warmup" && !m.run && !m.sport &&
+      (opts.style==="kbflow" ? true : (m.p==="motor"||m.p==="strength")) && (m.dur||0) < 600);
+    if(opts.style==="kbflow"){
+      const kb = pool.filter(m=>m.eq==="Kettlebells");
+      if(kb.length >= perBlock) pool = kb.concat(pool.filter(m=>m.eq==="Bodyweight" && m.p!=="armor"));
+    }
+    if(opts.mg && opts.mg.length) {
+      const hit = pool.filter(m=>!m.mg || m.mg.some(g=>opts.mg.includes(g)));
+      if(hit.filter(m=>m.mg).length >= perBlock) pool = hit.filter(m=>m.mg && m.mg.some(g=>opts.mg.includes(g)));
+    }
+    const picks = wPick(pool, blocks*perBlock);
+    if(picks.length < 3){ toast("No moves match — check your equipment"); return false; }
+    const warm = wPick(moves.filter(m=>m.b==="warmup"), 2);
+    S.session = { time, focus:opts.focusLabel||st.n, micro:!!opts.micro, style:opts.style,
+      flow:{ work:st.work, rest:st.rest, rounds, perBlock, blockRest:30 },
+      items:[...warm, ...picks].map(m=>({...m, d:`${st.work}s on / ${st.rest}s off`, done:false})) };
+    save(); return true;
   }
 
   /* run-specific days */
@@ -2390,6 +2590,8 @@ function buildSession(opts={}){
   let warm = opts.micro ? [] : wPick(moves.filter(m=>m.b==="warmup"), 2);
   if(!opts.micro && warm.length<2) warm = wPick(LIB.filter(m=>m.b==="warmup" && m.eq==="Bodyweight").filter(noAvoid), 2);
   let mainPool = moves.filter(m=>m.b==="main" && sysWanted.includes(m.p));
+  /* difficulty ceiling — e.g. heart-health starter sticks to level-1 moves */
+  if(opts.maxLvl){ const easy = mainPool.filter(m=>(m.lvl||1) <= opts.maxLvl); if(easy.length >= 2) mainPool = easy; }
 
   /* muscle-group targeting (strength) and body-area targeting (mobility) */
   const mgSel = opts.mg || (focus==="Strength" ? S.sel.mg : []);
@@ -2414,7 +2616,9 @@ function buildSession(opts={}){
   } else mains = wPick(mainPool, mainsNeeded);
   let fin = opts.micro ? [] : wPick(moves.filter(m=>m.b==="finisher" && (focus==="Full Body"||sysWanted.includes(m.p))), 1);
   if(!mains.length){ toast("No moves match — check your equipment"); return false; }
-  S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, items:[...warm,...mains,...fin].map(m=>({...m, done:false})) };
+  const style = opts.style || (focus==="Strength" ? S.sel.style : null) || null;
+  S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style,
+    items:applyStyle([...warm,...mains,...fin], style).map(m=>({...m, done:false})) };
   save(); return true;
 }
 
@@ -2483,9 +2687,90 @@ let PL = { i:0, phase:"work", left:0, iv:null };
 function plStopClock(){ clearInterval(PL.iv); PL.iv=null; }
 function openPlayer(){
   if(!S.session) return;
+  if(S.session.flow){   // follow-along circuit mode
+    PL = { mode:"circuit", si:0, left:0, iv:null, paused:false, seq:circuitSeq() };
+    $("#player").classList.add("show"); renderPlayer(); return;
+  }
   const first = S.session.items.findIndex(m=>!m.done);
   PL = { i: first<0 ? 0 : first, phase:"work", left:0, iv:null };
   $("#player").classList.add("show"); renderPlayer();
+}
+/* ---- circuit sequence: warmups (manual) → blocks × rounds of work/rest ---- */
+function circuitSeq(){
+  const f = S.session.flow, items = S.session.items;
+  const warm = items.map((m,i)=>({m,i})).filter(x=>x.m.b==="warmup").map(x=>x.i);
+  const mains = items.map((m,i)=>({m,i})).filter(x=>x.m.b!=="warmup").map(x=>x.i);
+  const seq = warm.map(i=>({t:"manual", i}));
+  const blocks = []; for(let b=0; b<mains.length; b+=f.perBlock) blocks.push(mains.slice(b, b+f.perBlock));
+  blocks.forEach((blk,bi)=>{
+    for(let r=1; r<=f.rounds; r++) blk.forEach((i,ii)=>{
+      seq.push({t:"work", i, r, b:bi+1, last:r===f.rounds});
+      if(!(ii===blk.length-1 && r===f.rounds)) seq.push({t:"rest", n: ii===blk.length-1 ? blk[0] : blk[ii+1]});
+    });
+    if(bi < blocks.length-1) seq.push({t:"brest", n: blocks[bi+1][0]});
+  });
+  return seq;
+}
+function plcAdvance(){
+  plStopClock();
+  const step = PL.seq[PL.si];
+  if(step && (step.t==="manual" || (step.t==="work" && step.last))){
+    if(!S.session.items[step.i].done) toggleItem(step.i, true);
+    save();
+  }
+  PL.si++; renderPlayer();
+}
+function plcClock(sec){
+  PL.left = sec;
+  const ms = (typeof window.__CIRC_TICK_MS==="number") ? window.__CIRC_TICK_MS : 1000;
+  PL.iv = setInterval(()=>{
+    if(PL.paused) return;
+    PL.left--;
+    const c = $("#plClock"); if(c) c.textContent = fmt(Math.max(0, PL.left));
+    if(sec>=20 && PL.left===Math.ceil(sec/2)) SFX.play("tick");        // halfway
+    if(PL.left<=3 && PL.left>0) SFX.play("tick");                       // 3-2-1
+    if(PL.left<=0){ plStopClock(); SFX.play("beep1"); plcAdvance(); }
+  }, ms);
+}
+function renderCircuit(){
+  const f = S.session.flow, it = S.session.items, seq = PL.seq;
+  $("#plProg").style.width = Math.round(PL.si/seq.length*100) + "%";
+  const body = $("#plBody"), foot = $("#plFoot");
+  const step = seq[PL.si];
+  if(!step){
+    body.innerHTML = `<div class="pl-eyebrow">Circuit complete</div>
+      <div class="pl-xp">+${it.reduce((a,m)=>a+m.xp,0) + Math.round(it.length*(S.session.micro?2:4))} XP</div>
+      <div class="pl-name" style="font-size:24px">That's momentum. 💥</div>
+      <p class="pl-how">${it.filter(m=>m.b!=="warmup").length} movements × ${f.rounds} round${f.rounds>1?"s":""} — banked.</p>`;
+    foot.innerHTML = `<button class="btn big" id="plDone2">FINISH</button>`;
+    beep(); return;
+  }
+  const pauseBtn = `<button class="btn ghost" style="flex:1" id="plcPause">${PL.paused?"▶ RESUME":"⏸ PAUSE"}</button>`;
+  if(step.t==="manual"){
+    const m = it[step.i];
+    body.innerHTML = `<div class="pl-eyebrow">Warm-up</div>
+      <div class="pl-name">${esc(m.n)}</div><div class="pl-dose">${esc(m.d)}</div>
+      <div class="pl-how">${esc(m.how)}</div>`;
+    foot.innerHTML = `<button class="btn" style="flex:1" id="plcNext">DONE ✓</button>`;
+    return;
+  }
+  if(step.t==="work"){
+    const m = it[step.i];
+    body.innerHTML = `<div class="pl-eyebrow">Block ${step.b} · Round ${step.r}/${f.rounds} · WORK</div>
+      <div class="pl-name">${esc(m.n)}</div>
+      <div class="pl-clock" id="plClock">${fmt(PL.left>0?PL.left:f.work)}</div>
+      <div class="pl-how">${esc(m.how)}</div>
+      ${m.mod?`<div class="pl-hint">🟢 Easier: ${esc(m.mod.e)}<br>🔴 Harder: ${esc(m.mod.h)}</div>`:""}`;
+    foot.innerHTML = pauseBtn + `<button class="btn" style="flex:1" id="plcSkip">SKIP →</button>`;
+    if(!PL.iv) plcClock(f.work);
+    return;
+  }
+  const nm = it[step.n], dur2 = step.t==="brest" ? f.blockRest : f.rest;
+  body.innerHTML = `<div class="pl-eyebrow">${step.t==="brest" ? "Block done — shake it out" : "Rest"}</div>
+    <div class="pl-clock rest" id="plClock">${fmt(PL.left>0?PL.left:dur2)}</div>
+    <div class="pl-next">Up next: <b>${esc(nm?nm.n:"")}</b>${nm&&nm.mod?`<br>easier option: ${esc(nm.mod.e)}`:""}</div>`;
+  foot.innerHTML = pauseBtn + `<button class="btn" style="flex:1" id="plcSkip">SKIP REST</button>`;
+  if(!PL.iv) plcClock(dur2);
 }
 function closePlayer(){ plStopClock(); $("#player").classList.remove("show");
   renderSession(); renderHero(); renderTodayPage(); }
@@ -2502,6 +2787,7 @@ function plAdvance(){
   renderPlayer();
 }
 function renderPlayer(){
+  if(PL.mode==="circuit"){ renderCircuit(); return; }
   const it = S.session ? S.session.items : [];
   const doneN = it.filter(m=>m.done).length;
   $("#plProg").style.width = (it.length? Math.round(doneN/it.length*100):0) + "%";
@@ -2536,6 +2822,7 @@ function renderPlayer(){
     <div class="pl-dose">${esc(m.d)}</div>
     ${timed ? `<div class="pl-clock" id="plClock">${fmt(PL.left||m.dur)}</div>` : ""}
     <div class="pl-how">${esc(m.how)}</div>
+    <div class="pl-next" style="margin-top:10px">🧠 ${esc(whyFor(m))}</div>
     ${hint?`<div class="pl-hint">💡 ${esc(hint)}</div>`:""}
     ${it[PL.i+1] && !it[PL.i+1].done ? `<div class="pl-next">Then: ${esc(it.slice(PL.i+1).find(x=>!x.done)?.n||"")}</div>`:""}`;
   foot.innerHTML = (timed && !PL.iv && !PL.started ?
@@ -2546,6 +2833,8 @@ function renderPlayer(){
 document.addEventListener("click", ev=>{
   const id = ev.target.id;
   if(id==="plClose" || id==="plDone2"){ closePlayer(); return; }
+  if(id==="plcNext" || id==="plcSkip"){ plcAdvance(); return; }
+  if(id==="plcPause"){ PL.paused = !PL.paused; renderPlayer(); return; }
   if(id==="plNext"){ plAdvance(); return; }
   if(id==="plSkip"){ plStopClock(); const it=S.session.items;
     const order = it.map((m,i)=>i).filter(i=>!it[i].done && i!==PL.i);
@@ -2650,6 +2939,11 @@ function renderHabits(){
 
 /* ================= RENDER: TRAIN ================= */
 function renderPickers(){
+  $("#recipeChips").innerHTML = RECIPES
+    .filter(r=>r.id!=="soc" || S.sel.eq.includes("Soccer Ball"))
+    .filter(r=>!r.o.eqOnly || r.o.eqOnly==="Bodyweight" || S.sel.eq.includes(r.o.eqOnly))
+    .map(r=>`<button class="chip" data-recipe="${r.id}">${r.n}</button>`).join("")
+    || `<span class="mut">Pick some gear below to unlock quick starts.</span>`;
   $("#timeChips").innerHTML = [15,30,45,60].map(t=>`<button class="chip alt ${S.sel.time===t?'on':''}" data-t="${t}">${t} min</button>`).join("");
   $("#eqGroups").innerHTML = Object.entries(EQ_GROUPS).map(([g,items])=>`<div class="eq-group"><div class="g">${g}</div><div class="chips">`+
     items.map(e=>`<button class="chip ${S.sel.eq.includes(e)?'on':''}" data-e="${e}">${e}</button>`).join("")+`</div></div>`).join("");
@@ -2661,7 +2955,10 @@ function renderPickers(){
   const MGS = [["legs","Legs"],["glutes","Glutes"],["chest","Chest"],["back","Back"],["shoulders","Shoulders"],["arms","Arms"],["core","Core"]];
   let sub = "";
   if(S.sel.focus==="Strength")
-    sub = `<div class="sec-label">Target muscles <span style="letter-spacing:0; text-transform:none; font-weight:500">(empty = balanced)</span></div><div class="chips">` +
+    sub = `<div class="sec-label">Training style</div><div class="chips">` +
+      [["","Balanced"],["hypertrophy","Hypertrophy"],["strength","Strength"],["power","Power"],["functional","Functional"]]
+        .map(([k,l])=>`<button class="chip alt ${(S.sel.style||"")===k?'on':''}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
+      `<div class="sec-label">Target muscles <span style="letter-spacing:0; text-transform:none; font-weight:500">(empty = balanced)</span></div><div class="chips">` +
       MGS.map(([k,l])=>`<button class="chip ${S.sel.mg.includes(k)?'on':''}" data-mg="${k}">${l}</button>`).join("") + `</div>`;
   if(S.sel.focus==="Mobility")
     sub = `<div class="sec-label">Target areas <span style="letter-spacing:0; text-transform:none; font-weight:500">(empty = all)</span></div><div class="chips">` +
@@ -2676,8 +2973,10 @@ function exCard(m,i){
       <div class="ex-sub">${esc(m.d)} · ${esc(m.eq)}</div></div>
       <div class="ex-xp" style="color:${sysColor(m.p)}">+${m.xp}</div></div>
     <div class="ex-detail"><p>${esc(m.how)}</p>
+      <div class="load" style="color:var(--dim); font-weight:500">🧠 ${esc(whyFor(m))}</div>
+      ${m.mod?`<p class="mut" style="margin-top:8px">🟢 Easier: ${esc(m.mod.e)} · 🔴 Harder: ${esc(m.mod.h)}</p>`:""}
       ${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
-      <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${m.rest?`<span class="tag">rest ${m.rest}s</span>`:""}</div>
+      <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${m.rest?`<span class="tag">rest ${m.rest}s</span>`:""}${(m.pattern?`<span class="tag">${esc(m.pattern)}</span>`:"")}${m.lvl?`<span class="tag">lvl ${m.lvl}</span>`:""}</div>
       <div class="ex-actions">
         ${m.dur && m.dur<=600 ? `<button class="btn sm ghost" data-timer="${m.dur}" data-tname="${esc(m.n)}">⏱ ${m.dur}s timer</button>`:""}
         <a class="btn sm ghost" style="text-decoration:none" href="${ytSearch(m.n)}" target="_blank" rel="noopener">▶ Demo</a>
@@ -2751,6 +3050,9 @@ function renderPlan(){
    Favorites (♥), 1–5 rankings (★) and usage counts live in S.moveMeta and feed
    the weighted session builder — the plan gets smarter the more you use it. */
 let libFilter = "", libSeg = "moves", libView = "all", libOpenMv = null;
+let libF = { mg:"", pat:"", lvl:0 }, libShowF = false;
+const FINE_LIST = ["chest","back","shoulders","biceps","triceps","forearms","core","glutes","quads","hamstrings","calves","hips","ankles","neck/traps","mobility/recovery"];
+const PATTERNS = ["squat","hinge","push","pull","carry","rotation","locomotion"];
 const MG_LABELS = { legs:"Legs", glutes:"Glutes", chest:"Chest", back:"Back", shoulders:"Shoulders", arms:"Arms", core:"Core" };
 function libCard(m){
   const P = SYS[m.p], hint = loadHint(m);
@@ -2762,21 +3064,40 @@ function libCard(m){
     <div class="ex-sub">${esc(m.d)} · ${esc(m.eq)}${m.custom?" · custom":""}${md.used?` · used ×${md.used}`:""}</div></div>
     <button class="fav ${md.fav?'on':''}" data-fav="${esc(m.n)}">${md.fav?"♥":"♡"}</button>
     <div class="ex-xp" style="color:${sysColor(m.p)}">+${m.xp}</div></div>
-    <div class="ex-detail"><p>${esc(m.how)}</p>${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
+    <div class="ex-detail"><p>${esc(m.how)}</p>
+    <div class="load" style="color:var(--dim); font-weight:500">🧠 ${esc(whyFor(m))}</div>
+    ${m.mod?`<p class="mut" style="margin-top:8px">🟢 Easier: ${esc(m.mod.e)} · 🔴 Harder: ${esc(m.mod.h)}</p>`:""}
+    ${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
     <div class="stars">${stars}<span class="st-lab">${(md.rank||0)>0?"your rating — favorites & ratings steer your plan":"rate it — ratings steer your plan"}</span></div>
     <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${(m.mg||[]).map(g=>`<span class="tag">${MG_LABELS[g]||g}</span>`).join("")}${m.sport?`<span class="tag">${esc(m.sport)}</span>`:""}</div>
     <div class="ex-actions"><a class="btn sm ghost" style="text-decoration:none" href="${ytSearch(m.n)}" target="_blank" rel="noopener">▶ Demo</a></div></div></div>`;
 }
 function renderLib(){
   const views = [["all","All"],["fav","♥ Favorites"],["rank","★ My ranking"],["used","🔥 Most used"],["mg","💪 Muscle group"],["type","🗂 Activity type"]];
+  const nF = (libF.mg?1:0)+(libF.pat?1:0)+(libF.lvl?1:0);
   $("#libFilter").innerHTML = `<div class="chips" style="margin-bottom:8px">` +
-    views.map(([k,l])=>`<button class="chip ${libView===k?'on':''}" data-lview="${k}">${l}</button>`).join("") + `</div><div class="chips">` +
+    views.map(([k,l])=>`<button class="chip ${libView===k?'on':''}" data-lview="${k}">${l}</button>`).join("") +
+    `<button class="chip ${nF||libShowF?'on':''}" data-lftog="1">⚙ Filters${nF?` · ${nF}`:""}</button></div>` +
+    (libShowF ? `<div class="eq-group"><div class="g">Muscle</div><div class="chips">` +
+      [`<button class="chip alt ${!libF.mg?'on':''}" data-lmg="">Any</button>`]
+      .concat(FINE_LIST.map(g=>`<button class="chip alt ${libF.mg===g?'on':''}" data-lmg="${g}">${MG_NICE[g]||g}</button>`)).join("") + `</div></div>
+    <div class="eq-group"><div class="g">Movement pattern</div><div class="chips">` +
+      [`<button class="chip alt ${!libF.pat?'on':''}" data-lpat="">Any</button>`]
+      .concat(PATTERNS.map(pt=>`<button class="chip alt ${libF.pat===pt?'on':''}" data-lpat="${pt}">${pt}</button>`)).join("") + `</div></div>
+    <div class="eq-group"><div class="g">Difficulty</div><div class="chips">` +
+      [`<button class="chip alt ${!libF.lvl?'on':''}" data-llvl="0">Any</button>`]
+      .concat([1,2,3].map(l=>`<button class="chip alt ${libF.lvl===l?'on':''}" data-llvl="${l}">${["","🌱 Beginner","⚙️ Moderate","🔥 Advanced"][l]}</button>`)).join("") + `</div></div>` : "") +
+    `<div class="chips">` +
     [`<button class="chip alt ${libFilter===""?'on':''}" data-lf="">Any gear</button>`,
      `<button class="chip alt ${libFilter==="Bodyweight"?'on':''}" data-lf="Bodyweight">Bodyweight</button>`]
     .concat(ALL_EQ.map(e=>`<button class="chip alt ${libFilter===e?'on':''}" data-lf="${e}">${e}</button>`)).join("") + `</div>`;
   const q = ($("#libSearch").value||"").toLowerCase();
   const md = n => (S.moveMeta||{})[n]||{};
-  let list = allMoves().filter(m=>(!libFilter||m.eq===libFilter)&&(!q||m.n.toLowerCase().includes(q)||m.how.toLowerCase().includes(q)||SYS[m.p].name.toLowerCase().includes(q)));
+  let list = allMoves().filter(m=>(!libFilter||m.eq===libFilter)
+    && (!libF.mg || (m.mgf||[]).includes(libF.mg))
+    && (!libF.pat || m.pattern===libF.pat)
+    && (!libF.lvl || (m.lvl||1)===libF.lvl)
+    && (!q||m.n.toLowerCase().includes(q)||m.how.toLowerCase().includes(q)||SYS[m.p].name.toLowerCase().includes(q)));
   let html = "";
   if(libView==="fav"){
     const favs = list.filter(m=>md(m.n).fav);
@@ -2964,6 +3285,8 @@ document.addEventListener("click", ev=>{
   const os = t.closest("[data-mode]"); if(os && $("#onb").classList.contains("show")){ onb.a.mode=os.dataset.mode; buzz(); onbRender(); return; }
 
   const chip = t.closest(".chip");
+  if(chip && chip.dataset.recipe){ buzz(); applyRecipe(chip.dataset.recipe); return; }
+  if(chip && chip.dataset.sstyle!==undefined){ S.sel.style=chip.dataset.sstyle; save(); renderPickers(); return; }
   if(chip && chip.dataset.t){ S.sel.time=+chip.dataset.t; save(); renderPickers(); return; }
   if(chip && chip.dataset.e){ const e=chip.dataset.e, i=S.sel.eq.indexOf(e);
     i>=0?S.sel.eq.splice(i,1):S.sel.eq.push(e);   // empty is fine — bodyweight is always in
@@ -2975,6 +3298,10 @@ document.addEventListener("click", ev=>{
   if(chip && chip.dataset.ar){ const k=chip.dataset.ar, i=S.sel.areas.indexOf(k);
     i>=0?S.sel.areas.splice(i,1):S.sel.areas.push(k); save(); renderPickers(); return; }
   if(chip && chip.dataset.lview){ libView=chip.dataset.lview; renderLib(); return; }
+  if(chip && chip.dataset.lftog){ libShowF=!libShowF; renderLib(); return; }
+  if(chip && chip.dataset.lmg!==undefined){ libF.mg=chip.dataset.lmg; renderLib(); return; }
+  if(chip && chip.dataset.lpat!==undefined){ libF.pat=chip.dataset.lpat; renderLib(); return; }
+  if(chip && chip.dataset.llvl!==undefined){ libF.lvl=+chip.dataset.llvl; renderLib(); return; }
   if(chip && chip.dataset.lf!==undefined){ libFilter=chip.dataset.lf; renderLib(); return; }
   if(chip && chip.dataset.week!==undefined){ planWeek=+chip.dataset.week; renderPlan(); return; }
 
@@ -3024,6 +3351,7 @@ document.addEventListener("click", ev=>{
     const tpl = act.tpl && S.plan.templates && S.plan.templates[act.tpl];
     const micro = !!(act.micro || (tpl && tpl.micro) || D.micro);
     if(buildSession({ focus:D.focus, time: micro ? 12 : ((S.profile&&S.profile.len)||S.sel.time), micro,
+        style: (tpl && tpl.style) || null,
         fromNames: tpl && tpl.names.length ? tpl.names : null, focusLabel: act.label || D.t })){
       S.session.actRef = {idx, ai}; save(); go("train"); renderSession(); renderMusic(); } return; }
   const tplFor = typ => { const k = S.plan && S.plan.templates && Object.keys(S.plan.templates).find(k=>k.split(":")[1]===typ);

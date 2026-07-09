@@ -280,6 +280,58 @@ setTimeout(()=>{ try {
   click($('[data-lview="all"]'));
   T("weighted builder prefers rated moves", w.eval(`typeof moveScore==="function" && moveScore({n:${JSON.stringify(favName)}}) > moveScore({n:"__nobody__"})`));
 
+  /* ---- Phase 3: metadata enrichment + why engine ---- */
+  T("every move enriched (level, mods, fine muscles)", w.eval(`LIB.every(m=>m.lvl && m.mod && Array.isArray(m.mgf))`));
+  T("fine muscle groups tagged", w.eval(`["biceps","triceps","hamstrings","quads","calves","forearms","neck/traps"].every(g=>LIB.some(m=>m.mgf.includes(g)))`));
+  T("movement patterns tagged", w.eval(`["squat","hinge","push","pull","carry","rotation","locomotion"].every(p=>LIB.some(m=>m.pattern===p))`));
+  T("why engine explains every single move", w.eval(`LIB.every(m=>{ const s=whyFor(m); return s.length>25 && s.indexOf(m.n)===0; })`));
+  T("why text is plain language", w.eval(`whyFor(LIB.find(m=>m.n==="KB swings")).length < 220`));
+
+  /* ---- Phase 3: combinable filters ---- */
+  click($('[data-lftog="1"]'));
+  T("filter panel opens", !!$('[data-lmg="biceps"]') && !!$('[data-lpat="hinge"]') && !!$('[data-llvl="1"]'));
+  click($('[data-lmg="biceps"]')); click($('[data-llvl="2"]'));
+  T("muscle + difficulty filters combine", w.eval(`
+    [...document.querySelectorAll("#libList .ex")].length>0 &&
+    [...document.querySelectorAll("#libList .ex")].every(el=>{
+      const m = LIB.concat(S.custom||[]).find(x=>x.n===el.dataset.mv);
+      return m && m.mgf.includes("biceps") && m.lvl===2; })`));
+  click($('[data-lmg=""]')); click($('[data-llvl="0"]')); click($('[data-lftog="1"]'));
+
+  /* ---- Phase 3: training styles change prescriptions ---- */
+  T("style axis changes set/rep/rest prescriptions", w.eval(`
+    buildSession({focus:"Strength", time:30, style:"strength"});
+    const a = S.session.items.filter(m=>m.p==="strength"&&m.b==="main"&&!m.dur).every(m=>m.d.indexOf("4×5")===0 && m.rest===150);
+    buildSession({focus:"Strength", time:30, style:"hypertrophy"});
+    const b = S.session.items.filter(m=>m.p==="strength"&&m.b==="main"&&!m.dur).every(m=>m.d.indexOf("3×10")===0);
+    a && b`));
+  T("plan strength template carries goal-driven style", w.eval(`
+    Object.values(S.plan.templates).some(t=>t.style==="hypertrophy")`));
+
+  /* ---- Phase 3: recipes + follow-along circuits ---- */
+  d.querySelectorAll(".nav button")[2].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("quick-start recipes render on Train", $$("[data-recipe]").length>=8, `(${$$("[data-recipe]").length})`);
+  click($$("[data-recipe]").find(c=>c.dataset.recipe==="kb20"));
+  const cs = state().session;
+  T("KB recipe builds a kettlebell circuit", cs && cs.flow && cs.items.filter(m=>m.b!=="warmup").every(m=>["Kettlebells","Bodyweight"].includes(m.eq)));
+  T("circuit uses follow-along pacing (40/20 ×2)", cs.flow.work===40 && cs.flow.rest===20 && cs.flow.rounds===2);
+  T("circuit moves carry easier/harder mods", cs.items.filter(m=>m.b!=="warmup").every(m=>m.mod && m.mod.e && m.mod.h));
+  click($("#playBtn"));
+  T("circuit player opens full screen", $("#player").classList.contains("show"));
+  T("circuit player has pause control", !!$("#plcNext") || !!$("#plcPause"));
+  let cguard=0;
+  while($("#player").classList.contains("show") && cguard++<250){
+    const f2=$("#plDone2"), n=$("#plcNext")||$("#plcSkip");
+    if(f2){ click(f2); break; } else if(n) click(n); else break;
+  }
+  T("circuit walks to completion via skips", !$("#player").classList.contains("show"), `(${cguard} steps)`);
+  T("circuit completion credits every movement", state().session.items.every(m=>m.done));
+  w.eval(`applyRecipe("desk")`);
+  T("desk posture recipe targets neck/back/shoulder", state().session.items.filter(m=>m.area).length>0 &&
+    state().session.items.filter(m=>m.area).every(m=>m.area.some(a=>["neck","back","shoulder","general"].includes(a))));
+  w.eval(`applyRecipe("heart")`);
+  T("heart-health recipe sticks to beginner moves", state().session.items.filter(m=>m.b==="main").every(m=>(m.lvl||1)<=1));
+
   /* ---- injury 'avoid' filters sessions ---- */
   T("avoid-mode area excluded from built sessions", w.eval(`
     S.profile.areaInfo.neck = {inj:"yes", mode:"avoid"};

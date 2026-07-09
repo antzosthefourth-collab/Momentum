@@ -7,6 +7,33 @@ Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-spa
 5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
 **Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
 
+## New in v5 Phase 3 (Library 2.0 · why engine · follow-along circuits)
+- **Every move enriched**: `m.mgf` (16 fine muscle groups incl. biceps/triceps/quads/
+  hamstrings/calves/forearms/neck-traps), `m.pattern` (squat/hinge/push/pull/carry/
+  rotation/locomotion), `m.lvl` (1–3 difficulty), `m.mod` {easier, harder} coaching cues.
+  Maps: FINE_MAP/FINE_DERIVE, PATTERN_MAP, LVL_MAP, MOD_MAP (+genericMod fallback).
+  +25 new moves (KB clean/push press/thruster/carries/windmill…, HIIT bodyweight, core).
+- **`whyFor(move, profile)`** — every exercise explains itself in plain language
+  (muscles → goal fit → gear preference → favorite). Shown in Train cards, Library
+  detail, both player modes.
+- **Training styles** (`STYLES`): hypertrophy 3×10–12/75s · strength 4×5/150s ·
+  power 5×3/180s · functional 3×8/90s change prescriptions via `applyStyle`; plan STR
+  templates auto-pick style from goal family and persist it (`template.style`).
+- **Follow-along circuits** (Juice&Toya-style pacing, original content): `hiit`/`kbflow`
+  styles build `session.flow` {40s work / 20s off, blocks of 4 × 2 rounds, 30s block
+  rest}; time budget sets block count; `noRepeat` recipe = single round. **Circuit player
+  mode**: auto-advancing clock, halfway + 3-2-1 ticks, block/round eyebrow, easier/harder
+  cues on every screen, pause/skip. `window.__CIRC_TICK_MS` overrides tick for tests.
+- **Smart autofill recipes** (`RECIPES`, Train → Quick starts): 20-min KB full body,
+  15-min one-KB, 20-min no-repeat KB, KB chest·sho·tris, functional KB, 20-min BW HIIT,
+  desk posture reset, heart-health starter (maxLvl 1), problem-areas mobility, soccer
+  conditioning, running comeback, family activity. Gated by owned gear.
+- **Combinable library filters**: ⚙ Filters panel (fine muscle × pattern × difficulty)
+  stacks with gear filter, search and views.
+- Builder additions: `opts.eqOnly`, `opts.maxLvl`, `opts.style`, Strength style selector
+  on Train (`S.sel.style`).
+- validate.js: **150 checks**.
+
 ## New in v5 Phase 2 (Onboarding 2.0 — the life interview)
 - **15 goal families** replace the 7 vague goals, grouped Strength & physique / Engine &
   performance / Life & wellbeing. Internal keys: muscle stronger power aesthetic functional
