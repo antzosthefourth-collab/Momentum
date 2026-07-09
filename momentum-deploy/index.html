@@ -186,6 +186,30 @@ a{color:var(--accent)}
 .td-move.done .ex-name{text-decoration:line-through; opacity:.55}
 .td-move .checkbox{flex:none}
 .td-how{background:var(--panel2); border-radius:10px; padding:10px 12px; margin:4px 0 8px; font-size:12.5px; line-height:1.5}
+/* v6 — Viking hero scene */
+.hero-scene{position:relative; height:230px; overflow:hidden; background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 18%, var(--panel)), var(--panel2)); border-bottom:1px solid var(--line)}
+.hero-scene .hs-bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.hero-scene .hs-char{position:absolute; bottom:0; left:50%; transform:translateX(-50%); height:88%; object-fit:contain; filter:drop-shadow(0 8px 18px rgba(0,0,0,.45))}
+.hero-scene .hs-pet{position:absolute; bottom:6px; left:calc(50% + 58px); height:34%; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+.hs-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:64px; opacity:.5}
+.hs-streak{position:absolute; top:10px; left:12px; background:color-mix(in srgb, var(--bg) 60%, transparent); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-family:'Chakra Petch'; font-weight:700; font-size:13px}
+.hs-lvlbadge{position:absolute; top:10px; right:12px; width:38px; height:38px; border-radius:12px; background:color-mix(in srgb, var(--accent) 30%, var(--bg)); border:1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Chakra Petch'; font-weight:800; font-size:16px}
+.hs-plate{position:absolute; bottom:10px; left:12px; right:12px; display:flex; gap:6px; align-items:baseline; text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.hs-name{font-family:'Chakra Petch'; font-weight:800; font-size:20px}
+.hs-stage{font-size:12px; color:var(--dim); font-weight:600}
+/* reward rail */
+.rw{padding:8px 0; border-bottom:1px dashed color-mix(in srgb, var(--line) 70%, transparent)}
+.rw:last-child{border-bottom:none}
+.rw-bar{height:6px; border-radius:99px; background:color-mix(in srgb, var(--text) 10%, transparent); margin-top:6px; overflow:hidden}
+.rw-bar i{display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--accent), var(--accent2))}
+/* feature tour */
+.tour-ov{position:fixed; inset:0; z-index:96; display:none; pointer-events:none}
+.tour-ov.show{display:block}
+.tourc{position:absolute; left:12px; right:12px; bottom:calc(76px + env(safe-area-inset-bottom, 0px)); max-width:520px; margin:0 auto; background:var(--panel); border:1px solid var(--accent); border-radius:16px; padding:14px 16px; box-shadow:0 12px 40px rgba(0,0,0,.5); pointer-events:auto}
+.tourc-step{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint)}
+.tourc-title{font-family:'Chakra Petch'; font-size:16px; margin:4px 0 4px}
+.tourc-text{color:var(--dim); font-size:13px; line-height:1.5; margin-bottom:10px}
+.tour-hl{outline:2px solid var(--accent); outline-offset:3px; border-radius:14px; position:relative; z-index:95}
 
 /* ---------- FORMS / LIB / SETTINGS ---------- */
 .search{width:100%; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; outline:none; margin-bottom:12px}
@@ -436,10 +460,17 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 
   <!-- ============ HOME ============ -->
   <section class="page" id="page-home">
-    <div class="banner"><img id="bannerImg" alt="" style="display:none" onload="this.style.display='block'"></div>
-    <div class="hero-card">
+    <div class="hero-scene" id="heroScene">
+      <img class="hs-bg" id="hsBg" alt="" style="display:none" onload="this.style.display='block'">
+      <img class="hs-char" id="hsChar" alt="" style="display:none" onload="this.style.display='block'">
+      <img class="hs-pet" id="hsPet" alt="" style="display:none" onload="this.style.display='block'">
+      <div class="hs-fallback" id="hsFallback">🛡️</div>
+      <div class="hs-streak" id="hsStreak">🔥 0</div>
+      <div class="hs-lvlbadge" id="hsLvl">1</div>
+      <div class="hs-plate"><span class="hs-name" id="hsName">You</span><span class="hs-stage" id="hsStage"></span></div>
+    </div>
+    <div class="hero-card" style="margin-top:-14px">
       <div class="hero-row">
-        <div class="avatar"><span class="ph">▲</span><img id="avatarImg" alt="" style="display:none" onload="this.style.display='block'"></div>
         <div class="hero-meta">
           <div class="hero-name" id="heroName">You</div>
           <div class="hero-rank" id="heroRank">Rookie</div>
@@ -451,7 +482,11 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
     </div>
 
     <div class="pad">
-      <div class="stat-grid">
+      <div class="sec-label">Your look</div>
+      <div id="lookCard"></div>
+      <div class="sec-label">Next rewards</div>
+      <div id="rewardRail"></div>
+      <div class="stat-grid" style="margin-top:14px">
         <div class="stat"><div class="k">🔥 Streak</div><div class="v" id="stStreak">0<small>d</small></div></div>
         <div class="stat"><div class="k">✅ Items done</div><div class="v" id="stDone">0</div></div>
         <div class="stat"><div class="k">Sessions</div><div class="v" id="stSessions">0</div></div>
@@ -461,6 +496,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div id="systems"></div>
       <div class="sec-label">Body armor</div>
       <div id="armorCard"></div>
+      <div class="sec-label">Your saga</div>
+      <div id="sagaCard"></div>
     </div>
   </section>
 
@@ -538,12 +575,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
       <button class="btn sm" id="saveMusic">Save music</button>
-      <div class="sec-label">Custom art</div>
-      <p class="mut" style="margin-bottom:10px">Point at any image URL — or drop banner.jpg / avatar.jpg next to the app file.</p>
-      <div class="field"><label>Banner image URL</label><input id="artBanner" placeholder="https://… or banner.jpg"></div>
-      <div class="field"><label>Avatar image URL</label><input id="artAvatar" placeholder="https://… or avatar.jpg"></div>
-      <div class="field"><label>Background photo URL <span style="text-transform:none; letter-spacing:0">(optional — themes have art built in)</span></label><input id="artBg" placeholder="https://… full-screen backdrop"></div>
-      <button class="btn sm" id="saveArt">Save art</button>
+      <div class="sec-label">Tour</div>
+      <button class="btn sm ghost" id="replayTour">↻ Replay the feature tour</button>
       <div class="sec-label">Your numbers</div>
       <p class="mut" style="margin-bottom:10px">Working weights power the load suggestions in your sessions.</p>
       <div class="row2">
@@ -594,6 +627,15 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 </div></div>
 <div class="sheet" id="actSheet"><div class="sheet-card tall" id="asBody"></div></div>
 <div class="sheet" id="pickSheet"><div class="sheet-card tall" id="pkBody"></div></div>
+<div class="tour-ov" id="tourOv"><div class="tourc">
+  <div class="tourc-step"></div>
+  <h3 class="tourc-title"></h3>
+  <p class="tourc-text"></p>
+  <div class="sheet-foot">
+    <button class="btn ghost sm" id="tourSkip">Skip</button>
+    <button class="btn sm" id="tourNext" style="flex:1">Next →</button>
+  </div>
+</div></div>
 <div class="levelup" id="levelup"><div class="lu-card">
   <div class="sub">Level up</div><div class="big" id="luLvl">LVL 2</div>
   <p id="luMsg"></p>
@@ -1518,11 +1560,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 <script>
 /* ================= CONFIG ================= */
 /* Art candidates: local files (ship these beside index.html) first, CDN fallback.
-   The loader probes each and uses the first that actually loads. */
-const ART = {
-  banner:["banner.png","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260707_230242_d0315464-7414-4632-a87d-b1ec12828455.png"],
-  avatar:["avatar.png","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260707_230258_5bb2685b-ae95-43ef-b756-10519e17be63.png"]
-};
+   The loader probes each and uses the first that actually loads.
+   v6: banner/avatar art retired — the Viking hero scene replaced them. */
 const BG_ART = {
   ember:["bg-ember.png","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260708_032139_d83fc44a-3f24-4453-9fe1-8bd975b9b77b.png"],
   steel:["bg-steel.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013635_2d2da825-d798-4370-a861-6fad32af68ae_min.webp"],
@@ -1559,6 +1598,64 @@ const SYS = {
   recharge:{ name:"RECHARGE", sub:"Sleep · Recover · Reset", icon:"🌙", cv:"--c-recharge" }
 };
 const TIERS = ["Rookie","Building","Consistent","Solid","Dialed","Elite","Peak"];
+
+/* ================= VIKING HERO (v6) =================
+   Your avatar is a Viking athlete who grows with you. Forms + habitats unlock on
+   overall hero level, weapons/armor on system levels, companions on streaks.
+   Art ships as local _min.webp beside the app (generated in v6 Phase 5) — the
+   scene renders gracefully with a fallback shield until files exist. */
+const HERO_STAGES = [
+  { lvl:1,  n:"Thrall",         img:"hero-1_min.webp", roast:"Fresh off the boat. That cape is a dish towel." },
+  { lvl:3,  n:"Shield-Carrier", img:"hero-2_min.webp", roast:"Allowed to hold the shield. Not to swing anything." },
+  { lvl:6,  n:"Raider",         img:"hero-3_min.webp" },
+  { lvl:10, n:"Huscarl",        img:"hero-4_min.webp" },
+  { lvl:15, n:"Jarl",           img:"hero-5_min.webp" },
+  { lvl:21, n:"Saga-Born",      img:"hero-6_min.webp" }
+];
+const HABITATS = [
+  { id:"yard",      n:"Muddy Yard",     lvl:1,  img:"hab-1_min.webp", roast:"A puddle with ambitions." },
+  { id:"longhouse", n:"Longhouse Gym",  lvl:5,  img:"hab-2_min.webp" },
+  { id:"fjord",     n:"Fjord Grounds",  lvl:10, img:"hab-3_min.webp" },
+  { id:"arena",     n:"Mountain Arena", lvl:18, img:"hab-4_min.webp" }
+];
+const COMPANIONS = [
+  { id:"slime",  n:"Bjorn the Slime",  streak:7,  evolve:30,  imgs:["pet-slime-1_min.webp","pet-slime-2_min.webp"] },
+  { id:"dragon", n:"Ember the Dragon", streak:14, evolve:50,  imgs:["pet-dragon-1_min.webp","pet-dragon-2_min.webp"] },
+  { id:"wolf",   n:"Fenrir the Pup",   streak:30, evolve:100, imgs:["pet-wolf-1_min.webp","pet-wolf-2_min.webp"] }
+];
+const GEAR_REWARDS = [
+  { n:"Pointy Stick",         sys:"strength", lvl:2, roast:"Technically a weapon." },
+  { n:"Rusty Hatchet",        sys:"strength", lvl:4 },
+  { n:"Bearded Axe",          sys:"strength", lvl:7 },
+  { n:"Rune-Etched Greataxe", sys:"strength", lvl:11 },
+  { n:"Barrel-Lid Shield",    sys:"armor",    lvl:2, roast:"Smells like pickles. Blocks like one." },
+  { n:"Painted Round-Shield", sys:"armor",    lvl:5 },
+  { n:"Dragon-Crest Shield",  sys:"armor",    lvl:9 },
+  { n:"War Horn",             sys:"motor",    lvl:3 },
+  { n:"Longship Figurehead",  sys:"motor",    lvl:7 },
+  { n:"Rune-Carved Ball",     sys:"skill",    lvl:3 },
+  { n:"Mead-Hall Feast",      sys:"fuel",     lvl:4 },
+  { n:"Bearskin Bedroll",     sys:"recharge", lvl:4 }
+];
+function heroStage(lvl){ let s = HERO_STAGES[0]; for(const st of HERO_STAGES) if(lvl>=st.lvl) s = st; return s; }
+function bestStreak(){ return Math.max(S.streak||0, (S.streak2&&S.streak2.best)||0); }
+function unlockedHabitats(lvl){ return HABITATS.filter(h=>lvl>=h.lvl); }
+function unlockedCompanions(){ return COMPANIONS.filter(c=>bestStreak()>=c.streak); }
+function unlockedGear(){ return GEAR_REWARDS.filter(g=>levelFromXp(S.sys[g.sys]||0).lvl>=g.lvl); }
+function nextRewards(){
+  const L = levelFromXp(S.xp), out = [];
+  const ns = HERO_STAGES.find(s=>s.lvl>L.lvl);
+  if(ns) out.push({ n:`${ns.n} form`, need:`hero level ${ns.lvl}`, pct:L.lvl/ns.lvl });
+  const nh = HABITATS.find(h=>h.lvl>L.lvl);
+  if(nh) out.push({ n:nh.n, need:`hero level ${nh.lvl}`, pct:L.lvl/nh.lvl });
+  for(const g of GEAR_REWARDS){
+    const pl = levelFromXp(S.sys[g.sys]||0);
+    if(pl.lvl < g.lvl) out.push({ n:g.n, need:`${SYS[g.sys].name} level ${g.lvl}`, pct:pl.lvl/g.lvl, roast:g.roast });
+  }
+  const st = bestStreak();
+  for(const c of COMPANIONS) if(st < c.streak) out.push({ n:c.n, need:`${c.streak}-day streak`, pct:st/c.streak });
+  return out.sort((a,b)=>b.pct-a.pct).slice(0,6);
+}
 
 /* ================= EQUIPMENT =================
    "Bodyweight" is NOT a pickable option — everyone ships with it. The session
@@ -1883,9 +1980,12 @@ const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0
   done:0, sessions:0, microDone:0, minutes:0, streak:0, lastDay:"", custom:[], media:[], logs:{}, dayXP:{}, dayMin:{}, moveMeta:{},
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
-  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", bannerUrl:"", avatarUrl:"", sound:"low"} };
+  avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
+  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", sound:"low"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
+S.avatar = Object.assign({}, DEF.avatar, S.avatar||{});
+["bannerUrl","avatarUrl","bgUrl"].forEach(k=>{ if(S.settings) delete S.settings[k]; });   // v6: custom art URLs retired
 S.settings = Object.assign({}, DEF.settings, S.settings||{}); S.moveMeta = S.moveMeta||{};
 const save = () => { store.set("mo_state", S); pushWidgets(); };
 
@@ -1996,8 +2096,15 @@ function grantXp(sysKey, amount){
   S.dayXP = S.dayXP||{}; const dk0 = dayKey(); S.dayXP[dk0] = (S.dayXP[dk0]||0) + amount;
   const after = levelFromXp(S.xp).lvl;
   if(after > before){
+    /* level-ups reveal what they unlocked — forms, habitats, weapons, armor */
+    const unlocked = [];
+    const st = HERO_STAGES.find(s=>s.lvl===after); if(st) unlocked.push("new form: "+st.n);
+    const hb = HABITATS.find(h=>h.lvl===after); if(hb) unlocked.push("habitat: "+hb.n);
+    const sl = levelFromXp(S.sys[sysKey]||0).lvl;
+    GEAR_REWARDS.filter(g=>g.sys===sysKey && g.lvl===sl).forEach(g=>unlocked.push(g.n));
     $("#luLvl").textContent = "LVL " + after;
-    $("#luMsg").textContent = "You're " + tierFor(after) + " now. Momentum compounds — keep stacking days.";
+    $("#luMsg").textContent = "You're " + tierFor(after) + " now." +
+      (unlocked.length ? " Unlocked — " + unlocked.join(" · ") + "." : " Momentum compounds — keep stacking days.");
     $("#levelup").classList.add("show");
     SFX.play("fanfare"); bigBurst({n:150, spread:90, origin:{x:.5,y:.45}});
   }
@@ -2275,6 +2382,35 @@ function runForge(ms, done){
   };
   tick();
 }
+/* ---- forced-but-skippable feature tour: fires once, right after the forge ---- */
+const TOUR_STEPS = [
+  { page:"today", sel:"#tdBrief",     t:"Your day, spoken plainly",  s:"The brief reads your whole day at a glance — tap 🔊 and it talks while you lace up." },
+  { page:"today", sel:"#tdActs",      t:"Zero-tap workouts",         s:"Today's session lives right here: check movements off inline, tap 'how' for coaching cues, or hit Start for the guided player." },
+  { page:"today", sel:"#checkinCard", t:"Three taps, honest plan",   s:"Energy · sleep · soreness. Feel rough and the plan offers an easier day — never guilt." },
+  { page:"plan",  sel:"#planDays",    t:"Your whole block",          s:"Every session is pre-built. Drag days around with 🖐 Arrange, tune any slot with ✎ — swaps stick." },
+  { page:"train", sel:"#recipeChips", t:"One-tap quick starts",      s:"Sessions filtered to your gear. Conditioning always builds circuits — KB HIIT scales to 40–60s work windows." },
+  { page:"home",  sel:"#heroScene",   t:"Your Viking grows",         s:"Everything you finish levels a system. Levels unlock forms, habitats, weapons and companions. Consistency writes the saga." }
+];
+let TOUR = null;
+function runTour(){ TOUR = { i:0 }; tourStep(); }
+function tourStep(){
+  const ov = $("#tourOv");
+  $$(".tour-hl").forEach(el=>el.classList.remove("tour-hl"));
+  if(!TOUR || TOUR.i >= TOUR_STEPS.length){
+    if(ov) ov.classList.remove("show");
+    if(TOUR){ S.tutorialDone = 1; save(); }
+    TOUR = null; go("today"); return;
+  }
+  const st = TOUR_STEPS[TOUR.i];
+  go(st.page);
+  const el = $(st.sel);
+  if(el){ el.classList.add("tour-hl"); try{ if(el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){} }
+  ov.querySelector(".tourc-step").textContent = (TOUR.i+1) + " / " + TOUR_STEPS.length;
+  ov.querySelector(".tourc-title").textContent = st.t;
+  ov.querySelector(".tourc-text").textContent = st.s;
+  ov.querySelector("#tourNext").textContent = TOUR.i===TOUR_STEPS.length-1 ? "LET'S GO ⚡" : "Next →";
+  ov.classList.add("show"); SFX.play("advance");
+}
 function finishOnboarding(skip){
   if(!skip) onbCollect();
   if(planHasWork()){
@@ -2310,6 +2446,7 @@ function applyOnboarding(skip){
     renderAll();
     toast(skip ? "Welcome — build it your way" : "Plan created — every session is already built.");
     if(S.plan) go("plan");   // fresh plan: show the block; daily reopens land on Today
+    if(!S.tutorialDone) runTour();   // one forced (skippable) lap around the app
   };
   const ms = (typeof window.__FORGE_MS==="number") ? window.__FORGE_MS :
     (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 2100);
@@ -2916,8 +3053,61 @@ document.addEventListener("click", ev=>{
 });
 
 /* ================= RENDER: HOME ================= */
+function renderHeroScene(){
+  const L = levelFromXp(S.xp);
+  const stage = heroStage(L.lvl);
+  const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const hab = unlockedHabitats(L.lvl).find(h=>h.id===A.habitat) || HABITATS[0];
+  $("#hsStreak").textContent = "🔥 " + (S.streak||0);
+  $("#hsLvl").textContent = L.lvl;
+  $("#hsName").textContent = (S.profile && S.profile.name) || "You";
+  $("#hsStage").textContent = "· " + stage.n;
+  probeImg([hab.img], u=>{ $("#hsBg").src = u; });
+  probeImg([stage.img], u=>{ $("#hsChar").src = u; const f=$("#hsFallback"); if(f) f.style.display="none"; });
+  const comp = COMPANIONS.find(c=>c.id===A.companion);
+  const pet = $("#hsPet");
+  if(comp && unlockedCompanions().includes(comp)){
+    probeImg([comp.imgs[bestStreak()>=comp.evolve ? 1 : 0]], u=>{ pet.src = u; });
+  } else if(pet){ pet.style.display = "none"; }
+}
+function renderLook(){
+  const L = levelFromXp(S.xp);
+  const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const habs = HABITATS.map(h=>{ const un = L.lvl>=h.lvl;
+    return `<button class="chip ${A.habitat===h.id?'on':''}" data-avhab="${h.id}" ${un?"":"disabled"}>${un?"":"🔒 "}${h.n}</button>`; }).join("");
+  const pets = [`<button class="chip ${!A.companion?'on':''}" data-avpet="">Lone wolf</button>`].concat(
+    COMPANIONS.map(c=>{ const un = bestStreak()>=c.streak;
+      return `<button class="chip ${A.companion===c.id?'on':''}" data-avpet="${c.id}" ${un?"":"disabled"}>${un?"":"🔒 "}${c.n}</button>`; })).join("");
+  $("#lookCard").innerHTML = `<div class="card">
+    <div class="chips">${habs}</div>
+    <div class="chips" style="margin-top:8px">${pets}</div>
+    <p class="mut" style="margin-top:8px; font-size:11.5px">Locked looks open as you level — the rail below shows what's next. Companions evolve as streaks grow.</p></div>`;
+}
+function renderRewards(){
+  const rws = nextRewards();
+  $("#rewardRail").innerHTML = `<div class="card">` + (rws.length ? rws.map(r=>
+    `<div class="rw"><div class="ex-meta"><div class="ex-name" style="font-size:13px">🔒 ${esc(r.n)}</div>
+      <div class="ex-sub">${esc(r.need)}${r.roast?` · <i>${esc(r.roast)}</i>`:""}</div></div>
+      <div class="rw-bar"><i style="width:${Math.round(Math.min(1,r.pct)*100)}%"></i></div></div>`).join("")
+    : `<p class="mut">Everything's unlocked. Write new sagas.</p>`) + `</div>`;
+}
+function renderSaga(){
+  const s2 = Object.assign({ freezes:0, best:0, milestones:[], comeback:0 }, S.streak2||{});
+  const L = levelFromXp(S.xp);
+  const chips = [
+    ...(s2.milestones||[]).map(m=>`<span class="tag">🔥 ${m}-day streak</span>`),
+    ...unlockedGear().map(g=>`<span class="tag">⚔️ ${esc(g.n)}</span>`),
+    ...unlockedHabitats(L.lvl).slice(1).map(h=>`<span class="tag">🏕 ${esc(h.n)}</span>`),
+    ...unlockedCompanions().map(c=>`<span class="tag">🐾 ${esc(c.n)}</span>`)
+  ];
+  $("#sagaCard").innerHTML = `<div class="card">` +
+    (chips.length ? `<div class="ex-tags" style="margin-top:0">${chips.join("")}</div>`
+      : `<p class="mut">Trophies land here — streak milestones, weapons, habitats, companions. Go earn the first one.</p>`) +
+    (s2.comeback ? `<p class="mut" style="margin-top:8px">Comeback honored: you came back after a ${s2.comeback}-day run ended. That's the saga.</p>` : "") + `</div>`;
+}
 function renderHero(){
   const L = levelFromXp(S.xp);
+  renderHeroScene(); renderLook(); renderRewards(); renderSaga();
   $("#heroName").textContent = (S.profile && S.profile.name) || "You";
   $("#heroLvl").textContent = "LVL " + L.lvl;
   $("#heroRank").textContent = tierFor(L.lvl);
@@ -3626,8 +3816,6 @@ function renderMore(){
   $("#soundChips").innerHTML = [["off","🔇 Off"],["low","🔉 Subtle"],["full","🔊 Full"]]
     .map(([k,l])=>`<button class="chip ${(S.settings.sound||"low")===k?'on':''}" data-sound="${k}">${l}</button>`).join("");
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
-  $("#artBanner").value = S.settings.bannerUrl||""; $("#artAvatar").value = S.settings.avatarUrl||"";
-  $("#artBg").value = S.settings.bgUrl||"";
   const p = S.profile||{lifts:{},caps:{}};
   $("#wSquat").value=p.lifts.squat||""; $("#wBench").value=p.lifts.bench||""; $("#wDead").value=p.lifts.deadlift||"";
   $("#wPress").value=p.lifts.press||""; $("#wDb").value=p.caps.db||""; $("#wKb").value=p.caps.kb||"";
@@ -3928,6 +4116,14 @@ document.addEventListener("click", ev=>{
   const rs = t.closest("[data-rest]");
   if(rs){ S.plan.days[+rs.dataset.rest].acts = []; save(); renderPlan(); renderTodayPage(); return; }
 
+  /* ---- feature tour + avatar look ---- */
+  if(t.id==="tourNext" && TOUR){ TOUR.i++; tourStep(); return; }
+  if(t.id==="tourSkip" && TOUR){ TOUR.i = TOUR_STEPS.length; tourStep(); return; }
+  const avh = t.closest("[data-avhab]");
+  if(avh && !avh.disabled){ S.avatar = S.avatar||{}; S.avatar.habitat = avh.dataset.avhab; save(); renderHero(); SFX.play("select"); return; }
+  const avp = t.closest("[data-avpet]");
+  if(avp && !avp.disabled){ S.avatar = S.avatar||{}; S.avatar.companion = avp.dataset.avpet || null; save(); renderHero(); SFX.play("select"); return; }
+
   const th = t.closest("[data-theme-pick]");
   if(th){ S.settings.theme=th.dataset.themePick; document.body.dataset.theme=S.settings.theme; applyBg(); SFX.play("select"); save(); renderMore(); return; }
   const snd = t.closest("[data-sound]");
@@ -3965,12 +4161,7 @@ $("#addBtn").addEventListener("click", ()=>{
 });
 $("#saveMusic").addEventListener("click", ()=>{ S.settings.spotify=$("#spotifyUrl").value.trim();
   S.settings.yt=$("#ytUrl").value.trim(); save(); renderMusic(); toast("Music saved"); });
-$("#saveArt").addEventListener("click", ()=>{ S.settings.bannerUrl=$("#artBanner").value.trim();
-  S.settings.avatarUrl=$("#artAvatar").value.trim(); S.settings.bgUrl=$("#artBg").value.trim();
-  applyBg(); save(); toast("Art saved — reopen or refresh to see it");
-  const b=S.settings.bannerUrl||ART.banner, a=S.settings.avatarUrl||ART.avatar;
-  const bi=$("#bannerImg"), ai=$("#avatarImg");
-  if(bi&&b) bi.src=b; if(ai&&a) ai.src=a; });
+$("#replayTour").addEventListener("click", ()=>{ runTour(); });
 $("#saveNums").addEventListener("click", ()=>{
   if(!S.profile) S.profile = { name:"You", goals:[], runFocus:"both", eq:S.sel.eq.slice(), lifts:{}, caps:{}, days:3, len:30, weeks:6, style:"flex" };
   S.profile.lifts = { squat:+$("#wSquat").value||0, bench:+$("#wBench").value||0, deadlift:+$("#wDead").value||0, press:+$("#wPress").value||0 };
@@ -4014,9 +4205,6 @@ $("#blankPlan").addEventListener("click", ()=>{ if(!S.profile) { openOnb(); retu
 function renderAll(){ renderHero(); renderTodayPage(); renderHabits(); renderPickers(); renderSession(); renderPlan(); renderLib(); renderMedia(); renderMore(); renderMusic(); }
 migrateProfile(); migratePlan();
 (function applyArt(){
-  const bi = $("#bannerImg"), ai = $("#avatarImg");
-  if(bi) probeImg([S.settings.bannerUrl].concat(ART.banner), u=>{ bi.src=u; });
-  if(ai) probeImg([S.settings.avatarUrl].concat(ART.avatar), u=>{ ai.src=u; });
   /* celebration art behind the level-up card */
   probeImg(["lu-burst.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_014051_622b187f-72b1-4a42-9bb4-6a5f38a17ce5_min.webp"], u=>{ const lc = $(".lu-card"); if(lc){
     lc.style.backgroundImage = `linear-gradient(color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 90%, transparent)), url("${u}")`;
@@ -4025,7 +4213,7 @@ migrateProfile(); migratePlan();
 })();
 function applyBg(){
   document.body.classList.remove("hasphoto");
-  const cands = [S.settings.bgUrl].concat(BG_ART[S.settings.theme]||[]);
+  const cands = (BG_ART[S.settings.theme]||[]).slice();
   probeImg(cands, url=>{
     document.body.style.setProperty("--bgphoto", `url("${url}")`);
     document.body.classList.add("hasphoto");

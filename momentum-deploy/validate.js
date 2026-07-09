@@ -107,7 +107,14 @@ setTimeout(()=>{ try {
   T("tech-comfort question removed", !$("[data-tech]"));
   click($('[data-mode="coach"]')); click($("#onbNext"));
   T("onboarding closes", !$("#onb").classList.contains("show"));
-  T("post-interview lands on Plan tab", $("#page-plan").classList.contains("on"));
+
+  /* ---- v6 Phase 4: forced (skippable) feature tour fires once, right after the forge ---- */
+  T("feature tour fires after the forge", $("#tourOv").classList.contains("show"));
+  T("tour walks Today first", $("#page-today").classList.contains("on") && $(".tourc-title").textContent.length>3);
+  let tguard = 0;
+  while($("#tourOv").classList.contains("show") && tguard++<10) click($("#tourNext"));
+  T("tour completes and marks itself done", !$("#tourOv").classList.contains("show") && state().tutorialDone===1, `(${tguard} steps)`);
+  T("tour can be replayed from More", !!$("#replayTour"));
 
   /* ---- profile captured the new answers ---- */
   const st = state();
@@ -559,6 +566,34 @@ setTimeout(()=>{ try {
       S.session = sv; save(); return ok; })()`));
   d.querySelectorAll(".nav button")[1].dispatchEvent(new w.Event("click",{bubbles:true}));
   T("armor card renders per-area shields", $$("#armorCard .sys").length>=1);
+
+  /* ---- v6 Phase 4: viking hero scene, look, rewards, saga ---- */
+  T("hero scene renders with level + streak badges", !!$("#heroScene") && $("#hsLvl").textContent.length>0 && /🔥/.test($("#hsStreak").textContent));
+  T("hero stage names the viking form", /Thrall|Shield-Carrier|Raider|Huscarl|Jarl|Saga-Born/.test($("#hsStage").textContent));
+  T("custom art URL fields removed", !$("#artBanner") && !$("#artAvatar") && !$("#artBg") && !$("#saveArt"));
+  T("legacy art settings scrubbed", state().settings.bannerUrl===undefined && state().settings.avatarUrl===undefined);
+  T("look card offers habitats + companions", $$("[data-avhab]").length===4 && $$("[data-avpet]").length===4);
+  T("locked looks stay locked", $$("[data-avhab]").filter(b=>b.disabled).length>=1 && $$("[data-avpet]").filter(b=>b.disabled).length>=1);
+  T("reward rail shows gated unlocks with progress", $$("#rewardRail .rw").length>=3 && /level|streak/.test($("#rewardRail").textContent));
+  T("saga card renders", !!$("#sagaCard") && $("#sagaCard").textContent.length>10);
+  T("hero stage progression is level-driven", w.eval(`heroStage(1).n==="Thrall" && heroStage(12).n==="Huscarl" && heroStage(30).n==="Saga-Born"`));
+  T("companions unlock on streaks", w.eval(`
+    (function(){ const s2=S.streak2; S.streak2={best:15,freezes:0,milestones:[],comeback:0};
+      const un = unlockedCompanions().map(c=>c.id);
+      S.streak2=s2;
+      return un.includes("slime") && un.includes("dragon") && !un.includes("wolf"); })()`));
+  T("picking an unlocked companion persists", w.eval(`
+    (function(){ const s2=S.streak2; S.streak2={best:10,freezes:0,milestones:[],comeback:0}; renderHero();
+      const btn=[...document.querySelectorAll("[data-avpet]")].find(b=>b.dataset.avpet==="slime");
+      btn.dispatchEvent(new Event("click",{bubbles:true}));
+      const ok = S.avatar.companion==="slime";
+      S.streak2=s2; renderHero(); return ok; })()`));
+  T("level-up card reveals unlocks", w.eval(`
+    (function(){ const xp=S.xp, sys=S.sys.strength;
+      S.xp = 0; S.sys.strength = 0; grantXp("strength", need(1)+10);
+      const msg = document.getElementById("luMsg").textContent;
+      S.xp = xp; S.sys.strength = sys; document.getElementById("levelup").classList.remove("show"); save();
+      return /Unlocked|Momentum/.test(msg); })()`));
 
   /* ---- habits + migration ---- */
   d.querySelectorAll(".nav button")[0].dispatchEvent(new w.Event("click",{bubbles:true}));

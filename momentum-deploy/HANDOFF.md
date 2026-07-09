@@ -12,9 +12,13 @@ hiit is an activity → MOT day; circuit templates hydrate with flow) · 3 ✅ T
 checklists with per-move check-off crediting via `ensureActSession`+`toggleItem`; how
 cues + demo inline; check-in & journal moved to page bottom) + Train in-session editing
 (swap/choose/remove/add per exercise, `#pickSheet`, edits write back to plan slot via
-`syncActNames`) · 4 ⏳ Viking hero/avatar/rewards + forced tutorial · 5 ⏳ generated
-assets (Viking art, companions incl. slime+dragon, lofi viking loops, level-up video).
-**validate.js: 215 checks.** Owner decisions: Viking athlete art direction; video in
+`syncActNames`) · 4 ✅ Viking hero (HERO_STAGES/HABITATS/COMPANIONS/GEAR_REWARDS;
+`#heroScene` layered art w/ probeImg fallback; look selectors; `nextRewards()` rail
+with roast-tier names; saga trophy card; level-ups reveal unlocks; 6-step forced
+skippable tour `runTour()` after forge + ↻ replay in More; custom art URL fields
+REMOVED, settings scrubbed) · 5 ⏳ generated assets (Viking art hero-1..6/hab-1..4/
+pet-{slime,dragon,wolf}-{1,2} `_min.webp`, lofi viking loops, level-up video).
+**validate.js: 230 checks.** Owner decisions: Viking athlete art direction; video in
 level-up + hero loop + theme backdrops (free-first: nanobanana/HF/GPT before
 Higgsfield's 39.28 credits); windows return in-app at Phase-7 scheduling.
 
