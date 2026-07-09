@@ -588,6 +588,21 @@ setTimeout(()=>{ try {
       btn.dispatchEvent(new Event("click",{bubbles:true}));
       const ok = S.avatar.companion==="slime";
       S.streak2=s2; renderHero(); return ok; })()`));
+  /* ---- v6 Phase 5: ambience player + animated backdrops (jsdom-safe wiring) ---- */
+  d.querySelectorAll(".nav button")[5].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("ambience chips render in More", $$("#ambChips [data-amb]").length===3);
+  T("animated-backdrop toggle renders", $$("#bgvChips [data-bgv]").length===2);
+  click($('[data-amb="fire"]'));
+  T("ambience choice persists", state().settings.amb==="fire");
+  click($('[data-amb="off"]'));
+  T("ambience off persists", state().settings.amb==="off");
+  click($('[data-bgv="off"]'));
+  T("backdrop toggle persists + applyBg survives jsdom", state().settings.bgv==="off");
+  click($('[data-bgv="on"]'));
+  d.querySelectorAll(".nav button")[2].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("Train music drawer includes ambience", !!$("#musicToggle") && (click($("#musicToggle")), $$("#musicDrawer [data-amb]").length===3));
+  T("probeVid is defined and silent in jsdom", w.eval(`typeof probeVid==="function" && (probeVid(["x.webm"], ()=>{}), true)`));
+  d.querySelectorAll(".nav button")[1].dispatchEvent(new w.Event("click",{bubbles:true}));
   T("level-up card reveals unlocks", w.eval(`
     (function(){ const xp=S.xp, sys=S.sys.strength;
       S.xp = 0; S.sys.strength = 0; grantXp("strength", need(1)+10);

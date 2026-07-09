@@ -210,6 +210,12 @@ a{color:var(--accent)}
 .tourc-title{font-family:'Chakra Petch'; font-size:16px; margin:4px 0 4px}
 .tourc-text{color:var(--dim); font-size:13px; line-height:1.5; margin-bottom:10px}
 .tour-hl{outline:2px solid var(--accent); outline-offset:3px; border-radius:14px; position:relative; z-index:95}
+/* v6 — video layers (backdrop, hero loop, level-up) */
+#bgVid{position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover; z-index:-3; pointer-events:none}
+body.hasvideo::before{background-image:none !important}
+.lu-card{position:relative; overflow:hidden}
+#luVid{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.45; pointer-events:none}
+.lu-card>*:not(#luVid){position:relative; z-index:1}
 
 /* ---------- FORMS / LIB / SETTINGS ---------- */
 .search{width:100%; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; outline:none; margin-bottom:12px}
@@ -571,6 +577,11 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="sec-label">Sound</div>
       <p class="mut" style="margin-bottom:10px">Taps, transitions, completions and celebrations — all generated on-device.</p>
       <div class="chips" id="soundChips"></div>
+      <div class="sec-label">Ambience</div>
+      <p class="mut" style="margin-bottom:10px">Lofi viking loops, generated once and bundled — they play offline, no streaming.</p>
+      <div class="chips" id="ambChips"></div>
+      <div class="sec-label">Animated backdrop</div>
+      <div class="chips" id="bgvChips"></div>
       <div class="sec-label">Music</div>
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
@@ -1580,6 +1591,41 @@ function probeImg(candidates, ok){
     im.src = list[i];
   })(0);
 }
+/* video sibling of probeImg — resolves the first playable source, silent otherwise */
+function probeVid(candidates, ok){
+  try{
+    const list = [].concat(candidates).filter(Boolean);
+    (function tryNext(i){
+      if(i >= list.length) return;
+      const v = document.createElement("video");
+      v.muted = true; v.preload = "metadata";
+      v.onloadeddata = ()=>ok(list[i]);
+      v.onerror = ()=>tryNext(i+1);
+      v.src = list[i];
+    })(0);
+  }catch(e){}
+}
+/* ---- ambient music: local generated loops, zero streaming ---- */
+const AMBIENCE = [
+  { id:"fire",  n:"🔥 Fire & Frost", file:"amb-viking-1.m4a" },
+  { id:"night", n:"🌙 Long Night",   file:"amb-viking-2.m4a" }
+];
+let _amb = null;
+function playAmbience(id){
+  try{
+    if(_amb){ _amb.pause(); _amb = null; }
+    if(!id || id==="off") return;
+    const tr = AMBIENCE.find(a=>a.id===id); if(!tr) return;
+    _amb = new Audio(tr.file);
+    _amb.loop = true; _amb.volume = 0.45;
+    const p = _amb.play(); if(p && p.catch) p.catch(()=>{});
+  }catch(e){}
+}
+function ambChips(){
+  const cur = (S.settings && S.settings.amb) || "off";
+  return [["off","🔇 Off"]].concat(AMBIENCE.map(a=>[a.id, a.n]))
+    .map(([k,l])=>`<button class="chip ${cur===k?'on':''}" data-amb="${k}">${l}</button>`).join("");
+}
 
 /* ================= SAFE STORAGE ================= */
 const mem = {};
@@ -1605,12 +1651,12 @@ const TIERS = ["Rookie","Building","Consistent","Solid","Dialed","Elite","Peak"]
    Art ships as local _min.webp beside the app (generated in v6 Phase 5) — the
    scene renders gracefully with a fallback shield until files exist. */
 const HERO_STAGES = [
-  { lvl:1,  n:"Thrall",         img:"hero-1_min.webp", roast:"Fresh off the boat. That cape is a dish towel." },
-  { lvl:3,  n:"Shield-Carrier", img:"hero-2_min.webp", roast:"Allowed to hold the shield. Not to swing anything." },
-  { lvl:6,  n:"Raider",         img:"hero-3_min.webp" },
-  { lvl:10, n:"Huscarl",        img:"hero-4_min.webp" },
-  { lvl:15, n:"Jarl",           img:"hero-5_min.webp" },
-  { lvl:21, n:"Saga-Born",      img:"hero-6_min.webp" }
+  { lvl:1,  n:"Thrall",         img:"hero-1_min.png", roast:"Fresh off the boat. That cape is a dish towel." },
+  { lvl:3,  n:"Shield-Carrier", img:"hero-2_min.png", roast:"Allowed to hold the shield. Not to swing anything." },
+  { lvl:6,  n:"Raider",         img:"hero-3_min.png" },
+  { lvl:10, n:"Huscarl",        img:"hero-4_min.png" },
+  { lvl:15, n:"Jarl",           img:"hero-5_min.png" },
+  { lvl:21, n:"Saga-Born",      img:"hero-6_min.png" }
 ];
 const HABITATS = [
   { id:"yard",      n:"Muddy Yard",     lvl:1,  img:"hab-1_min.webp", roast:"A puddle with ambitions." },
@@ -1619,9 +1665,9 @@ const HABITATS = [
   { id:"arena",     n:"Mountain Arena", lvl:18, img:"hab-4_min.webp" }
 ];
 const COMPANIONS = [
-  { id:"slime",  n:"Bjorn the Slime",  streak:7,  evolve:30,  imgs:["pet-slime-1_min.webp","pet-slime-2_min.webp"] },
-  { id:"dragon", n:"Ember the Dragon", streak:14, evolve:50,  imgs:["pet-dragon-1_min.webp","pet-dragon-2_min.webp"] },
-  { id:"wolf",   n:"Fenrir the Pup",   streak:30, evolve:100, imgs:["pet-wolf-1_min.webp","pet-wolf-2_min.webp"] }
+  { id:"slime",  n:"Bjorn the Slime",  streak:7,  evolve:30,  imgs:["pet-slime-1_min.png","pet-slime-2_min.png"] },
+  { id:"dragon", n:"Ember the Dragon", streak:14, evolve:50,  imgs:["pet-dragon-1_min.png","pet-dragon-2_min.png"] },
+  { id:"wolf",   n:"Fenrir the Pup",   streak:30, evolve:100, imgs:["pet-wolf-1_min.png","pet-wolf-2_min.png"] }
 ];
 const GEAR_REWARDS = [
   { n:"Pointy Stick",         sys:"strength", lvl:2, roast:"Technically a weapon." },
@@ -1981,7 +2027,7 @@ const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
-  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", sound:"low"} };
+  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", sound:"low", amb:"off", bgv:"on"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
 S.avatar = Object.assign({}, DEF.avatar, S.avatar||{});
@@ -2054,6 +2100,8 @@ const SFX = {
   }
 };
 document.addEventListener("pointerdown", ()=>{ try{ const ac=SFX.ctx(); if(ac && ac.state==="suspended" && ac.resume) ac.resume().catch(()=>{}); }catch(e){} }, {passive:true});
+/* autoplay policy: kick a saved ambience track alive on the first gesture */
+document.addEventListener("pointerdown", ()=>{ try{ if((S.settings.amb||"off")!=="off" && !_amb) playAmbience(S.settings.amb); }catch(e){} }, {passive:true});
 /* real haptics on iOS via Capacitor Haptics plugin; web vibrate fallback */
 const buzz = (style)=>{ try{
   const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
@@ -3064,6 +3112,15 @@ function renderHeroScene(){
   $("#hsStage").textContent = "· " + stage.n;
   probeImg([hab.img], u=>{ $("#hsBg").src = u; });
   probeImg([stage.img], u=>{ $("#hsChar").src = u; const f=$("#hsFallback"); if(f) f.style.display="none"; });
+  if(!$("#hsBgVid")) probeVid(["hero-loop.webm","hero-loop.mp4"], src=>{
+    if($("#hsBgVid")) return;
+    try{
+      const v = document.createElement("video"); v.id = "hsBgVid"; v.className = "hs-bg";
+      v.src = src; v.muted = true; v.loop = true; v.autoplay = true; v.setAttribute("playsinline","");
+      const scene = $("#heroScene"); if(scene) scene.insertBefore(v, scene.firstChild);
+      const p = v.play(); if(p && p.catch) p.catch(()=>{});
+    }catch(e){}
+  });
   const comp = COMPANIONS.find(c=>c.id===A.companion);
   const pet = $("#hsPet");
   if(comp && unlockedCompanions().includes(comp)){
@@ -3662,8 +3719,9 @@ function swapMoveInAct(act, ni){
   const names = actNames(act);
   const cur = allMoves().find(m=>m.n===names[ni]); if(!cur){ toast("Move not found"); return; }
   const eq = (S.profile&&S.profile.eq)||S.sel.eq;
-  const pool = allMoves().filter(m=>(m.eq==="Bodyweight"||eq.includes(m.eq)||(m.eq==="Dumbbells"&&eq.includes("Adjustable Dumbbells")))
-    && m.p===cur.p && m.b===cur.b && !names.includes(m.n));
+  const gearOk = m => m.eq==="Bodyweight"||eq.includes(m.eq)||(m.eq==="Dumbbells"&&eq.includes("Adjustable Dumbbells"));
+  let pool = allMoves().filter(m=>gearOk(m) && m.p===cur.p && m.b===cur.b && !names.includes(m.n));
+  if(!pool.length) pool = allMoves().filter(m=>gearOk(m) && m.b===cur.b && !names.includes(m.n));   // rare systems (e.g. skill warmups) relax to the block
   const pick = wPick(pool,1)[0];
   if(!pick){ toast("No alternative fits your gear"); return; }
   names[ni] = pick.n; act.names = names; save(); SFX.play("select");
@@ -3815,6 +3873,9 @@ function renderMore(){
       <div class="dot" style="background:${c}; ${k==='daylight'?'border:2px solid #ddd':''}"></div>${k}</div>`).join("");
   $("#soundChips").innerHTML = [["off","🔇 Off"],["low","🔉 Subtle"],["full","🔊 Full"]]
     .map(([k,l])=>`<button class="chip ${(S.settings.sound||"low")===k?'on':''}" data-sound="${k}">${l}</button>`).join("");
+  $("#ambChips").innerHTML = ambChips();
+  $("#bgvChips").innerHTML = [["on","🎞 Animated"],["off","🖼 Static"]]
+    .map(([k,l])=>`<button class="chip ${(S.settings.bgv||"on")===k?'on':''}" data-bgv="${k}">${l}</button>`).join("");
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
   const p = S.profile||{lifts:{},caps:{}};
   $("#wSquat").value=p.lifts.squat||""; $("#wBench").value=p.lifts.bench||""; $("#wDead").value=p.lifts.deadlift||"";
@@ -3837,7 +3898,9 @@ function musicEmbeds(){
 }
 function renderMusic(){
   const box = $("#musicBox"); const h = musicEmbeds();
-  box.innerHTML = h ? `<button class="btn sm ghost" id="musicToggle">🎵 Music</button><div id="musicDrawer" style="display:none; margin-top:10px">${h}</div>` : "";
+  const amb = `<div class="sec-label" style="margin-top:10px">Ambience</div><div class="chips">${ambChips()}</div>`;
+  box.innerHTML = `<button class="btn sm ghost" id="musicToggle">🎵 Music & ambience</button>
+    <div id="musicDrawer" style="display:none; margin-top:10px">${amb}${h}</div>`;
 }
 
 /* ================= WIDGET BRIDGE (iOS Home Screen widgets) ================= */
@@ -4128,6 +4191,14 @@ document.addEventListener("click", ev=>{
   if(th){ S.settings.theme=th.dataset.themePick; document.body.dataset.theme=S.settings.theme; applyBg(); SFX.play("select"); save(); renderMore(); return; }
   const snd = t.closest("[data-sound]");
   if(snd){ S.settings.sound=snd.dataset.sound; save(); renderMore(); SFX.play("complete"); return; }
+  const ambBtn = t.closest("[data-amb]");
+  if(ambBtn){ S.settings.amb = ambBtn.dataset.amb; playAmbience(S.settings.amb); save();
+    const dOpen = $("#musicDrawer") && $("#musicDrawer").style.display!=="none";
+    renderMore(); renderMusic();
+    if(dOpen){ const d2=$("#musicDrawer"); if(d2) d2.style.display="block"; }
+    SFX.play("select"); return; }
+  const bgvBtn = t.closest("[data-bgv]");
+  if(bgvBtn){ S.settings.bgv = bgvBtn.dataset.bgv; save(); applyBg(); renderMore(); SFX.play("select"); return; }
   const md = t.closest("[data-mdel]"); if(md){ S.media.splice(+md.dataset.mdel,1); save(); renderMedia(); return; }
   const dl = t.closest("[data-del]"); if(dl){ S.custom.splice(+dl.dataset.del,1); save(); renderMore(); renderLib(); return; }
   const seg = t.closest("#libSeg button");
@@ -4205,7 +4276,13 @@ $("#blankPlan").addEventListener("click", ()=>{ if(!S.profile) { openOnb(); retu
 function renderAll(){ renderHero(); renderTodayPage(); renderHabits(); renderPickers(); renderSession(); renderPlan(); renderLib(); renderMedia(); renderMore(); renderMusic(); }
 migrateProfile(); migratePlan();
 (function applyArt(){
-  /* celebration art behind the level-up card */
+  /* celebration video behind the level-up card, webp art as fallback */
+  probeVid(["lu-burst.webm","lu-burst.mp4"], src=>{ const lc = $(".lu-card"); if(lc && !$("#luVid")){
+    try{
+      const v = document.createElement("video"); v.id = "luVid"; v.src = src;
+      v.muted = true; v.loop = true; v.autoplay = true; v.setAttribute("playsinline","");
+      lc.prepend(v); const p = v.play(); if(p && p.catch) p.catch(()=>{});
+    }catch(e){} } });
   probeImg(["lu-burst.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_014051_622b187f-72b1-4a42-9bb4-6a5f38a17ce5_min.webp"], u=>{ const lc = $(".lu-card"); if(lc){
     lc.style.backgroundImage = `linear-gradient(color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 90%, transparent)), url("${u}")`;
     lc.style.backgroundSize = "cover"; lc.style.backgroundPosition = "center";
@@ -4217,6 +4294,21 @@ function applyBg(){
   probeImg(cands, url=>{
     document.body.style.setProperty("--bgphoto", `url("${url}")`);
     document.body.classList.add("hasphoto");
+  });
+  /* animated backdrop (v6): local video loop when present + enabled; photo stays the fallback */
+  const old = $("#bgVid"); if(old) old.remove();
+  document.body.classList.remove("hasvideo");
+  const wantVid = (S.settings.bgv||"on")!=="off" &&
+    !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  if(wantVid) probeVid(["bgv-"+S.settings.theme+".webm","bgv-"+S.settings.theme+".mp4"], src=>{
+    try{
+      const v = document.createElement("video");
+      v.id = "bgVid"; v.src = src; v.muted = true; v.loop = true; v.autoplay = true;
+      v.setAttribute("playsinline",""); v.setAttribute("aria-hidden","true");
+      document.body.prepend(v);
+      const p = v.play(); if(p && p.catch) p.catch(()=>{});
+      document.body.classList.add("hasvideo");
+    }catch(e){}
   });
 }
 document.body.dataset.theme = S.settings.theme || "ember";

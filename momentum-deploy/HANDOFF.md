@@ -16,9 +16,16 @@ cues + demo inline; check-in & journal moved to page bottom) + Train in-session 
 `#heroScene` layered art w/ probeImg fallback; look selectors; `nextRewards()` rail
 with roast-tier names; saga trophy card; level-ups reveal unlocks; 6-step forced
 skippable tour `runTour()` after forge + ↻ replay in More; custom art URL fields
-REMOVED, settings scrubbed) · 5 ⏳ generated assets (Viking art hero-1..6/hab-1..4/
-pet-{slime,dragon,wolf}-{1,2} `_min.webp`, lofi viking loops, level-up video).
-**validate.js: 230 checks.** Owner decisions: Viking athlete art direction; video in
+REMOVED, settings scrubbed) · 5 ✅ generated assets: 6 hero stages `hero-N_min.png`
+(transparent cutouts, 525×700), 4 habitats `hab-N_min.webp`, 6 companions
+`pet-{slime,dragon,wolf}-{1,2}_min.png` (400×400 cutouts) — all soul_2 + Higgsfield
+bg-remover, resized via System.Drawing; 3 seedance videos `bgv-ember.mp4` (9:16
+animated backdrop), `hero-loop.mp4` (hero scene), `lu-burst.mp4` (level-up) wired
+through `probeVid` w/ static fallbacks + More toggles; lofi viking ambience via
+ACE-Step (victor/ace-step-jam space) + `playAmbience()` player (More + Train drawer).
+banner.png/avatar.png deleted (orphaned). **validate.js: 237 checks.**
+**Higgsfield: 7.36 credits remain.** Remaining theme backdrop videos (steel/turf/
+night/retro/daylight) are future work — static webp stays the fallback by design. Owner decisions: Viking athlete art direction; video in
 level-up + hero loop + theme backdrops (free-first: nanobanana/HF/GPT before
 Higgsfield's 39.28 credits); windows return in-app at Phase-7 scheduling.
 
