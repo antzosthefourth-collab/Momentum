@@ -1,11 +1,16 @@
 # MOMENTUM — Session Handoff
 *Training + life OS · single-file web app → iOS via Capacitor · v5.0-phase1 · July 2026*
 
-## v5 program (approved master plan)
-Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-sparking-wigderson.md`.
-1 ✅ Warmth/Sound/Safety · 2 Onboarding 2.0 · 3 Library 2.0 + follow-along · 4 Drag-drop planner ·
-5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
+## v5 program — ALL SIX PHASES SHIPPED ✅ (see `PLAN-v5.md` in this folder)
+1 ✅ Warmth/Sound/Safety (527b7f6) · 2 ✅ Onboarding 2.0 (ebeb2ce) · 3 ✅ Library 2.0 +
+follow-along (d3dab94) · 4 ✅ Drag-drop planner (67aec11) · 5 ✅ Today 2.0 + Streak 2.0
+(b3c1d11) · 6 ✅ Higgsfield art + polish (9b87b9e).
 **Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
+**Workflow (unchanged):** every edit → `node validate.js` (needs `npm i jsdom` once) — 187 checks.
+**Natural Phase 7 candidates:** window-aware scheduling (place sessions at their time windows),
+per-set tracking / history heat-strip (v3 backlog below), whisper-tiny voice transcription,
+TestFlight build (WIDGETS.md — now incl. @capacitor/haptics), backup/export of mo_state.
+**Higgsfield: 39.28 credits remain** (images cost 0.12 each on soul_2; ship _min.webp).
 
 ## New in v5 Phase 6 (Higgsfield art + polish) — v5.0 COMPLETE
 - **6 generated images, 0.72 credits total spent (39.28 of 40 remain)** — soul_2 at
