@@ -7,6 +7,30 @@ Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-spa
 5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
 **Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
 
+## New in v5 Phase 2 (Onboarding 2.0 — the life interview)
+- **15 goal families** replace the 7 vague goals, grouped Strength & physique / Engine &
+  performance / Life & wellbeing. Internal keys: muscle stronger power aesthetic functional
+  heart run fat athletic sportgoal health feel mobility return family. Legacy keys map via
+  `migrateProfile()` (strength→stronger, move→mobility, eat/account→health, sleep→feel).
+- **"What activities do you do?"** — 25 activities (`ACTIVITIES`), each with its own 4-step
+  comfort level (`profile.activities = {key: 1–4}`). `ACT_DAY` maps activities → plan day
+  types; 7 new SPORT_DAYS (walking, baseball, golf, skate, martial, rowing, family) + 17 new
+  library moves (TRX, stair climber, foam roller, walking, family movement, etc.).
+- **Experience is now DERIVED from activity levels** (`derivedExps`); the exp step only
+  appears for goal tracks with no activity evidence (`missingTracks`).
+- **Equipment access ≠ preference**: access grid (+ Adjustable Dumbbells, TRX, Yoga Mat,
+  Foam Roller, Stair Climber, Sports Gear) then per-item Love/OK/Rarely/Avoid
+  (`profile.eqPref`) → weighted in `moveScore` (×1.5 / ×0.5 / ×0.15). Adjustable Dumbbells
+  satisfy Dumbbells moves in `eqOk`.
+- **Five time-windows** (main/secondary/mobility/family/booster) with one-tap life presets
+  (parent, WFH, manual labor, shift, early bird) → `profile.windows`.
+- **Four coach modes**: coach / hybrid / companion / recovery (`profile.mode`; companion
+  maps to legacy style:"flex"). Recovery-mode adaptation wires up in Phase 5.
+- **Motivation style, weekly consistency target (streakTol 3–6), tech comfort** captured
+  (`profile.motiv/streakTol/tech`) — consumed by the Phase 5 streak engine.
+- validate.js: **131 checks** including the full new walkthrough, level independence,
+  preference weighting, preset windows, v4→v5 migration fixture.
+
 ## New in v5 Phase 1 (warmth, sound & safety)
 - **Warmth/readability pass** on all 6 themes: panels lifted ~+8% luminance and warmed,
   `--dim`/`--faint` secondary text brightened to comfortable contrast, stronger bg-art glows,

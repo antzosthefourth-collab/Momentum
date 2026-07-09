@@ -1512,11 +1512,11 @@ const TIERS = ["Rookie","Building","Consistent","Solid","Dialed","Elite","Peak"]
    "Bodyweight" is NOT a pickable option — everyone ships with it. The session
    builder always allows Bodyweight moves regardless of selected gear. */
 const EQ_GROUPS = {
-  "Free weights":["Barbell","Squat Rack","Bench","Dumbbells","Kettlebells","EZ Bar","Landmine","Plates"],
-  "Simple gear":["Bands","Medicine Ball","Pull-up Bar","Jump Rope"],
+  "Free weights":["Barbell","Squat Rack","Bench","Dumbbells","Adjustable Dumbbells","Kettlebells","EZ Bar","Landmine","Plates"],
+  "Simple gear":["Bands","Medicine Ball","Pull-up Bar","Jump Rope","TRX / Suspension","Yoga Mat","Foam Roller"],
   "Gym machines":["Bench Press Machine","Lat Pulldown","Cable Machine","Leg Press","Row Machine","Smith Machine"],
-  "Cardio machines":["Treadmill","Stationary Bike","Elliptical","Rowing Machine"],
-  "Sport":["Soccer Ball"]
+  "Cardio machines":["Treadmill","Stationary Bike","Elliptical","Rowing Machine","Stair Climber"],
+  "Sport":["Soccer Ball","Sports Gear"]
 };
 const ALL_EQ = Object.values(EQ_GROUPS).flat();
 
@@ -1646,6 +1646,28 @@ LIB.push(
  {n:"Yin holds circuit", eq:"Bodyweight", p:"armor", d:"4×90s holds", dur:90, sport:"yoga", how:"Pigeon, dragon, forward fold, gentle twist. Sink in and breathe — no bouncing.", b:"main", xp:16, area:["hip","back","general"]}
 );
 
+/* New gear + activity coverage (v5): TRX, stair climber, foam roller, walking,
+   baseball, golf, skate, martial arts, family movement */
+LIB.push(
+ {n:"TRX rows", eq:"TRX / Suspension", p:"strength", d:"3×12", rest:60, how:"Lean back, body straight, pull chest to hands. Walk your feet forward to make it harder.", b:"main", xp:16, mg:["back","arms"]},
+ {n:"TRX push-ups", eq:"TRX / Suspension", p:"strength", d:"3×10", rest:60, how:"Handles low, body in one line — the wobble is the point.", b:"main", xp:16, mg:["chest","arms","core"]},
+ {n:"TRX pike / knee tuck", eq:"TRX / Suspension", p:"strength", d:"3×8", rest:60, how:"Feet in the cradles, hips up or knees in. Slow and controlled.", b:"main", xp:16, mg:["core"]},
+ {n:"Stairs: steady climb", eq:"Stair Climber", p:"motor", d:"15–20 min", dur:1050, how:"Whole foot on the step, light fingertips only. A quiet leg-and-lungs builder.", b:"main", xp:20},
+ {n:"Stairs: sprint intervals", eq:"Stair Climber", p:"motor", d:"8×45s hard / 60s easy", dur:45, rest:60, how:"Push the pace for the interval, slow spin to recover.", b:"main", xp:22},
+ {n:"Foam roll: lower body", eq:"Foam Roller", p:"armor", d:"6–8 min", dur:420, how:"Calves, quads, glutes — slow passes, pause on tender spots and breathe.", b:"main", xp:12, area:["hip","knee","general"]},
+ {n:"Foam roll: upper back", eq:"Foam Roller", p:"armor", d:"4–5 min", dur:270, how:"Roller across the mid-back, hands behind head, extend gently over it.", b:"main", xp:12, area:["back","neck"]},
+ {n:"Brisk neighborhood walk", eq:"Bodyweight", p:"motor", d:"30–45 min", dur:2100, sport:"walking", how:"Purposeful pace, tall posture. Podcast optional, consistency mandatory.", b:"main", xp:18},
+ {n:"Walk + strides", eq:"Bodyweight", p:"motor", d:"25 min + 4×20s pickups", dur:1500, sport:"walking", how:"Easy walk with four smooth 20-second faster efforts spread through it.", b:"main", xp:18},
+ {n:"Throwing ladder", eq:"Sports Gear", p:"skill", d:"4 rounds, short → long", sport:"baseball", how:"Start close with easy tosses, step back each round. Arm care first, velocity later.", b:"main", xp:16},
+ {n:"Base-to-base sprints", eq:"Bodyweight", p:"motor", d:"6×20s", dur:20, rest:60, sport:"baseball", how:"Explode out low, run through the bag — never slow down early.", b:"main", xp:18},
+ {n:"Golf rotation flow", eq:"Bodyweight", p:"armor", d:"8 min", dur:480, sport:"golf", how:"Hip circles, t-spine rotations, half-kneeling swings. Range of motion = range off the tee.", b:"main", xp:14, area:["hip","back"]},
+ {n:"Skate stance holds & pumps", eq:"Bodyweight", p:"armor", d:"3×40s each stance", dur:40, sport:"skate", how:"Low stance, weight shifts front-to-back. Ankles and balance take the beating for you.", b:"main", xp:16, area:["ankle","knee"]},
+ {n:"Kick-through / sprawl drill", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:30, sport:"martial", how:"Sprawl, kick through to a seated leg extension, back up. Full-body scramble work.", b:"main", xp:18},
+ {n:"Family walk after dinner", eq:"Bodyweight", p:"motor", d:"20–30 min", dur:1500, sport:"family", how:"Everyone comes. Slowest legs set the pace, and that's fine — it counts.", b:"main", xp:14},
+ {n:"Backyard games block", eq:"Bodyweight", p:"skill", d:"20 min", dur:1200, sport:"family", how:"Tag, races, catch, whatever they pick. Chaotic movement is elite training in disguise.", b:"main", xp:16},
+ {n:"Family bike loop", eq:"Bodyweight", p:"motor", d:"30 min easy", dur:1800, sport:"family", how:"Kid-pace spinning. Zone 1 for you, adventure for them.", b:"main", xp:16}
+);
+
 /* ---- sports-science metadata: muscle groups (strength) & body areas (armor) ---- */
 const MG_MAP = {
  "Back squat":["legs","glutes"],"Bench press":["chest","arms"],"Barbell deadlift":["legs","glutes","back"],
@@ -1678,7 +1700,9 @@ LIB.push(
 );
 /* sport tags on pre-existing moves so selected sports pull them into the plan */
 const SPORT_TAG = { "Bike: sprints":"cycling", "Bike: steady state":"cycling", "Treadmill: incline walk":"hiking",
-  "Outdoor run: easy":"running", "Outdoor run: long":"running", "Outdoor run: intervals":"running", "Outdoor run: tempo":"running" };
+  "Outdoor run: easy":"running", "Outdoor run: long":"running", "Outdoor run: intervals":"running", "Outdoor run: tempo":"running",
+  "Rower: intervals":"rowing", "Rower: steady 2k–3k":"rowing", "Shadow boxing rounds":"martial",
+  "Med ball rotational throw":"golf", "Tag / chase game":"family" };
 LIB.forEach(m=>{ if(MG_MAP[m.n]) m.mg = MG_MAP[m.n]; if(AREA_MAP[m.n]) m.area = AREA_MAP[m.n];
   if(SPORT_TAG[m.n]) m.sport = SPORT_TAG[m.n]; if(m.eq==="Soccer Ball") m.sport = "soccer"; });
 
@@ -1822,10 +1846,12 @@ function habitSet(){
     {id:"protein", n:"Protein with every meal", sys:"fuel", xp:8}
   ];
   if(g.includes("fat")) H.push({id:"kitchen", n:"Kitchen closed 2h before bed", sys:"fuel", xp:8});
-  if(g.includes("sleep")) H.push({id:"winddown", n:"5-min phone-free wind-down", sys:"recharge", xp:8},
+  if(g.includes("feel")||g.includes("sleep")) H.push({id:"winddown", n:"5-min phone-free wind-down", sys:"recharge", xp:8},
     {id:"bedtime", n:"Lights out by your target time", sys:"recharge", xp:10});
-  if(g.includes("move")) H.push({id:"stretch", n:"5-min evening stretch", sys:"armor", xp:8});
-  if(g.includes("account")) H.push({id:"checkin", n:"Rate your day 1–10 and note why", sys:"recharge", xp:8});
+  if(g.includes("mobility")||g.includes("move")||g.includes("return")) H.push({id:"stretch", n:"5-min evening stretch", sys:"armor", xp:8});
+  if(g.includes("health")||g.includes("account")) H.push({id:"checkin", n:"Rate your day 1–10 and note why", sys:"recharge", xp:8});
+  if(g.includes("family")) H.push({id:"fammove", n:"10 min of family movement", sys:"skill", xp:8});
+  if(g.includes("heart")) H.push({id:"steps", n:"Close your movement ring — any cardio counts", sys:"motor", xp:8});
   const work = S.profile && S.profile.work;
   if(work==="wfh") H.push({id:"deskbreak", n:"Stand + 2-min move between meetings", sys:"armor", xp:8},
     {id:"hipstretch", n:"Hip flexor stretch after your last call", sys:"armor", xp:8});
@@ -1841,45 +1867,101 @@ function habitSet(){
 }
 
 /* ================= ONBOARDING ================= */
-const GOALS = [
-  ["strength","🏋️","Get stronger"], ["fat","📉","Lose fat"], ["run","🏃","Improve my running"],
-  ["move","🛡️","Move better · rehab · mobility"],
-  ["eat","🍽️","Eat better"], ["sleep","🌙","Sleep & recovery"], ["account","🤝","Accountability & structure"]
+/* 15 specific goal families, grouped for the picker */
+const GOAL_GROUPS = [
+ ["Strength & physique", [
+   ["muscle","💪","Build muscle"], ["stronger","🏋️","Get stronger"], ["power","🏆","Powerlifting"],
+   ["aesthetic","🗿","Aesthetic physique"], ["functional","🧰","Functional fitness"] ]],
+ ["Engine & performance", [
+   ["heart","❤️","Improve heart health"], ["run","🏃","Improve running"], ["fat","📉","Lose fat"],
+   ["athletic","⚡","Athletic performance"], ["sportgoal","🎯","Sport-specific improvement"] ]],
+ ["Life & wellbeing", [
+   ["health","🌿","General health"], ["feel","😊","Feel better day to day"], ["mobility","🛡️","Improve mobility"],
+   ["return","🔄","Return to activity"], ["family","👨‍👩‍👧","Family activity"] ]]
 ];
-const SPORTS = [["soccer","⚽","Soccer"],["running","🏃","Running"],["cycling","🚴","Cycling"],["swimming","🏊","Swimming"],
-  ["basketball","🏀","Basketball"],["racquet","🎾","Tennis / pickleball"],["hiking","🥾","Hiking"],["yoga","🧘","Yoga / mobility"]];
+const GOALS = GOAL_GROUPS.flatMap(([,items])=>items);
+/* 25 activities — each carries its own comfort level (1 New … 4 Advanced) */
+const ACTIVITIES = [
+ ["running","🏃","Running"], ["walking","🚶","Walking"], ["hiking","🥾","Hiking"],
+ ["swimming","🏊","Swimming"], ["cycling","🚴","Cycling"], ["rowing","🚣","Rowing"],
+ ["hiit","🔥","HIIT"], ["elliptical","♻️","Elliptical"], ["stairs","⛰️","Stair climber"],
+ ["soccer","⚽","Soccer"], ["basketball","🏀","Basketball"], ["tennis","🎾","Tennis"],
+ ["pickleball","🏓","Pickleball"], ["baseball","⚾","Baseball / softball"], ["golf","⛳","Golf"],
+ ["skate","🛹","Skateboarding"], ["martial","🥋","Martial arts"],
+ ["kettlebells","🔔","Kettlebells"], ["dumbbells","💪","Dumbbells"], ["barbell","🏋️","Barbell lifting"],
+ ["machines","⚙️","Gym machines"], ["bodyweight","🤸","Bodyweight training"],
+ ["yoga","🧘","Yoga"], ["mobilityw","🛡️","Mobility work"], ["family","👨‍👩‍👧","Family movement"]
+];
+const LEVELS = [[1,"New"],[2,"Learning"],[3,"Comfortable"],[4,"Advanced"]];
+/* which day type each activity earns in the weekly plan */
+const ACT_DAY = { cycling:"SP_cycling", swimming:"SP_swimming", basketball:"SP_basketball",
+  tennis:"SP_racquet", pickleball:"SP_racquet", hiking:"SP_hiking", yoga:"SP_yoga",
+  walking:"SP_walking", baseball:"SP_baseball", golf:"SP_golf", skate:"SP_skate",
+  martial:"SP_martial", rowing:"SP_rowing", family:"SP_family", soccer:"SKL" };
 const AREAS = [["ankle","🦶","Ankles"],["knee","🦵","Knees"],["hip","🩹","Hips"],["back","🔙","Lower back"],
   ["shoulder","💪","Shoulders"],["neck","🧣","Neck & upper back"],["general","🧘","General flexibility"]];
 const WORKS = [["wfh","💻","Desk / work from home"],["feet","🚶","On my feet all day"],
   ["physical","🔧","Physical job"],["kids","👶","Home with kids"],["other","🎓","Student / other"]];
 const EVES = [["family","👨‍👩‍👧","Family time — evenings are spoken for"],["free","🌆","Evenings are mostly mine"],
   ["grind","📚","Side hustle / study most nights"],["social","🎉","Out and about a lot"],["tired","🔋","Usually running on empty"]];
-const WINDOWS = [["morning","🌅","Early morning"],["lunch","☀️","Midday"],["evening","🌇","Evening"],["varies","🔀","It varies"]];
+const MOTIVS = [["streaks","🔥 Streaks & celebrations"],["progress","📈 Seeing progress"],["gentle","🌿 Gentle nudges"]];
+const TECHS = [["simple","🧼 Keep it simple"],["standard","⚙️ Standard"],["power","🚀 All the toys"]];
 const EXPS = [["new","🌱","New to this","Simple sessions, extra cues, gentler ramp"],
   ["some","⚙️","Comfortable","Solid volume, steady progression"],
   ["exp","🔥","Experienced","More volume, bigger jumps"]];
 const REHAB_STAGES = [["early","Early — still hurts day to day"],["mid","Mid — daily life fine, sport hurts"],["late","Late — nearly back, building trust"]];
-/* experience is asked per training track, AFTER goals + sports are chosen */
-function trackList(a){
-  const t = [];
-  if(a.goals.includes("strength")||a.goals.includes("fat")) t.push(["lift","🏋️","Lifting & strength"]);
-  if(a.goals.includes("run")||a.sports.some(s=>["running","cycling","swimming","hiking"].includes(s))) t.push(["cardio","💓","Running & cardio"]);
-  if(a.sports.some(s=>["soccer","basketball","racquet","yoga"].includes(s))) t.push(["sport","🎽","Sport & skill work"]);
+/* multi time-windows + one-tap life presets */
+const WINS = [["main","🏋️","Main workout"],["secondary","🎽","Secondary activity"],["mobility","🛡️","Mobility / rehab"],
+  ["family","👨‍👩‍👧","Family activity"],["booster","✨","Daily boosters"]];
+const WIN_SLOTS = [["","—"],["morning","🌅 Morning"],["lunch","☀️ Midday"],["evening","🌇 Evening"],["varies","🔀 Varies"]];
+const WIN_PRESETS = {
+  parent:{ label:"👨‍👩‍👧 Parent schedule", w:{ main:"morning", secondary:"", mobility:"evening", family:"evening", booster:"lunch" } },
+  wfh:   { label:"💻 WFH midday",       w:{ main:"lunch", secondary:"evening", mobility:"morning", family:"evening", booster:"varies" } },
+  labor: { label:"🔧 Manual labor recovery", w:{ main:"varies", secondary:"", mobility:"evening", family:"", booster:"evening" } },
+  shift: { label:"🌗 Shift worker",     w:{ main:"varies", secondary:"varies", mobility:"varies", family:"", booster:"varies" } },
+  early: { label:"🌅 Early bird",       w:{ main:"morning", secondary:"", mobility:"", family:"evening", booster:"morning" } }
+};
+/* experience tracks: derived from activity levels; asked directly only for gaps */
+const TRACK_META = { lift:["🏋️","Lifting & strength"], cardio:["💓","Running & cardio"], sport:["🎽","Sport & skill work"] };
+const TRACK_ACTS = { lift:["kettlebells","dumbbells","barbell","machines","bodyweight"],
+  cardio:["running","walking","hiking","swimming","cycling","rowing","hiit","elliptical","stairs","family"],
+  sport:["soccer","basketball","tennis","pickleball","baseball","golf","skate","martial","yoga","mobilityw"] };
+const levelToExp = l => l>=4 ? "exp" : l>=2 ? "some" : "new";
+function derivedExps(a){
+  const out = {};
+  for(const tk of ["lift","cardio","sport"]){
+    const lv = Math.max(0, ...TRACK_ACTS[tk].map(k=>(a.activities||{})[k]||0));
+    if(lv>0) out[tk] = levelToExp(lv);
+  }
+  return out;
+}
+function neededTracks(a){
+  const t = [], g = a.goals;
+  if(["muscle","stronger","power","aesthetic","functional","athletic","fat"].some(k=>g.includes(k))) t.push("lift");
+  if(g.includes("run")||g.includes("heart")||g.includes("fat")) t.push("cardio");
   return t;
 }
-let onb = { i:0, _last:null, a:{ name:"", age:"", gender:"", exps:{lift:"some",cardio:"some",sport:"some"},
-  work:"wfh", eve:"free", window:"evening", goals:[], sports:[], areas:["ankle"], areaInfo:{},
-  runFocus:"both", eq:[], lifts:{}, caps:{}, days:3, len:30, weeks:6, boost:0, style:"coach" } };
+function missingTracks(a){
+  const der = derivedExps(a);
+  return neededTracks(a).filter(tk=>!der[tk]).map(tk=>[tk, ...TRACK_META[tk]]);
+}
+let onb = { i:0, _last:null, a:{ name:"", age:"", gender:"", exps:{}, activities:{},
+  work:"wfh", eve:"free", motiv:"progress", streakTol:4, tech:"standard",
+  windows:{ main:"evening", secondary:"", mobility:"", family:"", booster:"" },
+  goals:[], areas:["ankle"], areaInfo:{},
+  runFocus:"both", eq:[], eqPref:{}, lifts:{}, caps:{}, days:3, len:30, weeks:6, boost:0, mode:"coach" } };
 
 function onbSteps(){
-  const steps = ["intro","about","goals","sports"];
-  if(trackList(onb.a).length) steps.push("exp");
-  if(onb.a.goals.includes("move")) steps.push("areas");
-  steps.push("equip","life","schedule","style");
+  const steps = ["intro","about","goals","activities"];
+  if(missingTracks(onb.a).length) steps.push("exp");
+  if(onb.a.goals.includes("mobility")||onb.a.goals.includes("return")) steps.push("areas");
+  steps.push("equip");
+  if(onb.a.eq.length) steps.push("eqpref");
+  steps.push("life","windows","schedule","mode");
   return steps;
 }
-const STEP_TITLES = { intro:"Welcome", about:"You", goals:"Goals", sports:"Sports", exp:"Experience",
-  areas:"Your body", equip:"Gear", life:"Your day", schedule:"Commitment", style:"Coaching" };
+const STEP_TITLES = { intro:"Welcome", about:"You", goals:"Goals", activities:"Activities", exp:"Experience",
+  areas:"Your body", equip:"Gear", eqpref:"Preferences", life:"Your day", windows:"Windows", schedule:"Commitment", mode:"Coaching" };
 const pipOpt = (on, data, ic, label) => `<div class="opt ${on?'on':''}" ${data}><span class="oi">${ic}</span><span>${label}</span><span class="pip"></span></div>`;
 function injPanel(k){
   const info = onb.a.areaInfo[k]||{};
@@ -1922,42 +2004,66 @@ function onbRender(){
     <div class="field"><label>Gender</label><select id="oGender">
       <option value="">Prefer not to say</option><option ${a.gender==="male"?"selected":""} value="male">Male</option>
       <option ${a.gender==="female"?"selected":""} value="female">Female</option><option ${a.gender==="other"?"selected":""} value="other">Other</option></select></div></div>`;
-  if(step==="goals") h = `<h1>What are we <em>chasing</em>?</h1><p class="lead">Pick everything that matters. Your plan, habits and coaching all key off this.</p>` +
-    GOALS.map(([k,ic,label])=>pipOpt(a.goals.includes(k), `data-goal="${k}"`, ic, label)).join("");
-  if(step==="sports") h = `<h1>What do you <em>play</em>?</h1><p class="lead">Sports get their own sessions in your plan — pick soccer and ball work is in, pick cycling and rides are in. Skip if none apply.</p>
-    <div class="opt-grid">` + SPORTS.map(([k,ic,label])=>`<div class="opt ${a.sports.includes(k)?'on':''}" data-sport="${k}"><span class="oi">${ic}</span><span>${label}</span><span class="pip"></span></div>`).join("") + `</div>`;
+  if(step==="goals") h = `<h1>What are we <em>chasing</em>?</h1><p class="lead">Pick everything that matters — specific goals build a specific plan, not a generic one.</p>` +
+    GOAL_GROUPS.map(([g,items])=>`<div class="sec-label">${g}</div>` +
+      items.map(([k,ic,label])=>pipOpt(a.goals.includes(k), `data-goal="${k}"`, ic, label)).join("")).join("");
+  if(step==="activities"){
+    const sel = ACTIVITIES.filter(([k])=>a.activities[k]);
+    h = `<h1>What <em>activities</em> do you do?</h1><p class="lead">Pick anything you do or want to do — each earns real sessions in your plan, each with its own comfort level. Advanced at swimming, brand-new to soccer? Normal.</p>
+    <div class="opt-grid">` + ACTIVITIES.map(([k,ic,label])=>`<div class="opt ${a.activities[k]?'on':''}" data-activity="${k}"><span class="oi">${ic}</span><span>${label}</span><span class="pip"></span></div>`).join("") + `</div>` +
+    (sel.length ? `<div class="sec-label">Your comfort level — per activity</div>` +
+      sel.map(([k,ic,label])=>`<div class="exp-track"><div class="et-name"><span>${ic}</span>${label}</div>
+        <div class="chips">${LEVELS.map(([lv,ll])=>`<button class="chip ${a.activities[k]===lv?'on':''}" data-alevel="${k}:${lv}">${ll}</button>`).join("")}</div></div>`).join("") : "");
+  }
   if(step==="exp"){
-    h = `<h1>Experience — <em>per discipline</em>.</h1><p class="lead">Lifting mileage isn't running mileage. Set each track honestly and the ramp will fit.</p>` +
-    trackList(a).map(([tk,ic,label])=>{
+    h = `<h1>Fill in the <em>gaps</em>.</h1><p class="lead">Your goals include training we couldn't read from your activities — set your experience so the ramp fits.</p>` +
+    missingTracks(a).map(([tk,ic,label])=>{
       const cur = EXPS.find(([k])=>k===(a.exps[tk]||"some"));
       return `<div class="exp-track"><div class="et-name"><span>${ic}</span>${label}</div>
-        <div class="chips">${EXPS.map(([k,eic,t])=>`<button class="chip ${a.exps[tk]===k?'on':''}" data-exp="${k}" data-track="${tk}">${eic} ${t}</button>`).join("")}</div>
+        <div class="chips">${EXPS.map(([k,eic,t])=>`<button class="chip ${(a.exps[tk]||"some")===k?'on':''}" data-exp="${k}" data-track="${tk}">${eic} ${t}</button>`).join("")}</div>
         <div class="et-hint">${cur?cur[3]:""}</div></div>`;
     }).join("");
   }
   if(step==="areas") h = `<h1>Where does your body <em>need work</em>?</h1><p class="lead">Rehab, mobility, stretching — ARMOR sessions build around these. Tap an area, then tell us about any injury.</p>` +
     AREAS.map(([k,ic,label])=>pipOpt(a.areas.includes(k), `data-area="${k}"`, ic, label) + (a.areas.includes(k)?injPanel(k):"")).join("");
-  if(step==="equip") h = `<h1>What gear can you <em>reach</em>?</h1><p class="lead">Bodyweight is always in — you carry it everywhere. Pick the rest. A soccer ball unlocks the SKILL system.</p>` +
+  if(step==="equip") h = `<h1>What gear can you <em>reach</em>?</h1><p class="lead">Bodyweight is always in — you carry it everywhere. Pick everything you have ACCESS to; you'll set preferences next.</p>` +
     Object.entries(EQ_GROUPS).map(([g,items])=>`<div class="eq-group"><div class="g">${g}</div><div class="chips">` +
       items.map(e=>`<button class="chip ${a.eq.includes(e)?'on':''}" data-oeq="${e}">${e}</button>`).join("") + `</div></div>`).join("");
-  if(step==="life") h = `<h1>What does your <em>day</em> look like?</h1><p class="lead">Habits, mobility work and session timing adapt to how you actually live.</p>
+  if(step==="eqpref"){
+    const PREFS = [["love","❤️ Love"],["ok","👍 OK"],["rare","🌗 Rarely"],["avoid","🚫 Avoid"]];
+    h = `<h1>Access isn't <em>preference</em>.</h1><p class="lead">Owning kettlebells doesn't mean you want them every day. Loved gear shows up more; avoided gear only when nothing else fits.</p>` +
+    a.eq.map(e=>`<div class="exp-track"><div class="et-name">${e}</div>
+      <div class="chips">${PREFS.map(([k,l])=>`<button class="chip ${(a.eqPref[e]||"ok")===k?'on':''}" data-epref="${e}:${k}">${l}</button>`).join("")}</div></div>`).join("");
+  }
+  if(step==="life") h = `<h1>What does your <em>day</em> look like?</h1><p class="lead">Habits, mobility work and coaching tone adapt to how you actually live.</p>
     <div class="sec-label">Your 9-to-5</div>` +
     WORKS.map(([k,ic,label])=>pipOpt(a.work===k, `data-work="${k}"`, ic, label)).join("") +
     `<div class="sec-label">Your 5-to-9</div>` +
     EVES.map(([k,ic,label])=>pipOpt(a.eve===k, `data-eve="${k}"`, ic, label)).join("") +
-    `<div class="sec-label">Realistic training window</div><div class="chips">` +
-    WINDOWS.map(([k,ic,label])=>`<button class="chip ${a.window===k?'on':''}" data-window="${k}">${ic} ${label}</button>`).join("") + `</div>`;
+    `<div class="sec-label">What keeps you going?</div><div class="chips">` +
+    MOTIVS.map(([k,l])=>`<button class="chip ${a.motiv===k?'on':''}" data-motiv="${k}">${l}</button>`).join("") + `</div>`;
+  if(step==="windows") h = `<h1>When does life <em>let you</em>?</h1><p class="lead">Real schedules have more than one opening. Set the windows you'll actually use — or grab a preset.</p>
+    <div class="chips" style="margin-bottom:14px">${Object.entries(WIN_PRESETS).map(([k,p])=>`<button class="chip alt" data-preset="${k}">${p.label}</button>`).join("")}</div>` +
+    WINS.map(([wk,ic,label])=>`<div class="exp-track"><div class="et-name"><span>${ic}</span>${label}</div>
+      <div class="chips">${WIN_SLOTS.map(([sk,sl])=>`<button class="chip ${(a.windows[wk]||"")===sk?'on':''}" data-owin="${wk}:${sk}">${sl}</button>`).join("")}</div></div>`).join("");
   if(step==="schedule") h = `<h1>How much life can you <em>give this</em>?</h1><p class="lead">Honest beats ambitious. You can always add days later.</p>
     <div class="sec-label">Training days per week</div><div class="chips">${[2,3,4,5,6].map(d=>`<button class="chip ${a.days===d?'on':''}" data-odays="${d}">${d}</button>`).join("")}</div>
     <div class="sec-label">Session length</div><div class="chips">${[15,30,45,60].map(t=>`<button class="chip alt ${a.len===t?'on':''}" data-olen="${t}">${t} min</button>`).join("")}</div>
     <div class="sec-label">Plan length</div><div class="chips">${[4,6,8].map(w=>`<button class="chip ${a.weeks===w?'on':''}" data-oweeks="${w}">${w} weeks</button>`).join("")}</div>
+    <div class="sec-label">Weekly consistency target</div>
+    <p class="mut" style="margin-bottom:10px">The number that matters most — days per week you show up in ANY way. Streaks build on this, not on perfection.</p>
+    <div class="chips">${[3,4,5,6].map(n=>`<button class="chip ${a.streakTol===n?'on':''}" data-wktarget="${n}">${n} days</button>`).join("")}</div>
     <div class="sec-label">Daily boosters — extra micro-sessions</div>
     <p class="mut" style="margin-bottom:10px">Short 10–15 min add-ons on top of your workouts: stretching, mobility, rehab, Armor. They stack XP and close rings, but don't count as full sessions.</p>
     <div class="chips">${[[0,"None"],[1,"✨ +1 a day"],[2,"✨✨ +2 a day"]].map(([n,l])=>`<button class="chip alt ${a.boost===n?'on':''}" data-oboost="${n}">${l}</button>`).join("")}</div>`;
-  if(step==="style") h = `<h1>How do you want to be <em>coached</em>?</h1>` +
-    [["coach","🗓️","Coach mode","A full day-by-day plan with every session pre-built. Editable anytime."],
-     ["flex","🎛️","Flexible mode","No fixed calendar — build sessions on demand, habits still tracked."]]
-    .map(([k,ic,t,s])=>`<div class="opt ${a.style===k?'on':''}" data-style="${k}"><span class="oi">${ic}</span><span>${t}<br><small style="color:var(--dim); font-weight:500">${s}</small></span><span class="pip"></span></div>`).join("");
+  if(step==="mode") h = `<h1>How do you want to be <em>coached</em>?</h1>` +
+    [["coach","🗓️","Full Coach","Workouts, activities, mobility and habits — all planned, all editable."],
+     ["hybrid","🎛️","Guided Hybrid","Structured workouts planned for you; sports & activities stay on your terms."],
+     ["companion","🧭","Flexible Companion","No fixed calendar — daily suggestions, you choose what happens."],
+     ["recovery","🌿","Recovery-First","A full plan that adapts to sleep, soreness and energy check-ins."]]
+    .map(([k,ic,t2,s])=>`<div class="opt ${a.mode===k?'on':''}" data-mode="${k}"><span class="oi">${ic}</span><span>${t2}<br><small style="color:var(--dim); font-weight:500">${s}</small></span><span class="pip"></span></div>`).join("") +
+    `<div class="sec-label">How much tech do you want?</div><div class="chips">` +
+    TECHS.map(([k,l])=>`<button class="chip ${a.tech===k?'on':''}" data-tech="${k}">${l}</button>`).join("") + `</div>`;
   const body = $("#onbBody");
   body.classList.remove("enter");
   body.innerHTML = h;
@@ -2023,17 +2129,29 @@ function finishOnboarding(skip){
 }
 function applyOnboarding(skip){
   const a = onb.a;
-  if(a.sports.includes("soccer") && !a.eq.includes("Soccer Ball")) a.eq.push("Soccer Ball");
+  const acts = a.activities||{};
+  if(acts.soccer && !a.eq.includes("Soccer Ball")) a.eq.push("Soccer Ball");
+  /* loving a modality you train is the default — explicit answers win */
+  const prefs = Object.assign({}, a.eqPref);
+  if(acts.kettlebells && !prefs["Kettlebells"]) prefs["Kettlebells"]="love";
+  if(acts.dumbbells && !prefs["Dumbbells"]) prefs["Dumbbells"]="love";
+  if(acts.barbell && !prefs["Barbell"]) prefs["Barbell"]="love";
+  /* experience: derived from activity levels, gap answers fill the rest */
+  const exps = Object.assign({lift:"some",cardio:"some",sport:"some"}, derivedExps(a), a.exps);
+  /* v4-compat sports list = the day-type keys this user's activities unlock */
+  const sports = [...new Set(Object.keys(acts).map(k=>ACT_DAY[k]).filter(Boolean)
+    .map(d=>d==="SKL" ? "soccer" : d.slice(3)))];
   S.profile = { name:a.name||"You", age:a.age, gender:a.gender,
-    exps:Object.assign({lift:"some",cardio:"some",sport:"some"}, a.exps),
-    exp:(a.goals.includes("strength")||a.goals.includes("fat")) ? (a.exps.lift||"some") : (a.exps.cardio||"some"),
-    work:a.work, eve:a.eve, window:a.window,
-    goals:a.goals.slice(), sports:a.sports.slice(), areas:a.areas.slice(),
-    areaInfo:JSON.parse(JSON.stringify(a.areaInfo||{})),
-    runFocus:a.runFocus, eq:a.eq.slice(), lifts:a.lifts||{}, caps:a.caps||{},
-    days:a.days, len:a.len, weeks:a.weeks, boost:a.boost||0, style:a.style };
+    exps, exp:exps.lift||"some",
+    work:a.work, eve:a.eve, motiv:a.motiv, streakTol:a.streakTol, tech:a.tech,
+    windows:Object.assign({}, a.windows), window:(a.windows&&a.windows.main)||"evening",
+    goals:a.goals.slice(), activities:Object.assign({}, acts), sports,
+    areas:a.areas.slice(), areaInfo:JSON.parse(JSON.stringify(a.areaInfo||{})),
+    runFocus:a.runFocus, eq:a.eq.slice(), eqPref:prefs, lifts:a.lifts||{}, caps:a.caps||{},
+    days:a.days, len:a.len, weeks:a.weeks, boost:a.boost||0,
+    mode:a.mode, style:(a.mode==="companion") ? "flex" : "coach" };
   S.sel.eq = a.eq.slice(); S.sel.time = [15,30,45,60].includes(a.len)?a.len:45;
-  S.plan = (!skip && a.style==="coach") ? makePlan(S.profile) : null;
+  S.plan = (!skip && S.profile.style==="coach") ? makePlan(S.profile) : null;
   save();
   const doClose = ()=>{
     $("#onb").classList.remove("show");
@@ -2058,20 +2176,32 @@ const DTYPES = {
   BST:{t:"Booster", icon:"✨", focus:"Mobility", micro:true},
   REST:{t:"Rest & recharge", icon:"🌙", focus:null}
 };
-/* sports picked in the interview register their own day types */
+/* activities picked in the interview register their own day types */
 const SPORT_DAYS = { cycling:{t:"Ride", icon:"🚴"}, swimming:{t:"Swim", icon:"🏊"}, basketball:{t:"Court work", icon:"🏀"},
-  racquet:{t:"Racquet day", icon:"🎾"}, hiking:{t:"Hike / ruck", icon:"🥾"}, yoga:{t:"Yoga flow", icon:"🧘"} };
+  racquet:{t:"Racquet day", icon:"🎾"}, hiking:{t:"Hike / ruck", icon:"🥾"}, yoga:{t:"Yoga flow", icon:"🧘"},
+  walking:{t:"Walk", icon:"🚶"}, baseball:{t:"Diamond work", icon:"⚾"}, golf:{t:"Golf prep", icon:"⛳"},
+  skate:{t:"Skate day", icon:"🛹"}, martial:{t:"Combat conditioning", icon:"🥋"}, rowing:{t:"Row day", icon:"🚣"},
+  family:{t:"Family activity", icon:"👨‍👩‍👧"} };
 Object.entries(SPORT_DAYS).forEach(([k,v])=>{ DTYPES["SP_"+k] = { t:v.t, icon:v.icon, focus:"__sport:"+k, sport:k }; });
 function weekTypes(p){
-  const g = p.goals, sp = p.sports||[], out = [];
-  const wantsRun = g.includes("run") || sp.includes("running");
-  if(g.includes("strength") || g.includes("fat")) out.push("STR");
+  const g = p.goals, acts = p.activities||{}, out = [];
+  const has = k => g.includes(k);
+  /* legacy keys (strength/move) still honored for un-migrated profiles */
+  const liftGoal = ["muscle","stronger","power","aesthetic","functional","athletic","fat","strength"].some(has);
+  const wantsRun = has("run") || !!acts.running;
+  if(liftGoal) out.push("STR");
   if(wantsRun) out.push(p.runFocus==="long" ? "RUNL" : "RUNF");
-  if(sp.includes("soccer")) out.push("SKL");   // soccer selected as a sport → ball work in the plan
-  sp.filter(s=>SPORT_DAYS[s] && s!=="yoga").forEach(s=>out.push("SP_"+s));
-  if(g.includes("move")) out.push("ARM");
-  else if(sp.includes("yoga")) out.push("SP_yoga");
-  if(g.includes("strength") && p.days>=4) out.push("STR");
+  /* day types earned by activities — soccer (SKILL system) and family first */
+  const dayset = new Set();
+  Object.keys(acts).forEach(k=>{ const d = ACT_DAY[k]; if(d && d!=="SP_yoga") dayset.add(d); });
+  (p.sports||[]).forEach(s=>{ if(s==="soccer") dayset.add("SKL"); else if(SPORT_DAYS[s]) dayset.add("SP_"+s); });
+  if(dayset.has("SKL")){ out.push("SKL"); dayset.delete("SKL"); }
+  if(has("family") && dayset.has("SP_family")){ out.push("SP_family"); dayset.delete("SP_family"); }
+  dayset.forEach(d=>out.push(d));
+  if(has("mobility")||has("return")||has("move")) out.push("ARM");
+  else if(acts.yoga || acts.mobilityw) out.push("SP_yoga");
+  if((has("heart")||has("athletic")||acts.hiit) && !out.includes("MOT")) out.push("MOT");
+  if(["muscle","stronger","power","strength"].some(has) && p.days>=4) out.push("STR");
   if(wantsRun && (p.days>=4 || p.runFocus==="both")) out.push(p.runFocus==="fast" ? "RUNF" : "RUNL");
   while(out.length < p.days) out.push(out.includes("STR") ? "MOT" : "STR");
   return out.slice(0, p.days*2);   // activities can stack: up to 2 per training day
@@ -2155,6 +2285,22 @@ function migrateProfile(){
   if(p.boost===undefined) p.boost = 0;
   if(p.eve===undefined) p.eve = "";
   if(p.window===undefined) p.window = "";
+  /* v5: goal families, per-activity levels, windows, gear preferences, coach modes */
+  if(!p.activities){
+    p.activities = {};
+    const lvl = { new:1, some:3, exp:4 };
+    p.sports.forEach(s=>{ const key = s==="racquet" ? "tennis" : s;
+      if(ACTIVITIES.some(([k])=>k===key)) p.activities[key] = lvl[(p.exps&&p.exps.sport)||"some"]||3; });
+    if((p.goals||[]).includes("run")) p.activities.running = lvl[(p.exps&&p.exps.cardio)||"some"]||3;
+  }
+  const GOAL_MAP = { strength:"stronger", move:"mobility", eat:"health", sleep:"feel", account:"health" };
+  if(p.goals && p.goals.some(g=>GOAL_MAP[g])) p.goals = [...new Set(p.goals.map(g=>GOAL_MAP[g]||g))];
+  if(!p.windows) p.windows = { main:p.window||"evening", secondary:"", mobility:"", family:"", booster:"" };
+  p.eqPref = p.eqPref||{};
+  if(!p.mode) p.mode = (p.style==="flex") ? "companion" : "coach";
+  if(p.motiv===undefined) p.motiv = "progress";
+  if(p.streakTol===undefined) p.streakTol = 4;
+  if(p.tech===undefined) p.tech = "standard";
 }
 /* migrate old single-type plans */
 function migratePlan(){
@@ -2179,7 +2325,11 @@ const FOCUS_SYS = { "Strength":["strength"], "Cardio":["motor"], "Mobility":["ar
   "Full Body":["strength","motor","armor","skill"] };
 /* favorites, rankings and usage make the builder smarter over time */
 function moveScore(m){ const md = (S.moveMeta||{})[m.n]||{};
-  return 1 + (md.fav?1.6:0) + (md.rank||0)*0.45 + Math.min(md.used||0,20)*0.06; }
+  let s = 1 + (md.fav?1.6:0) + (md.rank||0)*0.45 + Math.min(md.used||0,20)*0.06;
+  /* equipment preference: loved gear shows up more, avoided gear only when needed */
+  const pref = (S.profile && S.profile.eqPref) ? S.profile.eqPref[m.eq] : null;
+  if(pref==="love") s *= 1.5; else if(pref==="rare") s *= 0.5; else if(pref==="avoid") s *= 0.15;
+  return s; }
 function wPick(arr,n){ const pool = arr.slice(), out = [];
   while(pool.length && out.length<n){
     let tot = 0; const cum = pool.map(m=>tot += moveScore(m));
@@ -2191,7 +2341,8 @@ function buildSession(opts={}){
   const focus = opts.focus || S.sel.focus;
   const time = opts.time || S.sel.time;
   /* bodyweight is always available — it's not selectable gear */
-  const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq);
+  const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) ||
+    (m.eq==="Dumbbells" && S.sel.eq.includes("Adjustable Dumbbells"));
   const info = (S.profile && S.profile.areaInfo)||{};
   const avoid = Object.keys(info).filter(k=>info[k].mode==="avoid");
   const noAvoid = m => !m.area || !m.area.some(a=>avoid.includes(a));
@@ -2745,17 +2896,22 @@ function go(page){
 }
 $$(".nav button").forEach(b=>b.addEventListener("click", ()=>go(b.dataset.page)));
 
-function openOnb(){ onb = { i:0, _last:null, a:Object.assign({ name:"", age:"", gender:"",
-  exps:{lift:"some",cardio:"some",sport:"some"}, work:"wfh", eve:"free", window:"evening",
-  goals:[], sports:[], areas:["ankle"], areaInfo:{}, runFocus:"both",
-  eq:(S.profile&&S.profile.eq.slice())||[], lifts:(S.profile&&S.profile.lifts)||{}, caps:(S.profile&&S.profile.caps)||{},
-  days:3, len:30, weeks:6, boost:0, style:"coach" }, S.profile? {name:S.profile.name, age:S.profile.age, gender:S.profile.gender,
-  exps:Object.assign({lift:"some",cardio:"some",sport:"some"}, S.profile.exps||{lift:S.profile.exp||"some",cardio:S.profile.exp||"some",sport:S.profile.exp||"some"}),
-  work:S.profile.work||"wfh", eve:S.profile.eve||"free", window:S.profile.window||"evening",
-  goals:S.profile.goals.filter(g=>g!=="soccer"), sports:(S.profile.sports||[]).slice(), areas:(S.profile.areas||["ankle"]).slice(),
-  areaInfo:JSON.parse(JSON.stringify(S.profile.areaInfo||{})),
-  runFocus:S.profile.runFocus, days:S.profile.days, len:S.profile.len, weeks:S.profile.weeks,
-  boost:S.profile.boost||0, style:S.profile.style } : {}) };
+function openOnb(){ const P = S.profile;
+  onb = { i:0, _last:null, a:Object.assign({ name:"", age:"", gender:"", exps:{}, activities:{},
+  work:"wfh", eve:"free", motiv:"progress", streakTol:4, tech:"standard",
+  windows:{ main:"evening", secondary:"", mobility:"", family:"", booster:"" },
+  goals:[], areas:["ankle"], areaInfo:{}, runFocus:"both",
+  eq:(P&&P.eq.slice())||[], eqPref:(P&&Object.assign({},P.eqPref))||{},
+  lifts:(P&&P.lifts)||{}, caps:(P&&P.caps)||{},
+  days:3, len:30, weeks:6, boost:0, mode:"coach" }, P ? { name:P.name, age:P.age, gender:P.gender,
+  exps:Object.assign({}, P.exps||{}),
+  activities:Object.assign({}, P.activities||{}),
+  work:P.work||"wfh", eve:P.eve||"free", motiv:P.motiv||"progress", streakTol:P.streakTol||4, tech:P.tech||"standard",
+  windows:Object.assign({ main:P.window||"evening", secondary:"", mobility:"", family:"", booster:"" }, P.windows||{}),
+  goals:(P.goals||[]).slice(), areas:(P.areas||["ankle"]).slice(),
+  areaInfo:JSON.parse(JSON.stringify(P.areaInfo||{})),
+  runFocus:P.runFocus, days:P.days, len:P.len, weeks:P.weeks,
+  boost:P.boost||0, mode:P.mode||((P.style==="flex")?"companion":"coach") } : {}) };
   $("#onbNext").style.display = ""; $("#onbSkip").style.display = "";
   onbRender(); $("#onb").classList.add("show"); }
 window.openOnb = openOnb;
@@ -2773,12 +2929,23 @@ document.addEventListener("click", ev=>{
   const t = ev.target;
   const goal = t.closest("[data-goal]"); if(goal){ const k=goal.dataset.goal, a=onb.a;
     a.goals.includes(k) ? a.goals.splice(a.goals.indexOf(k),1) : a.goals.push(k); buzz(); onbRender(); return; }
-  const osp = t.closest("[data-sport]"); if(osp){ const k=osp.dataset.sport, a=onb.a;
-    a.sports.includes(k) ? a.sports.splice(a.sports.indexOf(k),1) : a.sports.push(k); buzz(); onbRender(); return; }
+  const oact = t.closest("[data-activity]"); if(oact){ const k=oact.dataset.activity, a=onb.a;
+    if(a.activities[k]) delete a.activities[k]; else a.activities[k]=3;   // default: Comfortable
+    buzz(); onbRender(); return; }
+  const olv = t.closest("[data-alevel]"); if(olv){ const s=olv.dataset.alevel, ix=s.lastIndexOf(":");
+    onb.a.activities[s.slice(0,ix)] = +s.slice(ix+1); buzz(); onbRender(); return; }
   const oexp = t.closest("[data-exp]"); if(oexp){ onb.a.exps[oexp.dataset.track||"lift"] = oexp.dataset.exp; buzz(); onbRender(); return; }
+  const oep = t.closest("[data-epref]"); if(oep){ const s=oep.dataset.epref, ix=s.lastIndexOf(":");
+    onb.a.eqPref[s.slice(0,ix)] = s.slice(ix+1); buzz(); onbRender(); return; }
   const owork = t.closest("[data-work]"); if(owork){ onb.a.work = owork.dataset.work; buzz(); onbRender(); return; }
   const oeve = t.closest("[data-eve]"); if(oeve){ onb.a.eve = oeve.dataset.eve; buzz(); onbRender(); return; }
-  const owin = t.closest("[data-window]"); if(owin){ onb.a.window = owin.dataset.window; buzz(); onbRender(); return; }
+  const omv = t.closest("[data-motiv]"); if(omv){ onb.a.motiv = omv.dataset.motiv; buzz(); onbRender(); return; }
+  const otk = t.closest("[data-tech]"); if(otk){ onb.a.tech = otk.dataset.tech; buzz(); onbRender(); return; }
+  const owt = t.closest("[data-wktarget]"); if(owt){ onb.a.streakTol = +owt.dataset.wktarget; buzz(); onbRender(); return; }
+  const owin = t.closest("[data-owin]"); if(owin){ const s=owin.dataset.owin, ix=s.lastIndexOf(":");
+    onb.a.windows[s.slice(0,ix)] = s.slice(ix+1); buzz(); onbRender(); return; }
+  const opre = t.closest("[data-preset]"); if(opre){ const p=WIN_PRESETS[opre.dataset.preset];
+    if(p) onb.a.windows = Object.assign({}, p.w); buzz(); SFX.play("select"); onbRender(); return; }
   const oarea = t.closest("[data-area]"); if(oarea){ const k=oarea.dataset.area, a=onb.a;
     if(a.areas.includes(k)){ a.areas.splice(a.areas.indexOf(k),1); delete a.areaInfo[k]; }
     else a.areas.push(k); buzz(); onbRender(); return; }
@@ -2794,7 +2961,7 @@ document.addEventListener("click", ev=>{
   const ol = t.closest("[data-olen]"); if(ol){ onb.a.len=+ol.dataset.olen; buzz(); onbRender(); return; }
   const ow = t.closest("[data-oweeks]"); if(ow){ onb.a.weeks=+ow.dataset.oweeks; buzz(); onbRender(); return; }
   const ob = t.closest("[data-oboost]"); if(ob){ onb.a.boost=+ob.dataset.oboost; buzz(); onbRender(); return; }
-  const os = t.closest("[data-style]"); if(os){ onb.a.style=os.dataset.style; buzz(); onbRender(); return; }
+  const os = t.closest("[data-mode]"); if(os && $("#onb").classList.contains("show")){ onb.a.mode=os.dataset.mode; buzz(); onbRender(); return; }
 
   const chip = t.closest(".chip");
   if(chip && chip.dataset.t){ S.sel.time=+chip.dataset.t; save(); renderPickers(); return; }
