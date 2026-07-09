@@ -1,5 +1,29 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v4.0 · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v5.0-phase1 · July 2026*
+
+## v5 program (approved master plan)
+Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-sparking-wigderson.md`.
+1 ✅ Warmth/Sound/Safety · 2 Onboarding 2.0 · 3 Library 2.0 + follow-along · 4 Drag-drop planner ·
+5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
+**Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
+
+## New in v5 Phase 1 (warmth, sound & safety)
+- **Warmth/readability pass** on all 6 themes: panels lifted ~+8% luminance and warmed,
+  `--dim`/`--faint` secondary text brightened to comfortable contrast, stronger bg-art glows,
+  Daylight refined (warm paper bg, darker secondary text). Body type 15→15.5px.
+- **SFX engine** (`SFX` object, all Web Audio synthesized, zero files): tap/select/advance/back/
+  done/complete/fanfare/tick/beep. Settings → Sound: Off / Subtle / Full (`S.settings.sound`).
+  First-gesture unlock; every call try/caught (harness-safe). Old `beep()` delegates to it.
+- **Real haptics**: `buzz()` now uses Capacitor Haptics plugin when wrapped
+  (`npm i @capacitor/haptics` at Capacitor time), vibrate fallback on web.
+- **canvas-confetti v1.9.3 vendored inline** (MIT, before main script). `bigBurst(opts)` fires
+  theme-colored bursts on: session complete, level-up, plan forge. CSS confetti kept for forge.
+- **Destructive-action protection**: `askConfirm()` bottom sheet (`#confirmSheet`) gates
+  Regenerate / Start-blank / interview finish / deleting completed acts. `regeneratePlan()`
+  MERGES: done+locked acts (and their templates) always survive. `planHasWork()` is the guard.
+  Acts now honor a `lock` flag in merges (UI for locks arrives in Phase 4).
+- validate.js: **109 checks** (sound persistence, confetti vendored, confirm gates,
+  done-acts-survive-regenerate, cancelled-skip keeps plan).
 
 ## New in v4.0 (onboarding overhaul + smart library)
 **Interview restructured (owner review, July 8):**

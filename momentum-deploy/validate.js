@@ -189,6 +189,39 @@ setTimeout(()=>{ try {
   click($('[data-theme-pick="retro"]'));
   T("theme switch keeps glass system", d.body.dataset.theme==="retro");
   click($('[data-theme-pick="ember"]'));
+  T("warmth pass applied (brighter secondary text)", html.includes("--dim:#A8ACBA"));
+
+  /* ---- Phase 1: sound engine ---- */
+  T("SFX engine present", w.eval(`typeof SFX==="object" && typeof SFX.play==="function"`));
+  w.eval(`SFX.play("complete"); SFX.play("fanfare"); SFX.play("advance"); SFX.play("tick");`);
+  T("SFX plays without runtime errors", errs.length===0);
+  d.querySelectorAll(".nav button")[5].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("sound setting chips render in More", $$("[data-sound]").length===3);
+  click($('[data-sound="off"]'));
+  T("sound off persists and silences engine", state().settings.sound==="off" && w.eval(`SFX.on===false`));
+  click($('[data-sound="low"]'));
+  T("canvas-confetti vendored inline", w.eval(`typeof window.confetti==="function"`));
+  T("bigBurst safe in any environment", w.eval(`bigBurst(); true`));
+
+  /* ---- Phase 1: destructive-action protection ---- */
+  const doneCount = ()=>state().plan.days.reduce((a,day)=>a+day.acts.filter(x=>x.done).length,0);
+  const doneBefore = doneCount();
+  T("plan has completed work for protection tests", doneBefore>0, `(${doneBefore} done)`);
+  w.eval(`S.plan.__tag = "old"; save();`);
+  d.querySelectorAll(".nav button")[3].dispatchEvent(new w.Event("click",{bubbles:true}));
+  click($("#replanBtn"));
+  T("regenerate asks before rebuilding", $("#confirmSheet").classList.contains("show"));
+  click($("#cfNo"));
+  T("cancel keeps the plan untouched", state().plan.__tag==="old");
+  click($("#replanBtn")); click($("#cfYes"));
+  T("confirmed rebuild replaces the plan", state().plan.__tag===undefined);
+  T("completed acts survive regenerate", doneCount()>=doneBefore, `done ${doneBefore} -> ${doneCount()}`);
+  click($("#redoInterview"));
+  click($("#onbSkip"));
+  T("interview skip asks before wiping a worked plan", $("#confirmSheet").classList.contains("show"));
+  click($("#cfNo"));
+  T("cancelled skip keeps the plan alive", !!state().plan);
+  w.eval(`document.getElementById("onb").classList.remove("show")`);
 
   /* ---- movement library: favorite, rank, views ---- */
   d.querySelectorAll(".nav button")[4].dispatchEvent(new w.Event("click",{bubbles:true}));
@@ -229,6 +262,10 @@ setTimeout(()=>{ try {
   click($(`[data-actswap="${editIdx}:0"]`));
   T("swap activity type", true);
   click($(`[data-actdel="${editIdx}:0"]`));
+  if($("#confirmSheet").classList.contains("show")){
+    T("deleting a completed act asks first", true);
+    click($("#cfYes"));
+  }
   T("remove activity", state().plan.days[editIdx].acts.length === cBefore);
 
   /* ---- timers / soccer gate / bodyweight always-on / widgets ---- */

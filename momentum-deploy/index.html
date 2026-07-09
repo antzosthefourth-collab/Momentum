@@ -4,68 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MOMENTUM — Training & Life OS</title>
-<meta name="theme-color" content="#0C0D11">
+<meta name="theme-color" content="#121014">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root, [data-theme="ember"]{
-  --bg:#0C0D11; --panel:rgba(24,26,34,.72); --panel2:rgba(34,37,48,.78); --line:rgba(255,255,255,.09);
-  --bgart:radial-gradient(120% 70% at 85% 110%, rgba(255,107,53,.28), transparent 60%),
-          radial-gradient(90% 60% at 0% 100%, rgba(232,180,74,.14), transparent 55%),
-          radial-gradient(140% 90% at 50% -20%, #1a1220 0%, transparent 70%),
-          linear-gradient(180deg,#0C0D11,#120d0e);
-  --text:#EDEFF4; --dim:#8A8F9E; --faint:#5A5F6E; --accent:#FF6B35; --accent2:#E8B44A; --onaccent:#14100c;
-  --c-strength:#E8B44A; --c-motor:#FF6B35; --c-armor:#5B8DB8; --c-skill:#4CC58A; --c-fuel:#D96AA8; --c-recharge:#9B7BD8;
+  --bg:#121014; --panel:rgba(38,35,42,.76); --panel2:rgba(50,46,54,.82); --line:rgba(255,255,255,.13);
+  --bgart:radial-gradient(120% 70% at 85% 110%, rgba(255,107,53,.36), transparent 62%),
+          radial-gradient(90% 60% at 0% 100%, rgba(232,180,74,.20), transparent 55%),
+          radial-gradient(140% 90% at 50% -20%, #221728 0%, transparent 70%),
+          linear-gradient(180deg,#121014,#191114);
+  --text:#F2F3F7; --dim:#A8ACBA; --faint:#7B8090; --accent:#FF6B35; --accent2:#E8B44A; --onaccent:#14100c;
+  --c-strength:#E8B44A; --c-motor:#FF6B35; --c-armor:#6FA0CC; --c-skill:#4CC58A; --c-fuel:#D96AA8; --c-recharge:#A98FE0;
 }
 [data-theme="steel"]{
-  --bg:#0A0E14; --panel:rgba(18,24,38,.72); --panel2:rgba(26,34,54,.78); --line:rgba(160,190,255,.11);
-  --bgart:radial-gradient(120% 60% at 50% 115%, rgba(76,154,255,.30), transparent 60%),
-          radial-gradient(80% 50% at 90% 0%, rgba(155,123,216,.16), transparent 55%),
-          linear-gradient(180deg,#070b12,#0A0E14);
-  --text:#E8EEF8; --dim:#8C99B0; --faint:#5A6680; --accent:#4C9AFF; --accent2:#7FDBFF; --onaccent:#061020;
-  --c-strength:#7FDBFF; --c-motor:#4C9AFF; --c-armor:#9B7BD8; --c-skill:#4CC58A; --c-fuel:#FF7EB6; --c-recharge:#B39DDB;
+  --bg:#0D121B; --panel:rgba(28,36,56,.76); --panel2:rgba(38,48,72,.82); --line:rgba(160,190,255,.15);
+  --bgart:radial-gradient(120% 60% at 50% 115%, rgba(76,154,255,.36), transparent 62%),
+          radial-gradient(80% 50% at 90% 0%, rgba(155,123,216,.22), transparent 55%),
+          linear-gradient(180deg,#0a0f18,#0D121B);
+  --text:#EDF2FB; --dim:#A6B1C9; --faint:#77839F; --accent:#4C9AFF; --accent2:#7FDBFF; --onaccent:#061020;
+  --c-strength:#7FDBFF; --c-motor:#4C9AFF; --c-armor:#A98FE0; --c-skill:#4CC58A; --c-fuel:#FF7EB6; --c-recharge:#B39DDB;
 }
 [data-theme="turf"]{
-  --bg:#0A100C; --panel:rgba(18,26,20,.72); --panel2:rgba(26,38,29,.78); --line:rgba(150,255,180,.10);
-  --bgart:radial-gradient(110% 65% at 20% 115%, rgba(61,220,132,.24), transparent 60%),
-          radial-gradient(90% 55% at 100% -10%, rgba(198,244,77,.10), transparent 55%),
-          linear-gradient(180deg,#070d09,#0A100C);
-  --text:#EAF4EC; --dim:#8AA592; --faint:#5A7562; --accent:#3DDC84; --accent2:#C6F44D; --onaccent:#07130b;
-  --c-strength:#C6F44D; --c-motor:#3DDC84; --c-armor:#5B8DB8; --c-skill:#FFD166; --c-fuel:#FF8FA3; --c-recharge:#9B7BD8;
+  --bg:#0E1510; --panel:rgba(28,39,31,.76); --panel2:rgba(38,52,42,.82); --line:rgba(150,255,180,.14);
+  --bgart:radial-gradient(110% 65% at 20% 115%, rgba(61,220,132,.32), transparent 62%),
+          radial-gradient(90% 55% at 100% -10%, rgba(198,244,77,.16), transparent 55%),
+          linear-gradient(180deg,#0a110c,#0E1510);
+  --text:#EFF6F1; --dim:#A4BCAC; --faint:#75907F; --accent:#3DDC84; --accent2:#C6F44D; --onaccent:#07130b;
+  --c-strength:#C6F44D; --c-motor:#3DDC84; --c-armor:#6FA0CC; --c-skill:#FFD166; --c-fuel:#FF8FA3; --c-recharge:#A98FE0;
 }
 [data-theme="night"]{
-  --bg:#0B0A12; --panel:rgba(21,18,40,.72); --panel2:rgba(29,25,56,.78); --line:rgba(180,160,255,.12);
-  --bgart:radial-gradient(100% 60% at 80% 110%, rgba(155,123,255,.30), transparent 60%),
-          radial-gradient(80% 55% at 5% -5%, rgba(94,230,208,.12), transparent 50%),
-          radial-gradient(50% 30% at 30% 40%, rgba(155,123,255,.10), transparent 60%),
-          linear-gradient(180deg,#080710,#0B0A12);
-  --text:#EDEAF8; --dim:#948DB0; --faint:#5F5980; --accent:#9B7BFF; --accent2:#5EE6D0; --onaccent:#0d0a1a;
+  --bg:#100E19; --panel:rgba(32,28,56,.76); --panel2:rgba(42,37,72,.82); --line:rgba(180,160,255,.16);
+  --bgart:radial-gradient(100% 60% at 80% 110%, rgba(155,123,255,.36), transparent 62%),
+          radial-gradient(80% 55% at 5% -5%, rgba(94,230,208,.18), transparent 50%),
+          radial-gradient(50% 30% at 30% 40%, rgba(155,123,255,.14), transparent 60%),
+          linear-gradient(180deg,#0b0914,#100E19);
+  --text:#F0EDFA; --dim:#ACA5C8; --faint:#7E779A; --accent:#9B7BFF; --accent2:#5EE6D0; --onaccent:#0d0a1a;
   --c-strength:#5EE6D0; --c-motor:#9B7BFF; --c-armor:#6FA8DC; --c-skill:#7BE495; --c-fuel:#FF8FC7; --c-recharge:#C3B4FF;
 }
 [data-theme="retro"]{
-  --bg:#12080E; --panel:rgba(31,16,26,.74); --panel2:rgba(43,22,36,.80); --line:rgba(255,120,200,.14);
-  --bgart:radial-gradient(110% 60% at 15% 115%, rgba(255,77,157,.32), transparent 60%),
-          radial-gradient(90% 55% at 100% 0%, rgba(57,210,192,.18), transparent 55%),
-          linear-gradient(160deg,#160810,#0e0712);
-  --text:#FDEFF6; --dim:#B78BA3; --faint:#7D5A6E; --accent:#FF4D9D; --accent2:#39D2C0; --onaccent:#1a0611;
+  --bg:#170D14; --panel:rgba(44,25,38,.78); --panel2:rgba(58,32,49,.84); --line:rgba(255,120,200,.17);
+  --bgart:radial-gradient(110% 60% at 15% 115%, rgba(255,77,157,.38), transparent 62%),
+          radial-gradient(90% 55% at 100% 0%, rgba(57,210,192,.24), transparent 55%),
+          linear-gradient(160deg,#1c0a15,#130a17);
+  --text:#FDF1F7; --dim:#C8A2B6; --faint:#966F84; --accent:#FF4D9D; --accent2:#39D2C0; --onaccent:#1a0611;
   --c-strength:#39D2C0; --c-motor:#FF4D9D; --c-armor:#7FB8FF; --c-skill:#B6F36A; --c-fuel:#FFB86B; --c-recharge:#C89BFF;
 }
 [data-theme="daylight"]{
-  --bg:#F4F5F8; --panel:rgba(255,255,255,.82); --panel2:rgba(235,238,246,.88); --line:rgba(20,25,40,.12);
-  --bgart:radial-gradient(110% 60% at 85% 115%, rgba(228,85,44,.14), transparent 60%),
-          radial-gradient(90% 55% at 0% 0%, rgba(184,134,11,.10), transparent 50%),
-          linear-gradient(180deg,#FBF9F4,#EEF0F6);
-  --text:#171B26; --dim:#5A6172; --faint:#8B92A5; --accent:#E4552C; --accent2:#B8860B; --onaccent:#fff;
-  --c-strength:#B8860B; --c-motor:#E4552C; --c-armor:#2E6DA4; --c-skill:#1F9D5B; --c-fuel:#C2447E; --c-recharge:#6B4FBB;
+  --bg:#F6F4F0; --panel:rgba(255,255,255,.9); --panel2:rgba(241,240,244,.94); --line:rgba(20,25,40,.13);
+  --bgart:radial-gradient(110% 60% at 85% 115%, rgba(228,85,44,.18), transparent 60%),
+          radial-gradient(90% 55% at 0% 0%, rgba(184,134,11,.14), transparent 50%),
+          linear-gradient(180deg,#FCF8F1,#F0F0F4);
+  --text:#151924; --dim:#4F5668; --faint:#788094; --accent:#E4552C; --accent2:#A87A0A; --onaccent:#fff;
+  --c-strength:#A87A0A; --c-motor:#E4552C; --c-armor:#2E6DA4; --c-skill:#1F9D5B; --c-fuel:#C2447E; --c-recharge:#6B4FBB;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; font-size:15px; line-height:1.5; overscroll-behavior-y:none; transition:background .3s}
+body{background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; font-size:15.5px; line-height:1.5; overscroll-behavior-y:none; transition:background .3s}
 body::before{content:""; position:fixed; inset:0; z-index:-2; background:var(--bgart); background-size:cover}
 body::after{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.5; mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E")}
 body.hasphoto::before{background-image:var(--bgphoto); background-position:center; background-size:cover; background-repeat:no-repeat}
-body.hasphoto{--panel:rgba(16,17,24,.66); --panel2:rgba(26,28,38,.72)}
+body.hasphoto{--panel:rgba(26,26,33,.7); --panel2:rgba(37,38,48,.76)}
 .card,.stat,.sys,.ex,.pday,.habit,.lib-item,.media-card,.today-card,.hero-card,.opt,.chip,.field input,.field select,.field textarea,.search,.seg{backdrop-filter:blur(14px) saturate(1.25); -webkit-backdrop-filter:blur(14px) saturate(1.25)}
 h1,h2,h3,.disp{font-family:'Chakra Petch',sans-serif; letter-spacing:.02em}
 button{font-family:inherit; color:inherit; background:none; border:none; cursor:pointer}
@@ -80,7 +80,7 @@ a{color:var(--accent)}
 .sec-label{font-family:'Chakra Petch'; font-size:11px; font-weight:600; letter-spacing:.22em; color:var(--faint); text-transform:uppercase; margin:22px 0 10px; display:flex; align-items:center; gap:8px}
 .sec-label::after{content:""; flex:1; height:1px; background:var(--line)}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
-.mut{color:var(--dim); font-size:13px}
+.mut{color:var(--dim); font-size:13.5px}
 
 /* ---------- HERO ---------- */
 .banner{position:relative; height:140px; overflow:hidden; background:linear-gradient(160deg,var(--panel2),var(--bg))}
@@ -152,7 +152,7 @@ a{color:var(--accent)}
 .ex-meta{flex:1; min-width:0}
 .ex-name{font-weight:600; font-size:15px}
 .ex.done .ex-name{color:var(--dim); text-decoration:line-through}
-.ex-sub{font-size:12px; color:var(--dim); margin-top:1px}
+.ex-sub{font-size:12.5px; color:var(--dim); margin-top:1px}
 .ex-xp{font-family:'Chakra Petch'; font-weight:700; font-size:12px; flex:none}
 .ex-detail{display:none; padding:0 14px 14px; border-top:1px dashed var(--line)}
 .ex.open .ex-detail{display:block}
@@ -212,6 +212,19 @@ a{color:var(--accent)}
 .timerbar .tlab{font-size:11px; letter-spacing:.18em; text-transform:uppercase; font-family:'Chakra Petch'; font-weight:600; color:var(--accent)}
 .timerbar .tnum{font-family:'Chakra Petch'; font-weight:700; font-size:24px; min-width:74px; text-align:center; font-variant-numeric:tabular-nums}
 .timerbar button{font-size:12px; font-weight:700; color:var(--dim); padding:6px 10px}
+
+/* ---------- CONFIRM SHEET (destructive-action guard) ---------- */
+.sheet{position:fixed; inset:0; z-index:90; display:none; align-items:flex-end; justify-content:center;
+  background:color-mix(in srgb, var(--bg) 55%, transparent); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px)}
+.sheet.show{display:flex}
+.sheet-card{width:100%; max-width:520px; background:var(--panel2); border:1px solid var(--line); border-bottom:none;
+  border-radius:22px 22px 0 0; padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+  backdrop-filter:blur(18px) saturate(1.3); -webkit-backdrop-filter:blur(18px) saturate(1.3);
+  animation:sheetup .32s cubic-bezier(.22,1,.36,1)}
+@keyframes sheetup{from{transform:translateY(40%); opacity:.4}}
+.sheet-card h3{font-size:18px}
+.sheet-card .mut{margin-top:8px; line-height:1.55}
+.sheet-foot{display:flex; gap:10px; margin-top:20px}
 
 .toast{position:fixed; left:50%; bottom:150px; transform:translateX(-50%) translateY(20px); z-index:60; background:var(--panel2); border:1px solid var(--accent2); color:var(--accent2); font-family:'Chakra Petch'; font-weight:700; padding:10px 18px; border-radius:999px; font-size:14px; opacity:0; pointer-events:none; transition:all .3s}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
@@ -476,6 +489,9 @@ a{color:var(--accent)}
       <h2 style="font-size:20px; margin:6px 0 12px">Profile & settings</h2>
       <div class="sec-label">Theme</div>
       <div class="theme-grid" id="themeGrid"></div>
+      <div class="sec-label">Sound</div>
+      <p class="mut" style="margin-bottom:10px">Taps, transitions, completions and celebrations — all generated on-device.</p>
+      <div class="chips" id="soundChips"></div>
       <div class="sec-label">Music</div>
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
@@ -527,6 +543,13 @@ a{color:var(--accent)}
   <button id="tPlus">+15s</button><button id="tStop">✕</button>
 </div>
 <div class="toast" id="toast"></div>
+<div class="sheet" id="confirmSheet"><div class="sheet-card">
+  <h3 id="cfTitle"></h3><p class="mut" id="cfMsg"></p>
+  <div class="sheet-foot">
+    <button class="btn ghost" id="cfNo" style="flex:1">Cancel</button>
+    <button class="btn" id="cfYes" style="flex:1">Confirm</button>
+  </div>
+</div></div>
 <div class="levelup" id="levelup"><div class="lu-card">
   <div class="sub">Level up</div><div class="big" id="luLvl">LVL 2</div>
   <p id="luMsg"></p>
@@ -553,6 +576,897 @@ a{color:var(--accent)}
   </div>
   <button id="onbSkip" style="margin-top:14px; color:var(--faint); font-size:13px">Skip — I'll build my own</button>
 </div></div>
+<script>/* canvas-confetti v1.9.3 | MIT (c) Kiril Vatev | github.com/catdad/canvas-confetti */
+// canvas-confetti v1.9.3 built on 2024-04-30T22:19:17.794Z
+!(function (window, module) {
+// source content
+/* globals Map */
+
+(function main(global, module, isWorker, workerSize) {
+  var canUseWorker = !!(
+    global.Worker &&
+    global.Blob &&
+    global.Promise &&
+    global.OffscreenCanvas &&
+    global.OffscreenCanvasRenderingContext2D &&
+    global.HTMLCanvasElement &&
+    global.HTMLCanvasElement.prototype.transferControlToOffscreen &&
+    global.URL &&
+    global.URL.createObjectURL);
+
+  var canUsePaths = typeof Path2D === 'function' && typeof DOMMatrix === 'function';
+  var canDrawBitmap = (function () {
+    // this mostly supports ssr
+    if (!global.OffscreenCanvas) {
+      return false;
+    }
+
+    var canvas = new OffscreenCanvas(1, 1);
+    var ctx = canvas.getContext('2d');
+    ctx.fillRect(0, 0, 1, 1);
+    var bitmap = canvas.transferToImageBitmap();
+
+    try {
+      ctx.createPattern(bitmap, 'no-repeat');
+    } catch (e) {
+      return false;
+    }
+
+    return true;
+  })();
+
+  function noop() {}
+
+  // create a promise if it exists, otherwise, just
+  // call the function directly
+  function promise(func) {
+    var ModulePromise = module.exports.Promise;
+    var Prom = ModulePromise !== void 0 ? ModulePromise : global.Promise;
+
+    if (typeof Prom === 'function') {
+      return new Prom(func);
+    }
+
+    func(noop, noop);
+
+    return null;
+  }
+
+  var bitmapMapper = (function (skipTransform, map) {
+    // see https://github.com/catdad/canvas-confetti/issues/209
+    // creating canvases is actually pretty expensive, so we should create a
+    // 1:1 map for bitmap:canvas, so that we can animate the confetti in
+    // a performant manner, but also not store them forever so that we don't
+    // have a memory leak
+    return {
+      transform: function(bitmap) {
+        if (skipTransform) {
+          return bitmap;
+        }
+
+        if (map.has(bitmap)) {
+          return map.get(bitmap);
+        }
+
+        var canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+
+        map.set(bitmap, canvas);
+
+        return canvas;
+      },
+      clear: function () {
+        map.clear();
+      }
+    };
+  })(canDrawBitmap, new Map());
+
+  var raf = (function () {
+    var TIME = Math.floor(1000 / 60);
+    var frame, cancel;
+    var frames = {};
+    var lastFrameTime = 0;
+
+    if (typeof requestAnimationFrame === 'function' && typeof cancelAnimationFrame === 'function') {
+      frame = function (cb) {
+        var id = Math.random();
+
+        frames[id] = requestAnimationFrame(function onFrame(time) {
+          if (lastFrameTime === time || lastFrameTime + TIME - 1 < time) {
+            lastFrameTime = time;
+            delete frames[id];
+
+            cb();
+          } else {
+            frames[id] = requestAnimationFrame(onFrame);
+          }
+        });
+
+        return id;
+      };
+      cancel = function (id) {
+        if (frames[id]) {
+          cancelAnimationFrame(frames[id]);
+        }
+      };
+    } else {
+      frame = function (cb) {
+        return setTimeout(cb, TIME);
+      };
+      cancel = function (timer) {
+        return clearTimeout(timer);
+      };
+    }
+
+    return { frame: frame, cancel: cancel };
+  }());
+
+  var getWorker = (function () {
+    var worker;
+    var prom;
+    var resolves = {};
+
+    function decorate(worker) {
+      function execute(options, callback) {
+        worker.postMessage({ options: options || {}, callback: callback });
+      }
+      worker.init = function initWorker(canvas) {
+        var offscreen = canvas.transferControlToOffscreen();
+        worker.postMessage({ canvas: offscreen }, [offscreen]);
+      };
+
+      worker.fire = function fireWorker(options, size, done) {
+        if (prom) {
+          execute(options, null);
+          return prom;
+        }
+
+        var id = Math.random().toString(36).slice(2);
+
+        prom = promise(function (resolve) {
+          function workerDone(msg) {
+            if (msg.data.callback !== id) {
+              return;
+            }
+
+            delete resolves[id];
+            worker.removeEventListener('message', workerDone);
+
+            prom = null;
+
+            bitmapMapper.clear();
+
+            done();
+            resolve();
+          }
+
+          worker.addEventListener('message', workerDone);
+          execute(options, id);
+
+          resolves[id] = workerDone.bind(null, { data: { callback: id }});
+        });
+
+        return prom;
+      };
+
+      worker.reset = function resetWorker() {
+        worker.postMessage({ reset: true });
+
+        for (var id in resolves) {
+          resolves[id]();
+          delete resolves[id];
+        }
+      };
+    }
+
+    return function () {
+      if (worker) {
+        return worker;
+      }
+
+      if (!isWorker && canUseWorker) {
+        var code = [
+          'var CONFETTI, SIZE = {}, module = {};',
+          '(' + main.toString() + ')(this, module, true, SIZE);',
+          'onmessage = function(msg) {',
+          '  if (msg.data.options) {',
+          '    CONFETTI(msg.data.options).then(function () {',
+          '      if (msg.data.callback) {',
+          '        postMessage({ callback: msg.data.callback });',
+          '      }',
+          '    });',
+          '  } else if (msg.data.reset) {',
+          '    CONFETTI && CONFETTI.reset();',
+          '  } else if (msg.data.resize) {',
+          '    SIZE.width = msg.data.resize.width;',
+          '    SIZE.height = msg.data.resize.height;',
+          '  } else if (msg.data.canvas) {',
+          '    SIZE.width = msg.data.canvas.width;',
+          '    SIZE.height = msg.data.canvas.height;',
+          '    CONFETTI = module.exports.create(msg.data.canvas);',
+          '  }',
+          '}',
+        ].join('\n');
+        try {
+          worker = new Worker(URL.createObjectURL(new Blob([code])));
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          typeof console !== undefined && typeof console.warn === 'function' ? console.warn('🎊 Could not load worker', e) : null;
+
+          return null;
+        }
+
+        decorate(worker);
+      }
+
+      return worker;
+    };
+  })();
+
+  var defaults = {
+    particleCount: 50,
+    angle: 90,
+    spread: 45,
+    startVelocity: 45,
+    decay: 0.9,
+    gravity: 1,
+    drift: 0,
+    ticks: 200,
+    x: 0.5,
+    y: 0.5,
+    shapes: ['square', 'circle'],
+    zIndex: 100,
+    colors: [
+      '#26ccff',
+      '#a25afd',
+      '#ff5e7e',
+      '#88ff5a',
+      '#fcff42',
+      '#ffa62d',
+      '#ff36ff'
+    ],
+    // probably should be true, but back-compat
+    disableForReducedMotion: false,
+    scalar: 1
+  };
+
+  function convert(val, transform) {
+    return transform ? transform(val) : val;
+  }
+
+  function isOk(val) {
+    return !(val === null || val === undefined);
+  }
+
+  function prop(options, name, transform) {
+    return convert(
+      options && isOk(options[name]) ? options[name] : defaults[name],
+      transform
+    );
+  }
+
+  function onlyPositiveInt(number){
+    return number < 0 ? 0 : Math.floor(number);
+  }
+
+  function randomInt(min, max) {
+    // [min, max)
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+
+  function toDecimal(str) {
+    return parseInt(str, 16);
+  }
+
+  function colorsToRgb(colors) {
+    return colors.map(hexToRgb);
+  }
+
+  function hexToRgb(str) {
+    var val = String(str).replace(/[^0-9a-f]/gi, '');
+
+    if (val.length < 6) {
+        val = val[0]+val[0]+val[1]+val[1]+val[2]+val[2];
+    }
+
+    return {
+      r: toDecimal(val.substring(0,2)),
+      g: toDecimal(val.substring(2,4)),
+      b: toDecimal(val.substring(4,6))
+    };
+  }
+
+  function getOrigin(options) {
+    var origin = prop(options, 'origin', Object);
+    origin.x = prop(origin, 'x', Number);
+    origin.y = prop(origin, 'y', Number);
+
+    return origin;
+  }
+
+  function setCanvasWindowSize(canvas) {
+    canvas.width = document.documentElement.clientWidth;
+    canvas.height = document.documentElement.clientHeight;
+  }
+
+  function setCanvasRectSize(canvas) {
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+
+  function getCanvas(zIndex) {
+    var canvas = document.createElement('canvas');
+
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0px';
+    canvas.style.left = '0px';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = zIndex;
+
+    return canvas;
+  }
+
+  function ellipse(context, x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+    context.save();
+    context.translate(x, y);
+    context.rotate(rotation);
+    context.scale(radiusX, radiusY);
+    context.arc(0, 0, 1, startAngle, endAngle, antiClockwise);
+    context.restore();
+  }
+
+  function randomPhysics(opts) {
+    var radAngle = opts.angle * (Math.PI / 180);
+    var radSpread = opts.spread * (Math.PI / 180);
+
+    return {
+      x: opts.x,
+      y: opts.y,
+      wobble: Math.random() * 10,
+      wobbleSpeed: Math.min(0.11, Math.random() * 0.1 + 0.05),
+      velocity: (opts.startVelocity * 0.5) + (Math.random() * opts.startVelocity),
+      angle2D: -radAngle + ((0.5 * radSpread) - (Math.random() * radSpread)),
+      tiltAngle: (Math.random() * (0.75 - 0.25) + 0.25) * Math.PI,
+      color: opts.color,
+      shape: opts.shape,
+      tick: 0,
+      totalTicks: opts.ticks,
+      decay: opts.decay,
+      drift: opts.drift,
+      random: Math.random() + 2,
+      tiltSin: 0,
+      tiltCos: 0,
+      wobbleX: 0,
+      wobbleY: 0,
+      gravity: opts.gravity * 3,
+      ovalScalar: 0.6,
+      scalar: opts.scalar,
+      flat: opts.flat
+    };
+  }
+
+  function updateFetti(context, fetti) {
+    fetti.x += Math.cos(fetti.angle2D) * fetti.velocity + fetti.drift;
+    fetti.y += Math.sin(fetti.angle2D) * fetti.velocity + fetti.gravity;
+    fetti.velocity *= fetti.decay;
+
+    if (fetti.flat) {
+      fetti.wobble = 0;
+      fetti.wobbleX = fetti.x + (10 * fetti.scalar);
+      fetti.wobbleY = fetti.y + (10 * fetti.scalar);
+
+      fetti.tiltSin = 0;
+      fetti.tiltCos = 0;
+      fetti.random = 1;
+    } else {
+      fetti.wobble += fetti.wobbleSpeed;
+      fetti.wobbleX = fetti.x + ((10 * fetti.scalar) * Math.cos(fetti.wobble));
+      fetti.wobbleY = fetti.y + ((10 * fetti.scalar) * Math.sin(fetti.wobble));
+
+      fetti.tiltAngle += 0.1;
+      fetti.tiltSin = Math.sin(fetti.tiltAngle);
+      fetti.tiltCos = Math.cos(fetti.tiltAngle);
+      fetti.random = Math.random() + 2;
+    }
+
+    var progress = (fetti.tick++) / fetti.totalTicks;
+
+    var x1 = fetti.x + (fetti.random * fetti.tiltCos);
+    var y1 = fetti.y + (fetti.random * fetti.tiltSin);
+    var x2 = fetti.wobbleX + (fetti.random * fetti.tiltCos);
+    var y2 = fetti.wobbleY + (fetti.random * fetti.tiltSin);
+
+    context.fillStyle = 'rgba(' + fetti.color.r + ', ' + fetti.color.g + ', ' + fetti.color.b + ', ' + (1 - progress) + ')';
+
+    context.beginPath();
+
+    if (canUsePaths && fetti.shape.type === 'path' && typeof fetti.shape.path === 'string' && Array.isArray(fetti.shape.matrix)) {
+      context.fill(transformPath2D(
+        fetti.shape.path,
+        fetti.shape.matrix,
+        fetti.x,
+        fetti.y,
+        Math.abs(x2 - x1) * 0.1,
+        Math.abs(y2 - y1) * 0.1,
+        Math.PI / 10 * fetti.wobble
+      ));
+    } else if (fetti.shape.type === 'bitmap') {
+      var rotation = Math.PI / 10 * fetti.wobble;
+      var scaleX = Math.abs(x2 - x1) * 0.1;
+      var scaleY = Math.abs(y2 - y1) * 0.1;
+      var width = fetti.shape.bitmap.width * fetti.scalar;
+      var height = fetti.shape.bitmap.height * fetti.scalar;
+
+      var matrix = new DOMMatrix([
+        Math.cos(rotation) * scaleX,
+        Math.sin(rotation) * scaleX,
+        -Math.sin(rotation) * scaleY,
+        Math.cos(rotation) * scaleY,
+        fetti.x,
+        fetti.y
+      ]);
+
+      // apply the transform matrix from the confetti shape
+      matrix.multiplySelf(new DOMMatrix(fetti.shape.matrix));
+
+      var pattern = context.createPattern(bitmapMapper.transform(fetti.shape.bitmap), 'no-repeat');
+      pattern.setTransform(matrix);
+
+      context.globalAlpha = (1 - progress);
+      context.fillStyle = pattern;
+      context.fillRect(
+        fetti.x - (width / 2),
+        fetti.y - (height / 2),
+        width,
+        height
+      );
+      context.globalAlpha = 1;
+    } else if (fetti.shape === 'circle') {
+      context.ellipse ?
+        context.ellipse(fetti.x, fetti.y, Math.abs(x2 - x1) * fetti.ovalScalar, Math.abs(y2 - y1) * fetti.ovalScalar, Math.PI / 10 * fetti.wobble, 0, 2 * Math.PI) :
+        ellipse(context, fetti.x, fetti.y, Math.abs(x2 - x1) * fetti.ovalScalar, Math.abs(y2 - y1) * fetti.ovalScalar, Math.PI / 10 * fetti.wobble, 0, 2 * Math.PI);
+    } else if (fetti.shape === 'star') {
+      var rot = Math.PI / 2 * 3;
+      var innerRadius = 4 * fetti.scalar;
+      var outerRadius = 8 * fetti.scalar;
+      var x = fetti.x;
+      var y = fetti.y;
+      var spikes = 5;
+      var step = Math.PI / spikes;
+
+      while (spikes--) {
+        x = fetti.x + Math.cos(rot) * outerRadius;
+        y = fetti.y + Math.sin(rot) * outerRadius;
+        context.lineTo(x, y);
+        rot += step;
+
+        x = fetti.x + Math.cos(rot) * innerRadius;
+        y = fetti.y + Math.sin(rot) * innerRadius;
+        context.lineTo(x, y);
+        rot += step;
+      }
+    } else {
+      context.moveTo(Math.floor(fetti.x), Math.floor(fetti.y));
+      context.lineTo(Math.floor(fetti.wobbleX), Math.floor(y1));
+      context.lineTo(Math.floor(x2), Math.floor(y2));
+      context.lineTo(Math.floor(x1), Math.floor(fetti.wobbleY));
+    }
+
+    context.closePath();
+    context.fill();
+
+    return fetti.tick < fetti.totalTicks;
+  }
+
+  function animate(canvas, fettis, resizer, size, done) {
+    var animatingFettis = fettis.slice();
+    var context = canvas.getContext('2d');
+    var animationFrame;
+    var destroy;
+
+    var prom = promise(function (resolve) {
+      function onDone() {
+        animationFrame = destroy = null;
+
+        context.clearRect(0, 0, size.width, size.height);
+        bitmapMapper.clear();
+
+        done();
+        resolve();
+      }
+
+      function update() {
+        if (isWorker && !(size.width === workerSize.width && size.height === workerSize.height)) {
+          size.width = canvas.width = workerSize.width;
+          size.height = canvas.height = workerSize.height;
+        }
+
+        if (!size.width && !size.height) {
+          resizer(canvas);
+          size.width = canvas.width;
+          size.height = canvas.height;
+        }
+
+        context.clearRect(0, 0, size.width, size.height);
+
+        animatingFettis = animatingFettis.filter(function (fetti) {
+          return updateFetti(context, fetti);
+        });
+
+        if (animatingFettis.length) {
+          animationFrame = raf.frame(update);
+        } else {
+          onDone();
+        }
+      }
+
+      animationFrame = raf.frame(update);
+      destroy = onDone;
+    });
+
+    return {
+      addFettis: function (fettis) {
+        animatingFettis = animatingFettis.concat(fettis);
+
+        return prom;
+      },
+      canvas: canvas,
+      promise: prom,
+      reset: function () {
+        if (animationFrame) {
+          raf.cancel(animationFrame);
+        }
+
+        if (destroy) {
+          destroy();
+        }
+      }
+    };
+  }
+
+  function confettiCannon(canvas, globalOpts) {
+    var isLibCanvas = !canvas;
+    var allowResize = !!prop(globalOpts || {}, 'resize');
+    var hasResizeEventRegistered = false;
+    var globalDisableForReducedMotion = prop(globalOpts, 'disableForReducedMotion', Boolean);
+    var shouldUseWorker = canUseWorker && !!prop(globalOpts || {}, 'useWorker');
+    var worker = shouldUseWorker ? getWorker() : null;
+    var resizer = isLibCanvas ? setCanvasWindowSize : setCanvasRectSize;
+    var initialized = (canvas && worker) ? !!canvas.__confetti_initialized : false;
+    var preferLessMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion)').matches;
+    var animationObj;
+
+    function fireLocal(options, size, done) {
+      var particleCount = prop(options, 'particleCount', onlyPositiveInt);
+      var angle = prop(options, 'angle', Number);
+      var spread = prop(options, 'spread', Number);
+      var startVelocity = prop(options, 'startVelocity', Number);
+      var decay = prop(options, 'decay', Number);
+      var gravity = prop(options, 'gravity', Number);
+      var drift = prop(options, 'drift', Number);
+      var colors = prop(options, 'colors', colorsToRgb);
+      var ticks = prop(options, 'ticks', Number);
+      var shapes = prop(options, 'shapes');
+      var scalar = prop(options, 'scalar');
+      var flat = !!prop(options, 'flat');
+      var origin = getOrigin(options);
+
+      var temp = particleCount;
+      var fettis = [];
+
+      var startX = canvas.width * origin.x;
+      var startY = canvas.height * origin.y;
+
+      while (temp--) {
+        fettis.push(
+          randomPhysics({
+            x: startX,
+            y: startY,
+            angle: angle,
+            spread: spread,
+            startVelocity: startVelocity,
+            color: colors[temp % colors.length],
+            shape: shapes[randomInt(0, shapes.length)],
+            ticks: ticks,
+            decay: decay,
+            gravity: gravity,
+            drift: drift,
+            scalar: scalar,
+            flat: flat
+          })
+        );
+      }
+
+      // if we have a previous canvas already animating,
+      // add to it
+      if (animationObj) {
+        return animationObj.addFettis(fettis);
+      }
+
+      animationObj = animate(canvas, fettis, resizer, size , done);
+
+      return animationObj.promise;
+    }
+
+    function fire(options) {
+      var disableForReducedMotion = globalDisableForReducedMotion || prop(options, 'disableForReducedMotion', Boolean);
+      var zIndex = prop(options, 'zIndex', Number);
+
+      if (disableForReducedMotion && preferLessMotion) {
+        return promise(function (resolve) {
+          resolve();
+        });
+      }
+
+      if (isLibCanvas && animationObj) {
+        // use existing canvas from in-progress animation
+        canvas = animationObj.canvas;
+      } else if (isLibCanvas && !canvas) {
+        // create and initialize a new canvas
+        canvas = getCanvas(zIndex);
+        document.body.appendChild(canvas);
+      }
+
+      if (allowResize && !initialized) {
+        // initialize the size of a user-supplied canvas
+        resizer(canvas);
+      }
+
+      var size = {
+        width: canvas.width,
+        height: canvas.height
+      };
+
+      if (worker && !initialized) {
+        worker.init(canvas);
+      }
+
+      initialized = true;
+
+      if (worker) {
+        canvas.__confetti_initialized = true;
+      }
+
+      function onResize() {
+        if (worker) {
+          // TODO this really shouldn't be immediate, because it is expensive
+          var obj = {
+            getBoundingClientRect: function () {
+              if (!isLibCanvas) {
+                return canvas.getBoundingClientRect();
+              }
+            }
+          };
+
+          resizer(obj);
+
+          worker.postMessage({
+            resize: {
+              width: obj.width,
+              height: obj.height
+            }
+          });
+          return;
+        }
+
+        // don't actually query the size here, since this
+        // can execute frequently and rapidly
+        size.width = size.height = null;
+      }
+
+      function done() {
+        animationObj = null;
+
+        if (allowResize) {
+          hasResizeEventRegistered = false;
+          global.removeEventListener('resize', onResize);
+        }
+
+        if (isLibCanvas && canvas) {
+          if (document.body.contains(canvas)) {
+            document.body.removeChild(canvas); 
+          }
+          canvas = null;
+          initialized = false;
+        }
+      }
+
+      if (allowResize && !hasResizeEventRegistered) {
+        hasResizeEventRegistered = true;
+        global.addEventListener('resize', onResize, false);
+      }
+
+      if (worker) {
+        return worker.fire(options, size, done);
+      }
+
+      return fireLocal(options, size, done);
+    }
+
+    fire.reset = function () {
+      if (worker) {
+        worker.reset();
+      }
+
+      if (animationObj) {
+        animationObj.reset();
+      }
+    };
+
+    return fire;
+  }
+
+  // Make default export lazy to defer worker creation until called.
+  var defaultFire;
+  function getDefaultFire() {
+    if (!defaultFire) {
+      defaultFire = confettiCannon(null, { useWorker: true, resize: true });
+    }
+    return defaultFire;
+  }
+
+  function transformPath2D(pathString, pathMatrix, x, y, scaleX, scaleY, rotation) {
+    var path2d = new Path2D(pathString);
+
+    var t1 = new Path2D();
+    t1.addPath(path2d, new DOMMatrix(pathMatrix));
+
+    var t2 = new Path2D();
+    // see https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrix/DOMMatrix
+    t2.addPath(t1, new DOMMatrix([
+      Math.cos(rotation) * scaleX,
+      Math.sin(rotation) * scaleX,
+      -Math.sin(rotation) * scaleY,
+      Math.cos(rotation) * scaleY,
+      x,
+      y
+    ]));
+
+    return t2;
+  }
+
+  function shapeFromPath(pathData) {
+    if (!canUsePaths) {
+      throw new Error('path confetti are not supported in this browser');
+    }
+
+    var path, matrix;
+
+    if (typeof pathData === 'string') {
+      path = pathData;
+    } else {
+      path = pathData.path;
+      matrix = pathData.matrix;
+    }
+
+    var path2d = new Path2D(path);
+    var tempCanvas = document.createElement('canvas');
+    var tempCtx = tempCanvas.getContext('2d');
+
+    if (!matrix) {
+      // attempt to figure out the width of the path, up to 1000x1000
+      var maxSize = 1000;
+      var minX = maxSize;
+      var minY = maxSize;
+      var maxX = 0;
+      var maxY = 0;
+      var width, height;
+
+      // do some line skipping... this is faster than checking
+      // every pixel and will be mostly still correct
+      for (var x = 0; x < maxSize; x += 2) {
+        for (var y = 0; y < maxSize; y += 2) {
+          if (tempCtx.isPointInPath(path2d, x, y, 'nonzero')) {
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+        }
+      }
+
+      width = maxX - minX;
+      height = maxY - minY;
+
+      var maxDesiredSize = 10;
+      var scale = Math.min(maxDesiredSize/width, maxDesiredSize/height);
+
+      matrix = [
+        scale, 0, 0, scale,
+        -Math.round((width/2) + minX) * scale,
+        -Math.round((height/2) + minY) * scale
+      ];
+    }
+
+    return {
+      type: 'path',
+      path: path,
+      matrix: matrix
+    };
+  }
+
+  function shapeFromText(textData) {
+    var text,
+        scalar = 1,
+        color = '#000000',
+        // see https://nolanlawson.com/2022/04/08/the-struggle-of-using-native-emoji-on-the-web/
+        fontFamily = '"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "EmojiOne Color", "Android Emoji", "Twemoji Mozilla", "system emoji", sans-serif';
+
+    if (typeof textData === 'string') {
+      text = textData;
+    } else {
+      text = textData.text;
+      scalar = 'scalar' in textData ? textData.scalar : scalar;
+      fontFamily = 'fontFamily' in textData ? textData.fontFamily : fontFamily;
+      color = 'color' in textData ? textData.color : color;
+    }
+
+    // all other confetti are 10 pixels,
+    // so this pixel size is the de-facto 100% scale confetti
+    var fontSize = 10 * scalar;
+    var font = '' + fontSize + 'px ' + fontFamily;
+
+    var canvas = new OffscreenCanvas(fontSize, fontSize);
+    var ctx = canvas.getContext('2d');
+
+    ctx.font = font;
+    var size = ctx.measureText(text);
+    var width = Math.ceil(size.actualBoundingBoxRight + size.actualBoundingBoxLeft);
+    var height = Math.ceil(size.actualBoundingBoxAscent + size.actualBoundingBoxDescent);
+
+    var padding = 2;
+    var x = size.actualBoundingBoxLeft + padding;
+    var y = size.actualBoundingBoxAscent + padding;
+    width += padding + padding;
+    height += padding + padding;
+
+    canvas = new OffscreenCanvas(width, height);
+    ctx = canvas.getContext('2d');
+    ctx.font = font;
+    ctx.fillStyle = color;
+
+    ctx.fillText(text, x, y);
+
+    var scale = 1 / scalar;
+
+    return {
+      type: 'bitmap',
+      // TODO these probably need to be transfered for workers
+      bitmap: canvas.transferToImageBitmap(),
+      matrix: [scale, 0, 0, scale, -width * scale / 2, -height * scale / 2]
+    };
+  }
+
+  module.exports = function() {
+    return getDefaultFire().apply(this, arguments);
+  };
+  module.exports.reset = function() {
+    getDefaultFire().reset();
+  };
+  module.exports.create = confettiCannon;
+  module.exports.shapeFromPath = shapeFromPath;
+  module.exports.shapeFromText = shapeFromText;
+}((function () {
+  if (typeof window !== 'undefined') {
+    return window;
+  }
+
+  if (typeof self !== 'undefined') {
+    return self;
+  }
+
+  return this || {};
+})(), module, false));
+
+// end source content
+
+  window.confetti = module.exports;
+}(window, {}));
+
+</script>
+<!--VENDOR-LIBS-->
 <script>
 /* ================= CONFIG ================= */
 /* Art candidates: local files (ship these beside index.html) first, CDN fallback.
@@ -772,7 +1686,7 @@ LIB.forEach(m=>{ if(MG_MAP[m.n]) m.mg = MG_MAP[m.n]; if(AREA_MAP[m.n]) m.area = 
 const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0,recharge:0},
   done:0, sessions:0, microDone:0, minutes:0, streak:0, lastDay:"", custom:[], media:[], logs:{}, dayXP:{}, dayMin:{}, moveMeta:{},
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[]},
-  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", bannerUrl:"", avatarUrl:""} };
+  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", bannerUrl:"", avatarUrl:"", sound:"low"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
 S.settings = Object.assign({}, DEF.settings, S.settings||{}); S.moveMeta = S.moveMeta||{};
@@ -788,7 +1702,92 @@ const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s??"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const round5 = n => Math.max(5, Math.round(n/5)*5);
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1800); }
-const buzz = ()=>{ try{ navigator.vibrate && navigator.vibrate(8); }catch(e){} };
+
+/* ================= SENSORY: SFX + HAPTICS + CONFETTI =================
+   All SFX are synthesized with Web Audio — zero files, works offline.
+   Settings: S.settings.sound = "off" | "low" | "full" (default "low"). */
+const SFX = {
+  ac:null,
+  ctx(){ if(!this.ac){ try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return this.ac; },
+  get on(){ return (S.settings.sound||"low") !== "off"; },
+  vol(){ return (S.settings.sound==="full") ? 1 : 0.55; },
+  env(freq, t0, dur, type="sine", gain=0.1, slide=0){
+    try{
+      const ac=this.ctx(); if(!ac) return;
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.type=type; o.frequency.setValueAtTime(freq, t0);
+      if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide), t0+dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain*this.vol(), t0+0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0+dur+0.02);
+    }catch(e){}
+  },
+  whoosh(t0, dur, from=300, to=3800, gain=0.05){
+    try{
+      const ac=this.ctx(); if(!ac || !ac.createBuffer) return;
+      const n = Math.floor(ac.sampleRate*dur), buf=ac.createBuffer(1,n,ac.sampleRate), d=buf.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+      const src=ac.createBufferSource(); src.buffer=buf;
+      const f=ac.createBiquadFilter(); f.type="bandpass"; f.Q.value=1.1;
+      f.frequency.setValueAtTime(from,t0); f.frequency.exponentialRampToValueAtTime(to,t0+dur);
+      const g=ac.createGain(); g.gain.setValueAtTime(0.0001,t0);
+      g.gain.exponentialRampToValueAtTime(gain*this.vol(), t0+dur*0.3);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      src.connect(f); f.connect(g); g.connect(ac.destination); src.start(t0); src.stop(t0+dur+0.02);
+    }catch(e){}
+  },
+  play(name){
+    if(!this.on) return;
+    try{
+      const ac=this.ctx(); if(!ac) return;
+      if(ac.state==="suspended" && ac.resume) ac.resume().catch(()=>{});
+      const t=(ac.currentTime||0)+0.01;
+      if(name==="tap") this.env(660,t,.05,"sine",.06);
+      else if(name==="select"){ this.env(520,t,.06,"sine",.07); this.env(784,t+.045,.08,"sine",.06); }
+      else if(name==="advance") this.whoosh(t,.26,300,3800,.045);
+      else if(name==="back") this.whoosh(t,.2,2800,320,.035);
+      else if(name==="done"){ this.env(587,t,.09,"triangle",.09); this.env(880,t+.07,.12,"triangle",.08); }
+      else if(name==="complete"){ [523.25,659.25,783.99].forEach((f,i)=>this.env(f,t+i*.09,.16,"triangle",.09)); }
+      else if(name==="fanfare"){ [523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>this.env(f,t+i*.1,.22,"triangle",.1)); this.whoosh(t+.38,.5,600,6000,.028); }
+      else if(name==="tick") this.env(880,t,.035,"square",.025);
+      else if(name==="beep"){ for(let i=0;i<3;i++) this.env(880,t+i*.28,.2,"sine",.09); }
+      else if(name==="beep1") this.env(880,t,.2,"sine",.09);
+    }catch(e){}
+  }
+};
+document.addEventListener("pointerdown", ()=>{ try{ const ac=SFX.ctx(); if(ac && ac.state==="suspended" && ac.resume) ac.resume().catch(()=>{}); }catch(e){} }, {passive:true});
+/* real haptics on iOS via Capacitor Haptics plugin; web vibrate fallback */
+const buzz = (style)=>{ try{
+  const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+  if(H && H.impact) H.impact({ style: style==="med" ? "MEDIUM" : "LIGHT" }).catch(()=>{});
+  else if(navigator.vibrate) navigator.vibrate(style==="med" ? 16 : 8);
+  SFX.play("tap");
+}catch(e){} };
+/* canvas-confetti (vendored) for big moments; CSS confetti stays for small wins */
+function bigBurst(opts={}){
+  try{
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if(typeof window.confetti !== "function") return;
+    const probe = document.createElement("canvas");
+    if(!probe.getContext || !probe.getContext("2d")) return;
+    const cs = getComputedStyle(document.body);
+    const colors = ["--accent","--accent2","--c-skill","--c-recharge","--c-fuel"]
+      .map(v=>cs.getPropertyValue(v).trim()).filter(Boolean);
+    window.confetti({ particleCount:opts.n||120, spread:opts.spread||75, startVelocity:36, gravity:1.1,
+      ticks:190, origin:opts.origin||{x:.5,y:.62}, colors:colors.length?colors:undefined,
+      disableForReducedMotion:true, zIndex:97 });
+  }catch(e){}
+}
+/* confirm sheet — every destructive action must pass through here */
+let _cfCb = null;
+function askConfirm(title, msg, okLabel, cb){
+  $("#cfTitle").textContent = title; $("#cfMsg").textContent = msg;
+  $("#cfYes").textContent = okLabel||"Confirm";
+  _cfCb = cb; $("#confirmSheet").classList.add("show"); SFX.play("select");
+}
+$("#cfYes").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("show"); const cb=_cfCb; _cfCb=null; buzz("med"); if(cb) cb(); });
+$("#cfNo").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("show"); _cfCb=null; });
 const allMoves = () => LIB.concat(S.custom||[]);
 const ytSearch = n => "https://www.youtube.com/results?search_query=" + encodeURIComponent("how to " + n + " exercise");
 const dayKey = (d=new Date()) => d.toDateString();
@@ -803,6 +1802,7 @@ function grantXp(sysKey, amount){
     $("#luLvl").textContent = "LVL " + after;
     $("#luMsg").textContent = "You're " + tierFor(after) + " now. Momentum compounds — keep stacking days.";
     $("#levelup").classList.add("show");
+    SFX.play("fanfare"); bigBurst({n:150, spread:90, origin:{x:.5,y:.45}});
   }
 }
 function touchStreak(){
@@ -1005,13 +2005,23 @@ function runForge(ms, done){
     if(i >= fsteps.length){ $("#forgePct").textContent = "100%";
       $("#forgeRing").style.background = `conic-gradient(var(--accent2) 100%, transparent 0)`;
       $$(".fstep").forEach(el=>el.classList.add("done"));
-      confettiBurst(); setTimeout(done, 550); return; }
-    i++; setTimeout(tick, per);
+      SFX.play("fanfare"); confettiBurst(); bigBurst({n:160, spread:100, origin:{x:.5,y:.4}});
+      setTimeout(done, 550); return; }
+    i++; SFX.play("tick"); setTimeout(tick, per);
   };
   tick();
 }
 function finishOnboarding(skip){
   if(!skip) onbCollect();
+  if(planHasWork()){
+    askConfirm("Rebuild everything?",
+      "You have completed work on your current plan. XP, stats and levels stay — the calendar itself is rebuilt around your new answers.","Rebuild",
+      ()=>applyOnboarding(skip));
+    return;
+  }
+  applyOnboarding(skip);
+}
+function applyOnboarding(skip){
   const a = onb.a;
   if(a.sports.includes("soccer") && !a.eq.includes("Soccer Ball")) a.eq.push("Soccer Ball");
   S.profile = { name:a.name||"You", age:a.age, gender:a.gender,
@@ -1272,10 +2282,7 @@ function loadHint(m){
 
 /* ================= TIMERS ================= */
 let T = { left:0, iv:null, label:"" };
-function beep(n=3){ try{ const ac = beep.ac || (beep.ac = new (window.AudioContext||window.webkitAudioContext)());
-  for(let i=0;i<n;i++){ const o=ac.createOscillator(), g=ac.createGain(); o.connect(g); g.connect(ac.destination);
-    o.frequency.value=880; g.gain.setValueAtTime(.18, ac.currentTime+i*.28); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime+i*.28+.22);
-    o.start(ac.currentTime+i*.28); o.stop(ac.currentTime+i*.28+.24);} }catch(e){} }
+function beep(n=3){ SFX.play(n===1 ? "beep1" : "beep"); }
 function fmt(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
 function startTimer(sec, label){
   clearInterval(T.iv); T.left=sec; T.label=label;
@@ -1313,9 +2320,10 @@ function toggleItem(i, fromPlayer){
         if(pt){ const typ = Object.keys(DTYPES).find(k=>DTYPES[k].t===S.session.focus) || "MOT";
           pt.day.acts.push({type:typ, done:true, adhoc:true}); }
       }
-      stopTimer(); if(!fromPlayer) toast("Session complete 💥");
-    } else if(m.rest && !fromPlayer){ startTimer(m.rest, "REST"); }
-    else if(!fromPlayer) toast(`+${m.xp} XP · ${SYS[m.p].name}`);
+      stopTimer(); SFX.play("complete"); bigBurst({n:90});
+      if(!fromPlayer) toast("Session complete 💥");
+    } else if(m.rest && !fromPlayer){ SFX.play("done"); startTimer(m.rest, "REST"); }
+    else { SFX.play("done"); if(!fromPlayer) toast(`+${m.xp} XP · ${SYS[m.p].name}`); }
   } else if(!fromPlayer){ m.done=false; S.done=Math.max(0,S.done-1); }
 }
 
@@ -1674,6 +2682,8 @@ function renderMore(){
   $("#themeGrid").innerHTML = Object.entries(THEMES).map(([k,c])=>`
     <div class="theme-sw ${S.settings.theme===k?'on':''}" data-theme-pick="${k}">
       <div class="dot" style="background:${c}; ${k==='daylight'?'border:2px solid #ddd':''}"></div>${k}</div>`).join("");
+  $("#soundChips").innerHTML = [["off","🔇 Off"],["low","🔉 Subtle"],["full","🔊 Full"]]
+    .map(([k,l])=>`<button class="chip ${(S.settings.sound||"low")===k?'on':''}" data-sound="${k}">${l}</button>`).join("");
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
   $("#artBanner").value = S.settings.bannerUrl||""; $("#artAvatar").value = S.settings.avatarUrl||"";
   $("#artBg").value = S.settings.bgUrl||"";
@@ -1754,9 +2764,9 @@ $("#onbNext").addEventListener("click", ()=>{
   onbCollect();
   const steps = onbSteps();
   if(onb.i >= steps.length-1){ finishOnboarding(false); return; }
-  onb.i++; onbRender();
+  onb.i++; SFX.play("advance"); onbRender();
 });
-$("#onbBack").addEventListener("click", ()=>{ if(onb.i>0){ onbCollect(); onb.i--; onbRender(); } });
+$("#onbBack").addEventListener("click", ()=>{ if(onb.i>0){ onbCollect(); onb.i--; SFX.play("back"); onbRender(); } });
 $("#onbSkip").addEventListener("click", ()=>finishOnboarding(true));
 
 document.addEventListener("click", ev=>{
@@ -1837,7 +2847,7 @@ document.addEventListener("click", ev=>{
   const hb = t.closest("[data-habit]");
   if(hb){ const id=hb.dataset.habit, today=dayKey(); S.habitLog[today]=S.habitLog[today]||{};
     const h = habitSet().find(x=>x.id===id);
-    if(!S.habitLog[today][id]){ S.habitLog[today][id]=true; touchStreak(); grantXp(h.sys, h.xp); toast(`+${h.xp} XP · ${SYS[h.sys].name}`); }
+    if(!S.habitLog[today][id]){ S.habitLog[today][id]=true; touchStreak(); grantXp(h.sys, h.xp); SFX.play("select"); toast(`+${h.xp} XP · ${SYS[h.sys].name}`); }
     else delete S.habitLog[today][id];
     save(); renderHabits(); renderHero(); return; }
 
@@ -1872,7 +2882,12 @@ document.addEventListener("click", ev=>{
     save(); renderPlan(); renderTodayPage(); return; }
   const adl = t.closest("[data-actdel]");
   if(adl){ const [idx,ai] = adl.dataset.actdel.split(":").map(Number);
-    S.plan.days[idx].acts.splice(ai,1); save(); renderPlan(); renderTodayPage(); return; }
+    const act = S.plan.days[idx].acts[ai];
+    const doDel = ()=>{ S.plan.days[idx].acts.splice(ai,1); save(); renderPlan(); renderTodayPage(); };
+    if(act && act.done) askConfirm("Remove completed session?",
+      "It disappears from this day — the XP and stats you earned stay yours.","Remove", doDel);
+    else doDel();
+    return; }
   const adn = t.closest("[data-actdone]");
   if(adn){ const [idx,ai] = adn.dataset.actdone.split(":").map(Number);
     const a = S.plan.days[idx].acts[ai]; a.done = !a.done; save(); renderPlan(); renderTodayPage(); return; }
@@ -1884,7 +2899,9 @@ document.addEventListener("click", ev=>{
   if(rs){ S.plan.days[+rs.dataset.rest].acts = []; save(); renderPlan(); renderTodayPage(); return; }
 
   const th = t.closest("[data-theme-pick]");
-  if(th){ S.settings.theme=th.dataset.themePick; document.body.dataset.theme=S.settings.theme; applyBg(); save(); renderMore(); return; }
+  if(th){ S.settings.theme=th.dataset.themePick; document.body.dataset.theme=S.settings.theme; applyBg(); SFX.play("select"); save(); renderMore(); return; }
+  const snd = t.closest("[data-sound]");
+  if(snd){ S.settings.sound=snd.dataset.sound; save(); renderMore(); SFX.play("complete"); return; }
   const md = t.closest("[data-mdel]"); if(md){ S.media.splice(+md.dataset.mdel,1); save(); renderMedia(); return; }
   const dl = t.closest("[data-del]"); if(dl){ S.custom.splice(+dl.dataset.del,1); save(); renderMore(); renderLib(); return; }
   const seg = t.closest("#libSeg button");
@@ -1928,11 +2945,34 @@ $("#saveNums").addEventListener("click", ()=>{
   S.profile.lifts = { squat:+$("#wSquat").value||0, bench:+$("#wBench").value||0, deadlift:+$("#wDead").value||0, press:+$("#wPress").value||0 };
   S.profile.caps = { db:+$("#wDb").value||0, kb:+$("#wKb").value||0 };
   save(); toast("Numbers saved — load hints updated"); });
-$("#replanBtn").addEventListener("click", ()=>{ if(S.profile){ S.plan = makePlan(S.profile); planWeek=0; save(); renderPlan(); renderTodayPage(); toast("Fresh plan generated"); } });
+/* ---- destructive-action protection: completed + locked work is never silently lost ---- */
+function planHasWork(){ return !!(S.plan && S.plan.days && S.plan.days.some(d=>(d.acts||[]).some(a=>a.done||a.lock))); }
+function regeneratePlan(blank){
+  const old = S.plan;
+  S.plan = makePlan(S.profile);
+  if(blank) S.plan.days.forEach(d=>{ d.acts=[]; d.note="Your call — tap ＋ Add activity to design this day."; });
+  if(old && old.days){
+    S.plan.days.forEach((day,i)=>{
+      const prev = old.days[i]; if(!prev) return;
+      const keep = (prev.acts||[]).filter(a=>a.done||a.lock);
+      if(keep.length) day.acts = keep.concat(day.acts.filter(na=>!keep.some(ka=>ka.type===na.type)));
+    });
+    /* kept acts may reference old templates — carry them over so Start still works */
+    Object.entries(old.templates||{}).forEach(([k,v])=>{ if(!S.plan.templates[k]) S.plan.templates[k]=v; });
+  }
+  planWeek=0; save(); renderPlan(); renderTodayPage();
+}
+$("#replanBtn").addEventListener("click", ()=>{ if(!S.profile) return;
+  if(planHasWork()) askConfirm("Rebuild your plan?",
+    "Completed and locked sessions stay exactly where they are — everything else is rebuilt fresh.","Rebuild",
+    ()=>{ regeneratePlan(false); toast("Plan rebuilt — finished work kept"); });
+  else { regeneratePlan(false); toast("Fresh plan generated"); } });
 $("#redoInterview").addEventListener("click", openOnb);
 $("#blankPlan").addEventListener("click", ()=>{ if(!S.profile) { openOnb(); return; }
-  S.plan = makePlan(S.profile); S.plan.days.forEach(d=>{ d.acts=[]; d.note="Your call — tap ＋ Add activity to design this day."; });
-  save(); renderPlan(); renderTodayPage(); toast("Blank canvas — design each day"); });
+  if(planHasWork()) askConfirm("Start a blank plan?",
+    "Completed and locked sessions are kept; other scheduled sessions are cleared so you can design each day yourself.","Clear plan",
+    ()=>{ regeneratePlan(true); toast("Blank canvas — design each day"); });
+  else { regeneratePlan(true); toast("Blank canvas — design each day"); } });
 
 /* ================= BOOT ================= */
 function renderAll(){ renderHero(); renderTodayPage(); renderHabits(); renderPickers(); renderSession(); renderPlan(); renderLib(); renderMedia(); renderMore(); renderMusic(); }
