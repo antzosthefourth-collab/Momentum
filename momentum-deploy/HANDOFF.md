@@ -1,5 +1,22 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v5.0-phase1 · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v6-in-progress · July 2026*
+
+## v6 program — IN PROGRESS (see `PLAN-v6.md`) — owner feedback pass, July 9
+1 ✅ Interview 3.0 (13 goals, 18 extracurricular activities, per-sport gear w/ auto-add,
+eqpref/life/windows/tech steps REMOVED, booster definition card, SKILL 🎯 gated on
+picking soccer, v4/v5→v6 migrations) · 2 ✅ Conditioning engine (MOT builds gear-adaptive
+circuits — kbflow with KB else HIIT — never sets×reps; `circuitTiming` scales work
+40s→50s→60s by session length; kb30/kb40 recipes; hiit20+fam quick starts removed;
+hiit is an activity → MOT day; circuit templates hydrate with flow) · 3 ✅ Today 2.1
+(`todayBrief()` plain-english + `speakBrief()`; acts expand into inline `actMoveList`
+checklists with per-move check-off crediting via `ensureActSession`+`toggleItem`; how
+cues + demo inline; check-in & journal moved to page bottom) + Train in-session editing
+(swap/choose/remove/add per exercise, `#pickSheet`, edits write back to plan slot via
+`syncActNames`) · 4 ⏳ Viking hero/avatar/rewards + forced tutorial · 5 ⏳ generated
+assets (Viking art, companions incl. slime+dragon, lofi viking loops, level-up video).
+**validate.js: 215 checks.** Owner decisions: Viking athlete art direction; video in
+level-up + hero loop + theme backdrops (free-first: nanobanana/HF/GPT before
+Higgsfield's 39.28 credits); windows return in-app at Phase-7 scheduling.
 
 ## v5 program — ALL SIX PHASES SHIPPED ✅ (see `PLAN-v5.md` in this folder)
 1 ✅ Warmth/Sound/Safety (527b7f6) · 2 ✅ Onboarding 2.0 (ebeb2ce) · 3 ✅ Library 2.0 +

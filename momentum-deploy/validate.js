@@ -34,29 +34,35 @@ setTimeout(()=>{ try {
   T("maxes NOT asked", !$("#oSquat"));
   click($("#onbNext"));                               // about -> goals
 
-  /* ---- 15 specific goal families, grouped ---- */
-  T("15 goal families offered", $$("[data-goal]").length===15);
-  T("goal families are specific", !!$('[data-goal="muscle"]') && !!$('[data-goal="heart"]') && !!$('[data-goal="power"]')
-    && !!$('[data-goal="aesthetic"]') && !!$('[data-goal="return"]') && !!$('[data-goal="family"]'));
+  /* ---- 13 specific goal families — powerlifting + family retired (v6) ---- */
+  T("13 goal families offered", $$("[data-goal]").length===13, `(${$$("[data-goal]").length})`);
+  T("goal families are specific", !!$('[data-goal="muscle"]') && !!$('[data-goal="heart"]')
+    && !!$('[data-goal="aesthetic"]') && !!$('[data-goal="return"]'));
+  T("powerlifting + family goals removed", !$('[data-goal="power"]') && !$('[data-goal="family"]'));
+  T("return-to-activity goal is self-explanatory", $("#onbBody").textContent.includes("Bounce back"));
   T("vague goals replaced", !$('[data-goal="strength"]') && !$('[data-goal="soccer"]') && !$('[data-goal="move"]'));
-  for(const g of ["muscle","run","mobility","fat","family"]) click($(`[data-goal="${g}"]`));
+  for(const g of ["muscle","run","mobility","fat"]) click($(`[data-goal="${g}"]`));
   T("no running-focus question exists", !$('[data-run]'));
   click($("#onbNext"));                               // goals -> activities
 
-  /* ---- "What activities do you do?" — 25 activities, per-activity levels ---- */
+  /* ---- "What activities do you do?" — 18 extracurricular activities (v6) ---- */
   T("activities step replaces sports step", $("#onbBody").textContent.includes("activities"));
-  T("25 activities offered", $$("[data-activity]").length===25, `(${$$("[data-activity]").length})`);
-  T("training modalities are activities too", !!$('[data-activity="kettlebells"]') && !!$('[data-activity="hiit"]') && !!$('[data-activity="martial"]') && !!$('[data-activity="family"]'));
+  T("18 extracurricular activities offered", $$("[data-activity]").length===18, `(${$$("[data-activity]").length})`);
+  T("gym modalities removed from activities", !$('[data-activity="kettlebells"]') && !$('[data-activity="dumbbells"]')
+    && !$('[data-activity="barbell"]') && !$('[data-activity="machines"]') && !$('[data-activity="bodyweight"]')
+    && !$('[data-activity="elliptical"]') && !$('[data-activity="family"]'));
+  T("real activities still offered", !!$('[data-activity="hiit"]') && !!$('[data-activity="martial"]') && !!$('[data-activity="swimming"]'));
   click($('[data-activity="soccer"]')); click($('[data-activity="cycling"]'));
-  click($('[data-activity="kettlebells"]')); click($('[data-activity="family"]'));
-  T("per-activity comfort sliders appear", $$("[data-alevel]").length===16, `(${$$("[data-alevel]").length})`);
-  click($('[data-alevel="kettlebells:4"]'));          // advanced lifter…
-  click($('[data-alevel="soccer:1"]'));               // …brand-new to soccer
-  T("levels are independent per activity", w.eval(`onb.a.activities.kettlebells===4 && onb.a.activities.soccer===1`));
-  click($("#onbNext"));                               // activities -> areas (exp derivable, so skipped)
+  T("per-activity comfort sliders appear", $$("[data-alevel]").length===8, `(${$$("[data-alevel]").length})`);
+  click($('[data-alevel="soccer:1"]'));               // brand-new to soccer
+  T("levels are independent per activity", w.eval(`onb.a.activities.cycling===3 && onb.a.activities.soccer===1`));
+  click($("#onbNext"));                               // activities -> exp (lifting not derivable anymore)
 
-  /* ---- experience derived from activities; gap step skipped ---- */
-  T("exp step skipped when derivable from activities", !$('[data-exp]'));
+  /* ---- lifting experience asked directly now that it's not an "activity" ---- */
+  T("exp step asks lifting when goals need it", !!$('[data-track="lift"]'));
+  T("cardio experience derived from activities — not asked", !$('[data-track="cardio"]'));
+  click($('[data-track="lift"][data-exp="exp"]'));
+  click($("#onbNext"));                               // exp -> areas
 
   /* ---- body areas + injury context ---- */
   T("mobility areas step appears", !!$('[data-area="ankle"]'));
@@ -74,34 +80,23 @@ setTimeout(()=>{ try {
   T("gym machines offered", !!$('[data-oeq="Lat Pulldown"]') && !!$('[data-oeq="Leg Press"]') && !!$('[data-oeq="Smith Machine"]') && !!$('[data-oeq="Cable Machine"]'));
   T("cardio machines offered", !!$('[data-oeq="Treadmill"]') && !!$('[data-oeq="Stationary Bike"]') && !!$('[data-oeq="Elliptical"]') && !!$('[data-oeq="Stair Climber"]'));
   T("new gear catalog offered", !!$('[data-oeq="Adjustable Dumbbells"]') && !!$('[data-oeq="TRX / Suspension"]') && !!$('[data-oeq="Yoga Mat"]') && !!$('[data-oeq="Foam Roller"]'));
+  const oeqSet = new Set($$("[data-oeq]").map(e=>e.dataset.oeq));   // jsdom selectors dislike "&" in values
+  T("per-sport gear replaces Sports Gear", oeqSet.has("Pool Access") && oeqSet.has("Racquet & Paddle")
+    && oeqSet.has("Bat & Glove") && oeqSet.has("Bike") && !oeqSet.has("Sports Gear"));
   for(const e of ["Barbell","Squat Rack","Bench","Kettlebells","Lat Pulldown","Cable Machine","Adjustable Dumbbells"]) click($(`[data-oeq="${e}"]`));
-  click($("#onbNext"));                               // equip -> eqpref
+  click($("#onbNext"));                               // equip -> schedule (pref/life/windows steps retired)
 
-  /* ---- access ≠ preference ---- */
-  T("gear preference step appears after access", $$("[data-epref]").length>=28, `(${$$("[data-epref]").length} pref chips)`);
-  click($('[data-epref="Kettlebells:love"]'));
-  click($('[data-epref="Lat Pulldown:avoid"]'));
-  T("preferences stored separately from access", w.eval(`onb.a.eqPref["Kettlebells"]==="love" && onb.a.eqPref["Lat Pulldown"]==="avoid" && onb.a.eq.includes("Lat Pulldown")`));
-  click($("#onbNext"));                               // eqpref -> life
-
-  /* ---- life: 9-to-5, 5-to-9, motivation style ---- */
-  T("9-to-5 question appears", !!$('[data-work="wfh"]'));
-  T("5-to-9 question appears", $$("[data-eve]").length>=4);
-  T("motivation style asked", $$("[data-motiv]").length===3);
-  click($('[data-work="wfh"]')); click($('[data-eve="family"]')); click($('[data-motiv="streaks"]'));
-  click($("#onbNext"));                               // life -> windows
-
-  /* ---- multi time-windows + life presets ---- */
-  T("five time-windows offered", $$("[data-owin]").length===25, `(${$$("[data-owin]").length} slots)`);
-  T("life presets offered", !!$('[data-preset="parent"]') && !!$('[data-preset="shift"]') && !!$('[data-preset="labor"]'));
-  click($('[data-preset="parent"]'));
-  T("preset fills the windows", w.eval(`onb.a.windows.main==="morning" && onb.a.windows.family==="evening" && onb.a.windows.booster==="lunch"`));
-  click($("#onbNext"));                               // windows -> schedule
+  /* ---- v6: dead-weight steps removed ---- */
+  T("gear-preference step removed", !$("[data-epref]"));
+  T("life step removed (9-to-5 / 5-to-9 / motivation)", !$("[data-work]") && !$("[data-eve]") && !$("[data-motiv]"));
+  T("windows step removed", !$("[data-owin]") && !$("[data-preset]"));
+  T("schedule step follows gear directly", !!$('[data-odays="3"]'));
 
   /* ---- schedule + weekly target + daily boosters ---- */
   click($('[data-odays="3"]')); click($('[data-olen="45"]')); click($('[data-oweeks="6"]'));
   T("weekly consistency target asked", $$("[data-wktarget]").length===4);
   click($('[data-wktarget="4"]'));
+  T("daily boosters DEFINED before asking", $("#onbBody").textContent.includes("What's a booster?"));
   T("daily boosters offered (multi-session days)", !!$('[data-oboost="1"]') && !!$('[data-oboost="2"]'));
   click($('[data-oboost="1"]'));
   click($("#onbNext"));                               // schedule -> mode
@@ -109,24 +104,22 @@ setTimeout(()=>{ try {
   /* ---- four coach modes ---- */
   T("four coach modes offered", $$("[data-mode]").length===4);
   T("recovery-first mode exists", !!$('[data-mode="recovery"]'));
-  T("tech comfort asked", $$("[data-tech]").length===3);
-  click($('[data-tech="standard"]'));
+  T("tech-comfort question removed", !$("[data-tech]"));
   click($('[data-mode="coach"]')); click($("#onbNext"));
   T("onboarding closes", !$("#onb").classList.contains("show"));
   T("post-interview lands on Plan tab", $("#page-plan").classList.contains("on"));
 
   /* ---- profile captured the new answers ---- */
   const st = state();
-  T("activities + levels saved on profile", st.profile.activities.kettlebells===4 && st.profile.activities.soccer===1 && st.profile.activities.cycling===3);
-  T("compat sports derived from activities", st.profile.sports.includes("soccer") && st.profile.sports.includes("cycling") && st.profile.sports.includes("family"));
-  T("soccer activity auto-adds soccer ball", st.profile.eq.includes("Soccer Ball"));
-  T("experience derived per track from levels", st.profile.exps.lift==="exp" && st.profile.exps.sport==="new" && st.profile.exps.cardio==="some");
-  T("gear preferences saved", st.profile.eqPref["Kettlebells"]==="love" && st.profile.eqPref["Lat Pulldown"]==="avoid");
-  T("loved gear boosts builder scores", w.eval(`moveScore({n:"__t",eq:"Kettlebells"}) > moveScore({n:"__t",eq:"Lat Pulldown"})`));
+  T("activities + levels saved on profile", st.profile.activities.soccer===1 && st.profile.activities.cycling===3);
+  T("compat sports derived from activities", st.profile.sports.includes("soccer") && st.profile.sports.includes("cycling") && !st.profile.sports.includes("family"));
+  T("sport gear auto-added (ball + bike)", st.profile.eq.includes("Soccer Ball") && st.profile.eq.includes("Bike"));
+  T("lifting exp from the exp step, rest derived", st.profile.exps.lift==="exp" && st.profile.exps.sport==="new" && st.profile.exps.cardio==="some");
+  T("lifestyle fields retired from profile", st.profile.work===undefined && st.profile.eve===undefined && st.profile.windows===undefined
+    && st.profile.motiv===undefined && st.profile.tech===undefined && st.profile.eqPref===undefined);
   T("injury context saved", st.profile.areaInfo.ankle && st.profile.areaInfo.ankle.inj==="yes"
     && st.profile.areaInfo.ankle.mode==="rehab" && st.profile.areaInfo.ankle.stage==="mid");
-  T("5-to-9 + windows saved", st.profile.eve==="family" && st.profile.windows.main==="morning" && st.profile.window==="morning");
-  T("motivation, weekly target, tech saved", st.profile.motiv==="streaks" && st.profile.streakTol===4 && st.profile.tech==="standard");
+  T("weekly target saved", st.profile.streakTol===4);
   T("coach mode saved", st.profile.mode==="coach" && st.profile.style==="coach");
   T("booster setting saved", st.profile.boost===1);
 
@@ -138,7 +131,7 @@ setTimeout(()=>{ try {
   T("every desired type present in wk1", ["STR","RUNF","SKL","ARM"].every(t=>wk1.some(x=>x.acts.some(a=>a.type===t))));
   T("soccer activity → ball work in plan", wk1.some(x=>x.acts.some(a=>a.type==="SKL")));
   T("cycling activity → ride day in plan", wk1.some(x=>x.acts.some(a=>a.type==="SP_cycling")));
-  T("family goal + activity → family day in plan", wk1.some(x=>x.acts.some(a=>a.type==="SP_family")));
+  T("no family day type in new plans", !st.plan.days.some(x=>x.acts.some(a=>a.type==="SP_family")));
   T("booster micro-session on every day", st.plan.days.every(x=>x.acts.some(a=>a.type==="BST" && a.micro)));
   T("adjustable dumbbells unlock dumbbell moves", w.eval(`
     (function(){ const saved = S.sel.eq.slice(); S.sel.eq = ["Adjustable Dumbbells"];
@@ -153,7 +146,24 @@ setTimeout(()=>{ try {
   const actBtns = $$("#tdActs [data-startact]");
   T("today's activities listed with start buttons", actBtns.length >= 1, `(${actBtns.length} acts)`);
   T("quick-add includes booster chip", !!$('[data-qadd="BST"]'));
-  T("quick-add offers picked activities only", !!$('[data-qadd="SP_cycling"]') && !!$('[data-qadd="SP_family"]') && !$('[data-qadd="SP_swimming"]') && !$('[data-qadd="SP_martial"]'));
+  T("quick-add offers picked activities only", !!$('[data-qadd="SP_cycling"]') && !$('[data-qadd="SP_swimming"]') && !$('[data-qadd="SP_martial"]'));
+  T("family activity fully retired from quick-add", !$('[data-qadd="SP_family"]'));
+
+  /* ---- v6 Phase 3: Today's brief + inline movement checklists ---- */
+  T("Today shows a plain-english brief", $("#tdBrief").textContent.includes("Today is") && $("#tdBrief").textContent.includes("week 1"));
+  T("brief includes real minutes", /about \d+ minutes/.test($("#tdBrief").textContent));
+  T("brief has a speak button", !!$("#briefSpeak"));
+  T("today's workouts expand into inline checklists", $$("#tdActs [data-tcheck]").length>=3, `(${$$("#tdActs [data-tcheck]").length} moves)`);
+  T("inline how cues on every move", $$("#tdActs [data-thow]").length === $$("#tdActs [data-tcheck]").length);
+  click($$("#tdActs [data-thow]")[0]);
+  T("how cue reveals coaching inline", $$("#tdActs .td-how")[0].style.display !== "none");
+  const doneB4 = state().done;
+  click($$("#tdActs [data-tcheck]")[0]);
+  T("checking a move from Today credits it", state().done === doneB4+1 && !!state().session.actRef);
+  click($$("#tdActs [data-tcheck]")[0]);
+  T("unchecking from Today works too", state().done === doneB4);
+  T("check-in + journal moved to the bottom", !!($("#habitList").compareDocumentPosition($("#checkinCard")) & 4)
+    && !!($("#checkinCard").compareDocumentPosition($("#jrnText")) & 4));
 
   /* ---- quick-add unscheduled activity ---- */
   click($('[data-qadd="ARM"]'));
@@ -171,8 +181,9 @@ setTimeout(()=>{ try {
   T("A/B strength split when 2+ strength days", strT.length<2 || strT.some(t=>/upper/.test(t.label)) && strT.some(t=>/lower/.test(t.label)));
   const armKey = Object.keys(tp).find(k=>k.endsWith(":ARM"));
   T("armor template respects chosen areas", !armKey || tp[armKey].names.length>0);
-  T("WFH habits derived from 9-to-5", $$("[data-habit]").some(h=>/between meetings/i.test(h.textContent)));
-  T("family habits derived from 5-to-9", $$("[data-habit]").some(h=>/post-dinner/i.test(h.textContent)));
+  T("baseline habits are goal-driven, not lifestyle-driven", $$("[data-habit]").length>=4 && $$("[data-habit]").some(h=>/Stand \+ 2-min/i.test(h.textContent)));
+  T("no orphaned lifestyle habits", !$$("[data-habit]").some(h=>/post-dinner|between meetings/i.test(h.textContent)));
+  T("SKILL system icon is sport-neutral", w.eval(`SYS.skill.icon==="🎯"`));
 
   /* ---- start an act, complete it, act marked done ---- */
   click($$("#tdActs [data-startact]")[0]);
@@ -331,6 +342,63 @@ setTimeout(()=>{ try {
     state().session.items.filter(m=>m.b!=="warmup" && m.area).every(m=>m.area.some(a=>["neck","back","shoulder","general"].includes(a))));
   w.eval(`applyRecipe("heart")`);
   T("heart-health recipe sticks to beginner moves", state().session.items.filter(m=>m.b==="main").every(m=>(m.lvl||1)<=1));
+
+  /* ---- v6 Phase 2: conditioning engine ---- */
+  T("zero-gear HIIT + family quick starts removed", w.eval(`!RECIPES.some(r=>r.id==="hiit20"||r.id==="fam")`));
+  T("30/40-min KB HIIT quick starts exist", w.eval(`RECIPES.some(r=>r.id==="kb30") && RECIPES.some(r=>r.id==="kb40")`));
+  T("conditioning focus offered on Train", w.eval(`FOCI.includes("Conditioning")`));
+  T("conditioning builds a KB circuit when KB on hand", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(); if(!S.sel.eq.includes("Kettlebells")) S.sel.eq.push("Kettlebells");
+      buildSession({focus:"Conditioning", time:20});
+      const ok = S.session.flow && S.session.style==="kbflow";
+      S.sel.eq=saved; return ok; })()`));
+  T("conditioning falls back to bodyweight HIIT without KB", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(); S.sel.eq=S.sel.eq.filter(e=>e!=="Kettlebells");
+      buildSession({focus:"Conditioning", time:20});
+      const ok = S.session.flow && S.session.style==="hiit";
+      S.sel.eq=saved; return ok; })()`));
+  T("conditioning never prescribes sets×reps", w.eval(`
+    buildSession({focus:"Conditioning", time:30});
+    S.session.items.filter(m=>m.b!=="warmup").every(m=>/s on \\/ /.test(m.d))`));
+  w.eval(`applyRecipe("kb30")`);
+  T("30-min KB HIIT works 50s windows", state().session.flow.work===50 && state().session.flow.rest===25);
+  w.eval(`applyRecipe("kb40")`);
+  T("40-min KB HIIT works 60s windows (40s–1min brief)", state().session.flow.work===60 && state().session.flow.rest===30);
+  T("longer KB HIIT stays kettlebell-first", state().session.items.filter(m=>m.b!=="warmup").every(m=>["Kettlebells","Bodyweight"].includes(m.eq)));
+  T("circuit plan templates hydrate with the follow-along player", w.eval(`
+    (function(){ const names = S.session.items.map(m=>m.n);
+      buildSession({fromNames:names, style:"kbflow", time:30});
+      return !!S.session.flow && S.session.flow.work===50; })()`));
+
+  /* ---- v6 Phase 3: edit a session in place — no random rebuild required ---- */
+  d.querySelectorAll(".nav button")[2].dispatchEvent(new w.Event("click",{bubbles:true}));
+  click($$("#focusChips .chip").find(c=>c.dataset.f==="Strength"));
+  click($("#buildBtn"));
+  const names1 = state().session.items.map(m=>m.n);
+  const mi1 = state().session.items.findIndex(m=>m.b==="main");
+  T("session cards offer swap / choose / remove", !!$(`[data-swap="${mi1}"]`) && !!$(`[data-pick="${mi1}"]`) && !!$(`[data-rm="${mi1}"]`));
+  click($(`[data-swap="${mi1}"]`));
+  const names2 = state().session.items.map(m=>m.n);
+  T("swap changes exactly one movement", names2.length===names1.length && names2[mi1]!==names1[mi1]
+    && names2.filter((n,i)=>n!==names1[i]).length===1, `${names1[mi1]} -> ${names2[mi1]}`);
+  click($(`[data-rm="${mi1}"]`));
+  T("remove drops the movement", state().session.items.length===names2.length-1);
+  click($('[data-addmove="main"]'));
+  T("movement picker opens filtered to gear", $("#pickSheet").classList.contains("show") && $$("#pkBody [data-pickmove]").length>0,
+    `(${$$("#pkBody [data-pickmove]").length} options)`);
+  const pickName = $$("#pkBody [data-pickmove]")[0] ? $$("#pkBody [data-pickmove]")[0].dataset.pickmove : "";
+  click($$("#pkBody [data-pickmove]")[0]);
+  T("picked movement lands in the session", state().session.items.some(m=>m.n===pickName) && !$("#pickSheet").classList.contains("show"));
+  /* plan-launched sessions write edits back to their slot */
+  d.querySelectorAll(".nav button")[0].dispatchEvent(new w.Event("click",{bubbles:true}));
+  const sBtn = $$("#tdActs [data-startact]")[0];
+  const [spIdx, spAi] = sBtn.dataset.startact.split(":").map(Number);
+  click(sBtn);
+  const mi2 = state().session.items.findIndex(m=>m.b==="main" && !m.done);
+  click($(`[data-swap="${mi2}"]`));
+  const wroteBack = state().plan.days[spIdx].acts[spAi].names;
+  T("train-tab edits save back to the plan slot", Array.isArray(wroteBack)
+    && wroteBack.join("|")===state().session.items.map(m=>m.n).join("|"));
 
   /* ---- injury 'avoid' filters sessions ---- */
   T("avoid-mode area excluded from built sessions", w.eval(`
@@ -502,7 +570,7 @@ setTimeout(()=>{ try {
     S.profile.goals.push("soccer"); delete S.profile.exps;
     migrateProfile();
     !S.profile.goals.includes("soccer") && S.profile.sports.includes("soccer") && !!S.profile.exps.lift`));
-  T("v4 profile migrates to v5 (goal families, activities, windows, mode)", w.eval(`
+  T("v4 profile migrates to v6 (goal families, activities, lifestyle cleanup)", w.eval(`
     (function(){
       const v4 = { name:"Old", exp:"exp", exps:{lift:"exp",cardio:"some",sport:"some"},
         goals:["strength","move","sleep","fat"], sports:["cycling","racquet"],
@@ -513,7 +581,25 @@ setTimeout(()=>{ try {
       return p.goals.includes("stronger") && p.goals.includes("mobility") && p.goals.includes("feel")
         && !p.goals.includes("strength") && !p.goals.includes("move")
         && p.activities.cycling>0 && p.activities.tennis>0
-        && p.windows.main==="evening" && p.mode==="coach" && p.eqPref && p.streakTol===4;
+        && p.windows===undefined && p.work===undefined && p.eqPref===undefined
+        && p.eq.includes("Bike") && p.eq.includes("Racquet & Paddle")
+        && p.mode==="coach" && p.streakTol===4;
+    })()`));
+  T("v5 profile migrates to v6 (power+family goals, modality activities)", w.eval(`
+    (function(){
+      const v5 = { name:"V5", exps:{lift:"some",cardio:"some",sport:"some"},
+        goals:["power","family","run"], sports:["family","running"],
+        activities:{ kettlebells:4, family:3, running:2, elliptical:2 },
+        areas:["ankle"], areaInfo:{}, runFocus:"both", eq:["Kettlebells","Sports Gear"], lifts:{}, caps:{},
+        work:"wfh", eve:"family", motiv:"streaks", tech:"simple",
+        windows:{main:"evening"}, eqPref:{Kettlebells:"love"}, days:3, len:30, weeks:6, boost:1, mode:"coach" };
+      const saved = S.profile; S.profile = v5; migrateProfile();
+      const p = S.profile; S.profile = saved;
+      return p.goals.includes("stronger") && p.goals.includes("feel") && !p.goals.includes("power") && !p.goals.includes("family")
+        && !p.activities.kettlebells && !p.activities.family && !p.activities.elliptical && p.activities.running===2
+        && !p.sports.includes("family") && !p.eq.includes("Sports Gear")
+        && p.work===undefined && p.eve===undefined && p.motiv===undefined && p.tech===undefined
+        && p.windows===undefined && p.eqPref===undefined;
     })()`));
 
   console.log(`\n${pass} passed, ${fail} failed. Runtime errors: ${errs.length?errs.join("; "):"none"}`);

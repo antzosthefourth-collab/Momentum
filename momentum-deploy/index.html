@@ -179,6 +179,13 @@ a{color:var(--accent)}
 .pday .dico{width:36px; height:36px; flex:none; border-radius:10px; background:var(--panel2); display:flex; align-items:center; justify-content:center; font-size:17px}
 .pday-detail{display:none; padding:0 6px 12px}
 .pday-wrap.open .pday-detail{display:block}
+/* Today 2.1 — inline movement checklists (Ankle-Armor digestibility) */
+.td-body{margin-top:10px; border-top:1px solid var(--line); padding-top:2px}
+.td-move{display:flex; align-items:center; gap:10px; padding:8px 0 8px 4px; border-bottom:1px dashed color-mix(in srgb, var(--line) 70%, transparent)}
+.td-move:last-child{border-bottom:none}
+.td-move.done .ex-name{text-decoration:line-through; opacity:.55}
+.td-move .checkbox{flex:none}
+.td-how{background:var(--panel2); border-radius:10px; padding:10px 12px; margin:4px 0 8px; font-size:12.5px; line-height:1.5}
 
 /* ---------- FORMS / LIB / SETTINGS ---------- */
 .search{width:100%; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; outline:none; margin-bottom:12px}
@@ -403,14 +410,18 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="today-eyebrow" id="tdDate" style="margin-top:10px"></div>
       <h2 style="font-size:22px; margin:4px 0 2px" id="tdTitle">Today</h2>
       <p class="mut" id="tdSub"></p>
-      <div id="checkinCard" style="margin-top:12px"></div>
-      <div id="adaptCard"></div>
-      <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
-      <div class="rings4" id="rings4"></div></div>
-      <div id="streakCard"></div>
+      <div id="tdBrief"></div>
       <div id="tdActs" style="margin-top:14px"></div>
       <div class="sec-label">Add something unscheduled</div>
       <div class="chips" id="tdQuick"></div>
+      <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
+      <div class="rings4" id="rings4"></div></div>
+      <div id="streakCard"></div>
+      <div class="sec-label">Today's habits</div>
+      <div id="habitList"></div>
+      <div class="sec-label">Quick check-in</div>
+      <div id="checkinCard"></div>
+      <div id="adaptCard"></div>
       <div class="sec-label">Journal & voice notes</div>
       <div class="card">
         <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="Type — or tap the mic on your keyboard and just talk. &quot;Did a 25 minute kettlebell workout, mostly swings and presses…&quot;"></textarea>
@@ -420,8 +431,6 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
         </div>
       </div>
       <div id="jrnList"></div>
-      <div class="sec-label">Today's habits</div>
-      <div id="habitList"></div>
     </div>
   </section>
 
@@ -584,6 +593,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
   </div>
 </div></div>
 <div class="sheet" id="actSheet"><div class="sheet-card tall" id="asBody"></div></div>
+<div class="sheet" id="pickSheet"><div class="sheet-card tall" id="pkBody"></div></div>
 <div class="levelup" id="levelup"><div class="lu-card">
   <div class="sub">Level up</div><div class="big" id="luLvl">LVL 2</div>
   <p id="luMsg"></p>
@@ -1544,7 +1554,7 @@ const SYS = {
   strength:{ name:"STRENGTH", sub:"Lift · Build · Carry", icon:"🏋️", cv:"--c-strength" },
   motor:   { name:"MOTOR",    sub:"Run · Ride · Row · Breathe", icon:"💓", cv:"--c-motor" },
   armor:   { name:"ARMOR",    sub:"Mobility · Rehab · Stretch", icon:"🛡️", cv:"--c-armor" },
-  skill:   { name:"SKILL",    sub:"Ball work · Drills · Games", icon:"⚽", cv:"--c-skill" },
+  skill:   { name:"SKILL",    sub:"Sport skills · Drills · Games", icon:"🎯", cv:"--c-skill" },
   fuel:    { name:"FUEL",     sub:"Eat well · Hydrate", icon:"🍽️", cv:"--c-fuel" },
   recharge:{ name:"RECHARGE", sub:"Sleep · Recover · Reset", icon:"🌙", cv:"--c-recharge" }
 };
@@ -1558,7 +1568,7 @@ const EQ_GROUPS = {
   "Simple gear":["Bands","Medicine Ball","Pull-up Bar","Jump Rope","TRX / Suspension","Yoga Mat","Foam Roller"],
   "Gym machines":["Bench Press Machine","Lat Pulldown","Cable Machine","Leg Press","Row Machine","Smith Machine"],
   "Cardio machines":["Treadmill","Stationary Bike","Elliptical","Rowing Machine","Stair Climber"],
-  "Sport":["Soccer Ball","Sports Gear"]
+  "Sport":["Soccer Ball","Basketball & Hoop","Racquet & Paddle","Bat & Glove","Golf Clubs","Skateboard","Gloves & Pads","Pool Access","Bike"]
 };
 const ALL_EQ = Object.values(EQ_GROUPS).flat();
 
@@ -1700,14 +1710,11 @@ LIB.push(
  {n:"Foam roll: upper back", eq:"Foam Roller", p:"armor", d:"4–5 min", dur:270, how:"Roller across the mid-back, hands behind head, extend gently over it.", b:"main", xp:12, area:["back","neck"]},
  {n:"Brisk neighborhood walk", eq:"Bodyweight", p:"motor", d:"30–45 min", dur:2100, sport:"walking", how:"Purposeful pace, tall posture. Podcast optional, consistency mandatory.", b:"main", xp:18},
  {n:"Walk + strides", eq:"Bodyweight", p:"motor", d:"25 min + 4×20s pickups", dur:1500, sport:"walking", how:"Easy walk with four smooth 20-second faster efforts spread through it.", b:"main", xp:18},
- {n:"Throwing ladder", eq:"Sports Gear", p:"skill", d:"4 rounds, short → long", sport:"baseball", how:"Start close with easy tosses, step back each round. Arm care first, velocity later.", b:"main", xp:16},
+ {n:"Throwing ladder", eq:"Bat & Glove", p:"skill", d:"4 rounds, short → long", sport:"baseball", how:"Start close with easy tosses, step back each round. Arm care first, velocity later.", b:"main", xp:16},
  {n:"Base-to-base sprints", eq:"Bodyweight", p:"motor", d:"6×20s", dur:20, rest:60, sport:"baseball", how:"Explode out low, run through the bag — never slow down early.", b:"main", xp:18},
  {n:"Golf rotation flow", eq:"Bodyweight", p:"armor", d:"8 min", dur:480, sport:"golf", how:"Hip circles, t-spine rotations, half-kneeling swings. Range of motion = range off the tee.", b:"main", xp:14, area:["hip","back"]},
  {n:"Skate stance holds & pumps", eq:"Bodyweight", p:"armor", d:"3×40s each stance", dur:40, sport:"skate", how:"Low stance, weight shifts front-to-back. Ankles and balance take the beating for you.", b:"main", xp:16, area:["ankle","knee"]},
- {n:"Kick-through / sprawl drill", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:30, sport:"martial", how:"Sprawl, kick through to a seated leg extension, back up. Full-body scramble work.", b:"main", xp:18},
- {n:"Family walk after dinner", eq:"Bodyweight", p:"motor", d:"20–30 min", dur:1500, sport:"family", how:"Everyone comes. Slowest legs set the pace, and that's fine — it counts.", b:"main", xp:14},
- {n:"Backyard games block", eq:"Bodyweight", p:"skill", d:"20 min", dur:1200, sport:"family", how:"Tag, races, catch, whatever they pick. Chaotic movement is elite training in disguise.", b:"main", xp:16},
- {n:"Family bike loop", eq:"Bodyweight", p:"motor", d:"30 min easy", dur:1800, sport:"family", how:"Kid-pace spinning. Zone 1 for you, adventure for them.", b:"main", xp:16}
+ {n:"Kick-through / sprawl drill", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:30, sport:"martial", how:"Sprawl, kick through to a seated leg extension, back up. Full-body scramble work.", b:"main", xp:18}
 );
 
 /* Kettlebell flow + HIIT + core library (v5 Phase 3) — powers the follow-along
@@ -1823,7 +1830,7 @@ LIB.push(
 const SPORT_TAG = { "Bike: sprints":"cycling", "Bike: steady state":"cycling", "Treadmill: incline walk":"hiking",
   "Outdoor run: easy":"running", "Outdoor run: long":"running", "Outdoor run: intervals":"running", "Outdoor run: tempo":"running",
   "Rower: intervals":"rowing", "Rower: steady 2k–3k":"rowing", "Shadow boxing rounds":"martial",
-  "Med ball rotational throw":"golf", "Tag / chase game":"family" };
+  "Med ball rotational throw":"golf" };
 LIB.forEach(m=>{ if(MG_MAP[m.n]) m.mg = MG_MAP[m.n]; if(AREA_MAP[m.n]) m.area = AREA_MAP[m.n];
   if(SPORT_TAG[m.n]) m.sport = SPORT_TAG[m.n]; if(m.eq==="Soccer Ball") m.sport = "soccer";
   /* v5 metadata enrichment — every move gets fine muscles, pattern, difficulty, mods */
@@ -1846,13 +1853,13 @@ const listNice = arr => { const a = arr.map(x=>MG_NICE[x]||x);
   return a.length<=1 ? (a[0]||"") : a.slice(0,-1).join(", ") + " and " + a[a.length-1]; };
 function whyFor(m, p){
   p = p || S.profile || {};
-  const g = p.goals||[], pref = (p.eqPref||{})[m.eq], md = (S.moveMeta||{})[m.n]||{};
+  const g = p.goals||[], md = (S.moveMeta||{})[m.n]||{};
   const bits = [];
   if(m.p==="strength"){
     const mgs = (m.mgf||[]).filter(x=>x!=="mobility/recovery").slice(0,3);
     bits.push((m.mgf||[]).length>=3 ? `is a high-value compound pick for ${listNice(mgs)}` : `builds ${listNice(mgs)||"strength"}`);
     if(g.includes("muscle")||g.includes("aesthetic")) bits.push("feeds your muscle-building goal");
-    else if(g.includes("stronger")||g.includes("power")) bits.push("moves your strength goal forward");
+    else if(g.includes("stronger")) bits.push("moves your strength goal forward");
     else if(g.includes("functional")) bits.push("carries over straight to real life");
   } else if(m.p==="motor"){
     bits.push(m.dur>=900 ? "gives you steady engine work" : "packs conditioning into very little time");
@@ -1866,8 +1873,7 @@ function whyFor(m, p){
   } else if(m.p==="skill"){
     bits.push("skill work that transfers straight to game day");
   }
-  if(pref==="love") bits.push(`uses gear you love (${m.eq})`);
-  else if(m.eq==="Bodyweight") bits.push("needs zero equipment");
+  if(m.eq==="Bodyweight") bits.push("needs zero equipment");
   if(md.fav) bits.push("and it's one of your favorites");
   return `${m.n} is here because it ${bits.slice(0,3).join(", ")}.`;
 }
@@ -2046,19 +2052,8 @@ function habitSet(){
     {id:"bedtime", n:"Lights out by your target time", sys:"recharge", xp:10});
   if(g.includes("mobility")||g.includes("move")||g.includes("return")) H.push({id:"stretch", n:"5-min evening stretch", sys:"armor", xp:8});
   if(g.includes("health")||g.includes("account")) H.push({id:"checkin", n:"Rate your day 1–10 and note why", sys:"recharge", xp:8});
-  if(g.includes("family")) H.push({id:"fammove", n:"10 min of family movement", sys:"skill", xp:8});
   if(g.includes("heart")) H.push({id:"steps", n:"Close your movement ring — any cardio counts", sys:"motor", xp:8});
-  const work = S.profile && S.profile.work;
-  if(work==="wfh") H.push({id:"deskbreak", n:"Stand + 2-min move between meetings", sys:"armor", xp:8},
-    {id:"hipstretch", n:"Hip flexor stretch after your last call", sys:"armor", xp:8});
-  if(work==="feet") H.push({id:"legsup", n:"5 min legs-up-the-wall after work", sys:"recharge", xp:8});
-  if(work==="physical") H.push({id:"unwind", n:"Post-work full-body stretch", sys:"armor", xp:8});
-  if(work==="kids") H.push({id:"floorplay", n:"10 min of floor play with the kids", sys:"skill", xp:8});
-  const eve = S.profile && S.profile.eve;
-  if(eve==="family") H.push({id:"famwalk", n:"Post-dinner walk with the crew", sys:"recharge", xp:8});
-  if(eve==="tired") H.push({id:"shutdown", n:"10-min shutdown wind-down", sys:"recharge", xp:8});
-  if(eve==="grind") H.push({id:"hourstretch", n:"2-min stretch every desk hour", sys:"armor", xp:8});
-  if(eve==="social") H.push({id:"planahead", n:"Lock in tomorrow's training window", sys:"recharge", xp:8});
+  H.push({id:"deskbreak", n:"Stand + 2-min move once an hour", sys:"armor", xp:8});
   return H;
 }
 
@@ -2066,61 +2061,50 @@ function habitSet(){
 /* 15 specific goal families, grouped for the picker */
 const GOAL_GROUPS = [
  ["Strength & physique", [
-   ["muscle","💪","Build muscle"], ["stronger","🏋️","Get stronger"], ["power","🏆","Powerlifting"],
+   ["muscle","💪","Build muscle"], ["stronger","🏋️","Get stronger"],
    ["aesthetic","🗿","Aesthetic physique"], ["functional","🧰","Functional fitness"] ]],
  ["Engine & performance", [
    ["heart","❤️","Improve heart health"], ["run","🏃","Improve running"], ["fat","📉","Lose fat"],
    ["athletic","⚡","Athletic performance"], ["sportgoal","🎯","Sport-specific improvement"] ]],
  ["Life & wellbeing", [
    ["health","🌿","General health"], ["feel","😊","Feel better day to day"], ["mobility","🛡️","Improve mobility"],
-   ["return","🔄","Return to activity"], ["family","👨‍👩‍👧","Family activity"] ]]
+   ["return","🔄","Bounce back — return after a break or injury"] ]]
 ];
 const GOALS = GOAL_GROUPS.flatMap(([,items])=>items);
-/* 25 activities — each carries its own comfort level (1 New … 4 Advanced) */
+/* 18 activities — extracurricular life, not gym modalities (those live in Gear +
+   experience). Each carries its own comfort level (1 New … 4 Advanced). */
 const ACTIVITIES = [
  ["running","🏃","Running"], ["walking","🚶","Walking"], ["hiking","🥾","Hiking"],
  ["swimming","🏊","Swimming"], ["cycling","🚴","Cycling"], ["rowing","🚣","Rowing"],
- ["hiit","🔥","HIIT"], ["elliptical","♻️","Elliptical"], ["stairs","⛰️","Stair climber"],
+ ["hiit","🔥","HIIT"], ["stairs","⛰️","Stair climber"],
  ["soccer","⚽","Soccer"], ["basketball","🏀","Basketball"], ["tennis","🎾","Tennis"],
  ["pickleball","🏓","Pickleball"], ["baseball","⚾","Baseball / softball"], ["golf","⛳","Golf"],
  ["skate","🛹","Skateboarding"], ["martial","🥋","Martial arts"],
- ["kettlebells","🔔","Kettlebells"], ["dumbbells","💪","Dumbbells"], ["barbell","🏋️","Barbell lifting"],
- ["machines","⚙️","Gym machines"], ["bodyweight","🤸","Bodyweight training"],
- ["yoga","🧘","Yoga"], ["mobilityw","🛡️","Mobility work"], ["family","👨‍👩‍👧","Family movement"]
+ ["yoga","🧘","Yoga"], ["mobilityw","🛡️","Mobility work"]
 ];
 const LEVELS = [[1,"New"],[2,"Learning"],[3,"Comfortable"],[4,"Advanced"]];
 /* which day type each activity earns in the weekly plan */
 const ACT_DAY = { cycling:"SP_cycling", swimming:"SP_swimming", basketball:"SP_basketball",
   tennis:"SP_racquet", pickleball:"SP_racquet", hiking:"SP_hiking", yoga:"SP_yoga",
   walking:"SP_walking", baseball:"SP_baseball", golf:"SP_golf", skate:"SP_skate",
-  martial:"SP_martial", rowing:"SP_rowing", family:"SP_family", soccer:"SKL" };
+  martial:"SP_martial", rowing:"SP_rowing", soccer:"SKL", hiit:"MOT" };
+/* picking a sport auto-adds its gear — access to the sport implies access to its kit */
+const ACT_GEAR = { soccer:"Soccer Ball", basketball:"Basketball & Hoop", tennis:"Racquet & Paddle",
+  pickleball:"Racquet & Paddle", baseball:"Bat & Glove", golf:"Golf Clubs", skate:"Skateboard",
+  martial:"Gloves & Pads", swimming:"Pool Access", cycling:"Bike" };
+/* SKILL (soccer) surfaces only for people who actually picked soccer;
+   interview-skippers fall back to the old ball-ownership gate */
+const soccerPicked = () => S.profile ? ((S.profile.sports||[]).includes("soccer")) : S.sel.eq.includes("Soccer Ball");
 const AREAS = [["ankle","🦶","Ankles"],["knee","🦵","Knees"],["hip","🩹","Hips"],["back","🔙","Lower back"],
   ["shoulder","💪","Shoulders"],["neck","🧣","Neck & upper back"],["general","🧘","General flexibility"]];
-const WORKS = [["wfh","💻","Desk / work from home"],["feet","🚶","On my feet all day"],
-  ["physical","🔧","Physical job"],["kids","👶","Home with kids"],["other","🎓","Student / other"]];
-const EVES = [["family","👨‍👩‍👧","Family time — evenings are spoken for"],["free","🌆","Evenings are mostly mine"],
-  ["grind","📚","Side hustle / study most nights"],["social","🎉","Out and about a lot"],["tired","🔋","Usually running on empty"]];
-const MOTIVS = [["streaks","🔥 Streaks & celebrations"],["progress","📈 Seeing progress"],["gentle","🌿 Gentle nudges"]];
-const TECHS = [["simple","🧼 Keep it simple"],["standard","⚙️ Standard"],["power","🚀 All the toys"]];
 const EXPS = [["new","🌱","New to this","Simple sessions, extra cues, gentler ramp"],
   ["some","⚙️","Comfortable","Solid volume, steady progression"],
   ["exp","🔥","Experienced","More volume, bigger jumps"]];
 const REHAB_STAGES = [["early","Early — still hurts day to day"],["mid","Mid — daily life fine, sport hurts"],["late","Late — nearly back, building trust"]];
-/* multi time-windows + one-tap life presets */
-const WINS = [["main","🏋️","Main workout"],["secondary","🎽","Secondary activity"],["mobility","🛡️","Mobility / rehab"],
-  ["family","👨‍👩‍👧","Family activity"],["booster","✨","Daily boosters"]];
-const WIN_SLOTS = [["","—"],["morning","🌅 Morning"],["lunch","☀️ Midday"],["evening","🌇 Evening"],["varies","🔀 Varies"]];
-const WIN_PRESETS = {
-  parent:{ label:"👨‍👩‍👧 Parent schedule", w:{ main:"morning", secondary:"", mobility:"evening", family:"evening", booster:"lunch" } },
-  wfh:   { label:"💻 WFH midday",       w:{ main:"lunch", secondary:"evening", mobility:"morning", family:"evening", booster:"varies" } },
-  labor: { label:"🔧 Manual labor recovery", w:{ main:"varies", secondary:"", mobility:"evening", family:"", booster:"evening" } },
-  shift: { label:"🌗 Shift worker",     w:{ main:"varies", secondary:"varies", mobility:"varies", family:"", booster:"varies" } },
-  early: { label:"🌅 Early bird",       w:{ main:"morning", secondary:"", mobility:"", family:"evening", booster:"morning" } }
-};
 /* experience tracks: derived from activity levels; asked directly only for gaps */
 const TRACK_META = { lift:["🏋️","Lifting & strength"], cardio:["💓","Running & cardio"], sport:["🎽","Sport & skill work"] };
-const TRACK_ACTS = { lift:["kettlebells","dumbbells","barbell","machines","bodyweight"],
-  cardio:["running","walking","hiking","swimming","cycling","rowing","hiit","elliptical","stairs","family"],
+const TRACK_ACTS = { lift:[],   /* lifting is no longer an "activity" — always asked when lift goals exist */
+  cardio:["running","walking","hiking","swimming","cycling","rowing","hiit","stairs"],
   sport:["soccer","basketball","tennis","pickleball","baseball","golf","skate","martial","yoga","mobilityw"] };
 const levelToExp = l => l>=4 ? "exp" : l>=2 ? "some" : "new";
 function derivedExps(a){
@@ -2133,7 +2117,7 @@ function derivedExps(a){
 }
 function neededTracks(a){
   const t = [], g = a.goals;
-  if(["muscle","stronger","power","aesthetic","functional","athletic","fat"].some(k=>g.includes(k))) t.push("lift");
+  if(["muscle","stronger","aesthetic","functional","athletic","fat"].some(k=>g.includes(k))) t.push("lift");
   if(g.includes("run")||g.includes("heart")||g.includes("fat")) t.push("cardio");
   return t;
 }
@@ -2142,22 +2126,19 @@ function missingTracks(a){
   return neededTracks(a).filter(tk=>!der[tk]).map(tk=>[tk, ...TRACK_META[tk]]);
 }
 let onb = { i:0, _last:null, a:{ name:"", age:"", gender:"", exps:{}, activities:{},
-  work:"wfh", eve:"free", motiv:"progress", streakTol:4, tech:"standard",
-  windows:{ main:"evening", secondary:"", mobility:"", family:"", booster:"" },
+  streakTol:4,
   goals:[], areas:["ankle"], areaInfo:{},
-  runFocus:"both", eq:[], eqPref:{}, lifts:{}, caps:{}, days:3, len:30, weeks:6, boost:0, mode:"coach" } };
+  runFocus:"both", eq:[], lifts:{}, caps:{}, days:3, len:30, weeks:6, boost:0, mode:"coach" } };
 
 function onbSteps(){
   const steps = ["intro","about","goals","activities"];
   if(missingTracks(onb.a).length) steps.push("exp");
   if(onb.a.goals.includes("mobility")||onb.a.goals.includes("return")) steps.push("areas");
-  steps.push("equip");
-  if(onb.a.eq.length) steps.push("eqpref");
-  steps.push("life","windows","schedule","mode");
+  steps.push("equip","schedule","mode");
   return steps;
 }
 const STEP_TITLES = { intro:"Welcome", about:"You", goals:"Goals", activities:"Activities", exp:"Experience",
-  areas:"Your body", equip:"Gear", eqpref:"Preferences", life:"Your day", windows:"Windows", schedule:"Commitment", mode:"Coaching" };
+  areas:"Your body", equip:"Gear", schedule:"Commitment", mode:"Coaching" };
 const pipOpt = (on, data, ic, label) => `<div class="opt ${on?'on':''}" ${data}><span class="oi">${ic}</span><span>${label}</span><span class="pip"></span></div>`;
 function injPanel(k){
   const info = onb.a.areaInfo[k]||{};
@@ -2222,26 +2203,9 @@ function onbRender(){
   }
   if(step==="areas") h = `<h1>Where does your body <em>need work</em>?</h1><p class="lead">Rehab, mobility, stretching — ARMOR sessions build around these. Tap an area, then tell us about any injury.</p>` +
     AREAS.map(([k,ic,label])=>pipOpt(a.areas.includes(k), `data-area="${k}"`, ic, label) + (a.areas.includes(k)?injPanel(k):"")).join("");
-  if(step==="equip") h = `<h1>What gear can you <em>reach</em>?</h1><p class="lead">Bodyweight is always in — you carry it everywhere. Pick everything you have ACCESS to; you'll set preferences next.</p>` +
+  if(step==="equip") h = `<h1>What gear can you <em>reach</em>?</h1><p class="lead">Bodyweight is always in — you carry it everywhere. Pick everything you can actually get to; your sports auto-add their own gear.</p>` +
     Object.entries(EQ_GROUPS).map(([g,items])=>`<div class="eq-group"><div class="g">${g}</div><div class="chips">` +
       items.map(e=>`<button class="chip ${a.eq.includes(e)?'on':''}" data-oeq="${e}">${e}</button>`).join("") + `</div></div>`).join("");
-  if(step==="eqpref"){
-    const PREFS = [["love","❤️ Love"],["ok","👍 OK"],["rare","🌗 Rarely"],["avoid","🚫 Avoid"]];
-    h = `<h1>Access isn't <em>preference</em>.</h1><p class="lead">Owning kettlebells doesn't mean you want them every day. Loved gear shows up more; avoided gear only when nothing else fits.</p>` +
-    a.eq.map(e=>`<div class="exp-track"><div class="et-name">${e}</div>
-      <div class="chips">${PREFS.map(([k,l])=>`<button class="chip ${(a.eqPref[e]||"ok")===k?'on':''}" data-epref="${e}:${k}">${l}</button>`).join("")}</div></div>`).join("");
-  }
-  if(step==="life") h = `<h1>What does your <em>day</em> look like?</h1><p class="lead">Habits, mobility work and coaching tone adapt to how you actually live.</p>
-    <div class="sec-label">Your 9-to-5</div>` +
-    WORKS.map(([k,ic,label])=>pipOpt(a.work===k, `data-work="${k}"`, ic, label)).join("") +
-    `<div class="sec-label">Your 5-to-9</div>` +
-    EVES.map(([k,ic,label])=>pipOpt(a.eve===k, `data-eve="${k}"`, ic, label)).join("") +
-    `<div class="sec-label">What keeps you going?</div><div class="chips">` +
-    MOTIVS.map(([k,l])=>`<button class="chip ${a.motiv===k?'on':''}" data-motiv="${k}">${l}</button>`).join("") + `</div>`;
-  if(step==="windows") h = `<h1>When does life <em>let you</em>?</h1><p class="lead">Real schedules have more than one opening. Set the windows you'll actually use — or grab a preset.</p>
-    <div class="chips" style="margin-bottom:14px">${Object.entries(WIN_PRESETS).map(([k,p])=>`<button class="chip alt" data-preset="${k}">${p.label}</button>`).join("")}</div>` +
-    WINS.map(([wk,ic,label])=>`<div class="exp-track"><div class="et-name"><span>${ic}</span>${label}</div>
-      <div class="chips">${WIN_SLOTS.map(([sk,sl])=>`<button class="chip ${(a.windows[wk]||"")===sk?'on':''}" data-owin="${wk}:${sk}">${sl}</button>`).join("")}</div></div>`).join("");
   if(step==="schedule") h = `<h1>How much life can you <em>give this</em>?</h1><p class="lead">Honest beats ambitious. You can always add days later.</p>
     <div class="sec-label">Training days per week</div><div class="chips">${[2,3,4,5,6].map(d=>`<button class="chip ${a.days===d?'on':''}" data-odays="${d}">${d}</button>`).join("")}</div>
     <div class="sec-label">Session length</div><div class="chips">${[15,30,45,60].map(t=>`<button class="chip alt ${a.len===t?'on':''}" data-olen="${t}">${t} min</button>`).join("")}</div>
@@ -2249,17 +2213,15 @@ function onbRender(){
     <div class="sec-label">Weekly consistency target</div>
     <p class="mut" style="margin-bottom:10px">The number that matters most — days per week you show up in ANY way. Streaks build on this, not on perfection.</p>
     <div class="chips">${[3,4,5,6].map(n=>`<button class="chip ${a.streakTol===n?'on':''}" data-wktarget="${n}">${n} days</button>`).join("")}</div>
-    <div class="sec-label">Daily boosters — extra micro-sessions</div>
-    <p class="mut" style="margin-bottom:10px">Short 10–15 min add-ons on top of your workouts: stretching, mobility, rehab, Armor. They stack XP and close rings, but don't count as full sessions.</p>
+    <div class="sec-label">Daily boosters</div>
+    <div class="tour-card" style="--tc:var(--c-armor); margin-bottom:10px"><div class="tour-ico">✨</div><span><b>What's a booster?</b><small>A tiny 10–15 minute bonus session — stretching, mobility or rehab — that lands on EVERY day of your plan, even rest days. Example: a "12-min desk reset" after lunch. Boosters stack XP and close rings, but never count (or guilt you) as full workouts.</small></span></div>
     <div class="chips">${[[0,"None"],[1,"✨ +1 a day"],[2,"✨✨ +2 a day"]].map(([n,l])=>`<button class="chip alt ${a.boost===n?'on':''}" data-oboost="${n}">${l}</button>`).join("")}</div>`;
   if(step==="mode") h = `<h1>How do you want to be <em>coached</em>?</h1>` +
     [["coach","🗓️","Full Coach","Workouts, activities, mobility and habits — all planned, all editable."],
      ["hybrid","🎛️","Guided Hybrid","Structured workouts planned for you; sports & activities stay on your terms."],
      ["companion","🧭","Flexible Companion","No fixed calendar — daily suggestions, you choose what happens."],
      ["recovery","🌿","Recovery-First","A full plan that adapts to sleep, soreness and energy check-ins."]]
-    .map(([k,ic,t2,s])=>`<div class="opt ${a.mode===k?'on':''}" data-mode="${k}"><span class="oi">${ic}</span><span>${t2}<br><small style="color:var(--dim); font-weight:500">${s}</small></span><span class="pip"></span></div>`).join("") +
-    `<div class="sec-label">How much tech do you want?</div><div class="chips">` +
-    TECHS.map(([k,l])=>`<button class="chip ${a.tech===k?'on':''}" data-tech="${k}">${l}</button>`).join("") + `</div>`;
+    .map(([k,ic,t2,s])=>`<div class="opt ${a.mode===k?'on':''}" data-mode="${k}"><span class="oi">${ic}</span><span>${t2}<br><small style="color:var(--dim); font-weight:500">${s}</small></span><span class="pip"></span></div>`).join("");
   const body = $("#onbBody");
   body.classList.remove("enter");
   body.innerHTML = h;
@@ -2326,12 +2288,7 @@ function finishOnboarding(skip){
 function applyOnboarding(skip){
   const a = onb.a;
   const acts = a.activities||{};
-  if(acts.soccer && !a.eq.includes("Soccer Ball")) a.eq.push("Soccer Ball");
-  /* loving a modality you train is the default — explicit answers win */
-  const prefs = Object.assign({}, a.eqPref);
-  if(acts.kettlebells && !prefs["Kettlebells"]) prefs["Kettlebells"]="love";
-  if(acts.dumbbells && !prefs["Dumbbells"]) prefs["Dumbbells"]="love";
-  if(acts.barbell && !prefs["Barbell"]) prefs["Barbell"]="love";
+  Object.entries(ACT_GEAR).forEach(([act,gear])=>{ if(acts[act] && !a.eq.includes(gear)) a.eq.push(gear); });
   /* experience: derived from activity levels, gap answers fill the rest */
   const exps = Object.assign({lift:"some",cardio:"some",sport:"some"}, derivedExps(a), a.exps);
   /* v4-compat sports list = the day-type keys this user's activities unlock */
@@ -2339,11 +2296,10 @@ function applyOnboarding(skip){
     .map(d=>d==="SKL" ? "soccer" : d.slice(3)))];
   S.profile = { name:a.name||"You", age:a.age, gender:a.gender,
     exps, exp:exps.lift||"some",
-    work:a.work, eve:a.eve, motiv:a.motiv, streakTol:a.streakTol, tech:a.tech,
-    windows:Object.assign({}, a.windows), window:(a.windows&&a.windows.main)||"evening",
+    streakTol:a.streakTol,
     goals:a.goals.slice(), activities:Object.assign({}, acts), sports,
     areas:a.areas.slice(), areaInfo:JSON.parse(JSON.stringify(a.areaInfo||{})),
-    runFocus:a.runFocus, eq:a.eq.slice(), eqPref:prefs, lifts:a.lifts||{}, caps:a.caps||{},
+    runFocus:a.runFocus, eq:a.eq.slice(), lifts:a.lifts||{}, caps:a.caps||{},
     days:a.days, len:a.len, weeks:a.weeks, boost:a.boost||0,
     mode:a.mode, style:(a.mode==="companion") ? "flex" : "coach" };
   S.sel.eq = a.eq.slice(); S.sel.time = [15,30,45,60].includes(a.len)?a.len:45;
@@ -2366,7 +2322,7 @@ const DTYPES = {
   STR:{t:"Strength", icon:"🏋️", focus:"Strength"},
   RUNF:{t:"Speed run", icon:"⚡", focus:"__runfast"},
   RUNL:{t:"Distance run", icon:"🛣️", focus:"__runlong"},
-  MOT:{t:"Conditioning", icon:"💓", focus:"Cardio"},
+  MOT:{t:"Conditioning", icon:"💓", focus:"Conditioning"},
   ARM:{t:"Mobility & rehab", icon:"🛡️", focus:"Mobility"},
   SKL:{t:"Soccer skills", icon:"⚽", focus:"Soccer"},
   BST:{t:"Booster", icon:"✨", focus:"Mobility", micro:true},
@@ -2381,9 +2337,10 @@ const DTYPES = {
 const SPORT_DAYS = { cycling:{t:"Ride", icon:"🚴"}, swimming:{t:"Swim", icon:"🏊"}, basketball:{t:"Court work", icon:"🏀"},
   racquet:{t:"Racquet day", icon:"🎾"}, hiking:{t:"Hike / ruck", icon:"🥾"}, yoga:{t:"Yoga flow", icon:"🧘"},
   walking:{t:"Walk", icon:"🚶"}, baseball:{t:"Diamond work", icon:"⚾"}, golf:{t:"Golf prep", icon:"⛳"},
-  skate:{t:"Skate day", icon:"🛹"}, martial:{t:"Combat conditioning", icon:"🥋"}, rowing:{t:"Row day", icon:"🚣"},
-  family:{t:"Family activity", icon:"👨‍👩‍👧"} };
+  skate:{t:"Skate day", icon:"🛹"}, martial:{t:"Combat conditioning", icon:"🥋"}, rowing:{t:"Row day", icon:"🚣"} };
 Object.entries(SPORT_DAYS).forEach(([k,v])=>{ DTYPES["SP_"+k] = { t:v.t, icon:v.icon, focus:"__sport:"+k, sport:k }; });
+/* legacy shim: v5 plans may hold SP_family acts — render them, never offer them */
+DTYPES.SP_family = { t:"Family activity", icon:"👨‍👩‍👧", focus:null, legacy:true };
 function weekTypes(p){
   const g = p.goals, acts = p.activities||{}, out = [];
   const has = k => g.includes(k);
@@ -2392,12 +2349,11 @@ function weekTypes(p){
   const wantsRun = has("run") || !!acts.running;
   if(liftGoal) out.push("STR");
   if(wantsRun) out.push(p.runFocus==="long" ? "RUNL" : "RUNF");
-  /* day types earned by activities — soccer (SKILL system) and family first */
+  /* day types earned by activities — soccer (SKILL system) first */
   const dayset = new Set();
   Object.keys(acts).forEach(k=>{ const d = ACT_DAY[k]; if(d && d!=="SP_yoga") dayset.add(d); });
   (p.sports||[]).forEach(s=>{ if(s==="soccer") dayset.add("SKL"); else if(SPORT_DAYS[s]) dayset.add("SP_"+s); });
   if(dayset.has("SKL")){ out.push("SKL"); dayset.delete("SKL"); }
-  if(has("family") && dayset.has("SP_family")){ out.push("SP_family"); dayset.delete("SP_family"); }
   dayset.forEach(d=>out.push(d));
   if(has("mobility")||has("return")||has("move")) out.push("ARM");
   else if(acts.yoga || acts.mobilityw) out.push("SP_yoga");
@@ -2442,6 +2398,7 @@ function makePlan(p){
       if(opts.style) label += ` · ${STYLES[opts.style].n.toLowerCase()}`; }
     if(t==="ARM" && okAreas.length) opts.areas = okAreas.slice();
     const ok = buildSession(opts);
+    if(t==="MOT" && ok && opts.style) label += opts.style==="kbflow" ? " · KB circuit" : " · HIIT circuit";
     templates[key] = { label, focus:D.focus, style:opts.style||null, names: ok ? S.session.items.map(m=>m.n) : [] };
   }));
   /* daily boosters: short mobility/rehab micro-sessions — rehab areas get priority */
@@ -2456,7 +2413,6 @@ function makePlan(p){
   const days = [];
   const expNote = { new:"Leave 2–3 reps in the tank — technique is the win.",
     some:"Leave 2 reps in the tank.", exp:"Push close, stop 1 rep shy of grinding." }[(p.exps&&p.exps.lift)||p.exp||"some"];
-  const winNote = (p.window && p.window!=="varies") ? ` Your window: ${p.window}.` : "";
   const rehabNote = rehabAreas.some(k=>info[k].stage==="early") ? " Rehab rule: pain-free range only." : "";
   for(let w=0; w<p.weeks; w++){
     const deload = (w === p.weeks-1) && p.weeks>=4;
@@ -2470,7 +2426,7 @@ function makePlan(p){
       days.push({ w, d, acts,
         note: isRest ? (p.boost ? "Recovery day — just your booster. Easy work still counts." : "Recovery is training too — habits still count.")
           : deload ? "Deload week: same moves, ~70% effort. Arrive fresh for the next block."
-          : (w===0 ? "Week 1: find your groove. " + expNote + winNote
+          : (w===0 ? "Week 1: find your groove. " + expNote
           : `Week ${w+1}: nudge it up — +1 rep per set or +5 lb where it felt solid.`)
           + rehabNote
           + (acts.filter(a=>!a.micro).length>1 ? " Split the activities across your day — morning and evening both count." : "") });
@@ -2489,8 +2445,6 @@ function migrateProfile(){
   if(!p.exps) p.exps = { lift:p.exp||"some", cardio:p.exp||"some", sport:p.exp||"some" };
   p.areaInfo = p.areaInfo||{};
   if(p.boost===undefined) p.boost = 0;
-  if(p.eve===undefined) p.eve = "";
-  if(p.window===undefined) p.window = "";
   /* v5: goal families, per-activity levels, windows, gear preferences, coach modes */
   if(!p.activities){
     p.activities = {};
@@ -2499,14 +2453,24 @@ function migrateProfile(){
       if(ACTIVITIES.some(([k])=>k===key)) p.activities[key] = lvl[(p.exps&&p.exps.sport)||"some"]||3; });
     if((p.goals||[]).includes("run")) p.activities.running = lvl[(p.exps&&p.exps.cardio)||"some"]||3;
   }
-  const GOAL_MAP = { strength:"stronger", move:"mobility", eat:"health", sleep:"feel", account:"health" };
+  const GOAL_MAP = { strength:"stronger", move:"mobility", eat:"health", sleep:"feel", account:"health",
+    power:"stronger", family:"feel" };   /* v6: powerlifting + family goals retired */
   if(p.goals && p.goals.some(g=>GOAL_MAP[g])) p.goals = [...new Set(p.goals.map(g=>GOAL_MAP[g]||g))];
-  if(!p.windows) p.windows = { main:p.window||"evening", secondary:"", mobility:"", family:"", booster:"" };
-  p.eqPref = p.eqPref||{};
   if(!p.mode) p.mode = (p.style==="flex") ? "companion" : "coach";
-  if(p.motiv===undefined) p.motiv = "progress";
   if(p.streakTol===undefined) p.streakTol = 4;
-  if(p.tech===undefined) p.tech = "standard";
+  /* v6: lifestyle answers, windows and gear preferences retired; modality "activities"
+     fold into gear + experience; family activity retired */
+  ["work","eve","motiv","tech","window","windows","eqPref"].forEach(k=>{ delete p[k]; });
+  if(p.activities){
+    const lift = ["kettlebells","dumbbells","barbell","machines","bodyweight"];
+    if(lift.some(k=>p.activities[k]) && !p.exps.lift) p.exps.lift = levelToExp(Math.max(...lift.map(k=>p.activities[k]||0)));
+    [...lift, "elliptical", "family"].forEach(k=>{ delete p.activities[k]; });
+  }
+  p.sports = (p.sports||[]).filter(s=>s!=="family");
+  if(p.eq){
+    p.eq = p.eq.filter(e=>e!=="Sports Gear");
+    Object.entries(ACT_GEAR).forEach(([act,gear])=>{ if((p.activities||{})[act] && !p.eq.includes(gear)) p.eq.push(gear); });
+  }
 }
 /* migrate old single-type plans */
 function migratePlan(){
@@ -2526,8 +2490,8 @@ function planToday(){
 }
 
 /* ================= SESSION BUILDER ================= */
-const FOCI = ["Full Body","Strength","Cardio","Mobility","Soccer"];
-const FOCUS_SYS = { "Strength":["strength"], "Cardio":["motor"], "Mobility":["armor"], "Soccer":["skill"],
+const FOCI = ["Full Body","Strength","Conditioning","Cardio","Mobility","Soccer"];
+const FOCUS_SYS = { "Strength":["strength"], "Conditioning":["motor"], "Cardio":["motor"], "Mobility":["armor"], "Soccer":["skill"],
   "Full Body":["strength","motor","armor","skill"] };
 /* training styles change set/rep/rest prescriptions; hiit/kbflow build timed circuits */
 const STYLES = {
@@ -2545,6 +2509,21 @@ function applyStyle(items, style){
     return {...m, d: st.d + (/each/.test(m.d)?" each":""), rest: st.rest};
   });
 }
+/* longer conditioning sessions earn longer work windows — 40s base up to a full
+   minute (owner brief: 30–40 min KB HIIT lives at 40–60s per movement) */
+function circuitTiming(style, time){
+  const st = STYLES[style]||STYLES.hiit;
+  const work = time>=40 ? 60 : time>=30 ? 50 : st.work;
+  return { work, rest: Math.round(work/2/5)*5 };   // 2:1 → 40/20 · 50/25 · 60/30
+}
+/* turn a picked move list into a follow-along circuit session */
+function circuitize(items, style, time, opts={}){
+  const tw = circuitTiming(style, time);
+  const mains = items.filter(m=>m.b!=="warmup").length;
+  return { style,
+    flow:{ work:tw.work, rest:tw.rest, rounds:(opts.noRepeat?1:2), perBlock:Math.min(4, Math.max(2, mains)), blockRest:30 },
+    items: items.map(m=>({...m, d:(m.b==="warmup"?m.d:`${tw.work}s on / ${tw.rest}s off`), done:false})) };
+}
 /* smart autofill — one-tap session recipes ("Only kettlebells", "Desk posture reset"…) */
 const RECIPES = [
  {id:"kb20",   n:"🔔 20-min KB full body",  o:{ focus:"Full Body", style:"kbflow", time:20, eqOnly:"Kettlebells", focusLabel:"KB full body" }},
@@ -2552,13 +2531,13 @@ const RECIPES = [
  {id:"kbnr",   n:"🔁 20-min no-repeat KB",  o:{ focus:"Full Body", style:"kbflow", time:20, eqOnly:"Kettlebells", noRepeat:true, focusLabel:"No-repeat KB" }},
  {id:"kbpush", n:"💪 KB chest·shoulders·tris", o:{ focus:"Strength", style:"hypertrophy", time:30, eqOnly:"Kettlebells", mg:["chest","shoulders","arms"], focusLabel:"KB push day" }},
  {id:"kbfun",  n:"🧰 Functional KB strength", o:{ focus:"Strength", style:"functional", time:30, eqOnly:"Kettlebells", focusLabel:"Functional KB strength" }},
- {id:"hiit20", n:"🔥 20-min HIIT, zero gear", o:{ focus:"Cardio", style:"hiit", time:20, eqOnly:"Bodyweight", focusLabel:"Bodyweight HIIT" }},
+ {id:"kb30",   n:"🔥 30-min KB HIIT",        o:{ focus:"Conditioning", style:"kbflow", time:30, eqOnly:"Kettlebells", focusLabel:"30-min KB HIIT" }},
+ {id:"kb40",   n:"🔥 40-min KB HIIT",        o:{ focus:"Conditioning", style:"kbflow", time:40, eqOnly:"Kettlebells", focusLabel:"40-min KB HIIT" }},
  {id:"desk",   n:"🧑‍💻 Desk posture reset",   o:{ focus:"Mobility", time:15, areas:["neck","back","shoulder"], focusLabel:"Desk posture reset" }},
  {id:"heart",  n:"❤️ Heart health starter",  o:{ focus:"Cardio", time:30, maxLvl:1, focusLabel:"Zone-2 starter" }},
  {id:"mob",    n:"🛡️ Your problem areas",    o:{ focus:"Mobility", time:20, focusLabel:"Mobility for your areas" }},
  {id:"soc",    n:"⚽ Soccer conditioning",   o:{ focus:"Soccer", time:30, focusLabel:"Soccer conditioning" }},
- {id:"runb",   n:"🏃 Running comeback",      o:{ focus:"__runlong", time:30, focusLabel:"Running comeback · easy" }},
- {id:"fam",    n:"👨‍👩‍👧 Family activity",     o:{ focus:"__sport:family", time:25, focusLabel:"Family activity" }}
+ {id:"runb",   n:"🏃 Running comeback",      o:{ focus:"__runlong", time:30, focusLabel:"Running comeback · easy" }}
 ];
 function applyRecipe(id){
   const r = RECIPES.find(x=>x.id===id); if(!r) return false;
@@ -2571,11 +2550,7 @@ function applyRecipe(id){
 }
 /* favorites, rankings and usage make the builder smarter over time */
 function moveScore(m){ const md = (S.moveMeta||{})[m.n]||{};
-  let s = 1 + (md.fav?1.6:0) + (md.rank||0)*0.45 + Math.min(md.used||0,20)*0.06;
-  /* equipment preference: loved gear shows up more, avoided gear only when needed */
-  const pref = (S.profile && S.profile.eqPref) ? S.profile.eqPref[m.eq] : null;
-  if(pref==="love") s *= 1.5; else if(pref==="rare") s *= 0.5; else if(pref==="avoid") s *= 0.15;
-  return s; }
+  return 1 + (md.fav?1.6:0) + (md.rank||0)*0.45 + Math.min(md.used||0,20)*0.06; }
 function wPick(arr,n){ const pool = arr.slice(), out = [];
   while(pool.length && out.length<n){
     let tot = 0; const cum = pool.map(m=>tot += moveScore(m));
@@ -2586,6 +2561,14 @@ function wPick(arr,n){ const pool = arr.slice(), out = [];
 function buildSession(opts={}){
   const focus = opts.focus || S.sel.focus;
   const time = opts.time || S.sel.time;
+  /* Conditioning is ALWAYS a timed circuit, never sets×reps — the gear on hand
+     decides the flavor (KB flow vs bodyweight HIIT). This is what separates a
+     conditioning day from a strength day. */
+  if(focus==="Conditioning" && !(opts.style && STYLES[opts.style] && STYLES[opts.style].circuit)){
+    const kbIn = opts.eqOnly ? opts.eqOnly==="Kettlebells" : S.sel.eq.includes("Kettlebells");
+    opts.style = kbIn ? "kbflow" : "hiit";
+    if(!opts.focusLabel) opts.focusLabel = kbIn ? "Conditioning · KB circuit" : "Conditioning · HIIT";
+  }
   /* bodyweight is always available — it's not selectable gear */
   const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) ||
     (m.eq==="Dumbbells" && S.sel.eq.includes("Adjustable Dumbbells"));
@@ -2600,8 +2583,13 @@ function buildSession(opts={}){
   if(opts.fromNames){
     const items = opts.fromNames.map(n=>allMoves().find(m=>m.n===n)).filter(Boolean);
     if(items.length >= 2){
-      S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style:opts.style||null,
-        items:applyStyle(items, opts.style).map(m=>({...m, done:false})) };
+      if(opts.style && STYLES[opts.style] && STYLES[opts.style].circuit){
+        const c = circuitize(items, opts.style, time, opts);   // circuit templates keep the follow-along player
+        S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style:c.style, flow:c.flow, items:c.items };
+      } else {
+        S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style:opts.style||null,
+          items:applyStyle(items, opts.style).map(m=>({...m, done:false})) };
+      }
       save(); return true;
     } /* library changed under us — fall through and rebuild fresh */
   }
@@ -2609,9 +2597,9 @@ function buildSession(opts={}){
   /* follow-along timed circuits (HIIT / kettlebell flow) — Juice&Toya-style pacing:
      blocks of 4 moves, 2 rounds each, 40s on / 20s off, 30s between blocks */
   if(opts.style && STYLES[opts.style] && STYLES[opts.style].circuit){
-    const st = STYLES[opts.style];
+    const tw = circuitTiming(opts.style, time);
     const rounds = opts.noRepeat ? 1 : 2, perBlock = 4;
-    const unit = (st.work+st.rest)*perBlock*rounds/60 + 0.5;
+    const unit = (tw.work+tw.rest)*perBlock*rounds/60 + 0.5;
     const blocks = Math.max(1, Math.round((time-3)/unit));
     let pool = moves.filter(m=>m.b!=="warmup" && !m.run && !m.sport &&
       (opts.style==="kbflow" ? true : (m.p==="motor"||m.p==="strength")) && (m.dur||0) < 600);
@@ -2626,9 +2614,9 @@ function buildSession(opts={}){
     const picks = wPick(pool, blocks*perBlock);
     if(picks.length < 3){ toast("No moves match — check your equipment"); return false; }
     const warm = wPick(moves.filter(m=>m.b==="warmup"), 2);
-    S.session = { time, focus:opts.focusLabel||st.n, micro:!!opts.micro, style:opts.style,
-      flow:{ work:st.work, rest:st.rest, rounds, perBlock, blockRest:30 },
-      items:[...warm, ...picks].map(m=>({...m, d:`${st.work}s on / ${st.rest}s off`, done:false})) };
+    S.session = { time, focus:opts.focusLabel||STYLES[opts.style].n, micro:!!opts.micro, style:opts.style,
+      flow:{ work:tw.work, rest:tw.rest, rounds, perBlock, blockRest:30 },
+      items:[...warm, ...picks].map(m=>({...m, d:`${tw.work}s on / ${tw.rest}s off`, done:false})) };
     save(); return true;
   }
 
@@ -2941,7 +2929,9 @@ function renderHero(){
   $("#stDone").textContent = S.done;
   $("#stSessions").innerHTML = S.sessions + ((S.microDone||0)?`<small> +${S.microDone} boost${S.microDone>1?"s":""}</small>`:"");
   $("#stTime").innerHTML = S.minutes+"<small>min</small>";
-  $("#systems").innerHTML = Object.entries(SYS).map(([k,P])=>{
+  $("#systems").innerHTML = Object.entries(SYS)
+    .filter(([k])=>k!=="skill" || soccerPicked() || (S.sys.skill||0)>0)   // SKILL earns a row only if you play
+    .map(([k,P])=>{
     const pl = levelFromXp(S.sys[k]||0), pct = Math.min(100, Math.round(pl.into/pl.next*100));
     return `<div class="sys"><div class="sys-top">
       <div class="sys-ico">${P.icon}</div>
@@ -2965,11 +2955,91 @@ function renderHero(){
       <div class="pbar"><div style="width:${pct2}%; background:var(--c-armor)"></div></div></div>`;
   }).join("") : `<div class="empty">Pick body areas in the interview and armor work will fill these shields.</div>`;
 }
+/* ---- Today's brief: the whole day in plain english, glanceable + speakable
+   (the Ankle Armor "audible brief" — the thing that made that app instantly usable) */
+function todayBrief(){
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
+  const pt = planToday();
+  if(!S.plan || !pt) return `Today is ${dateStr}. No plan is running — build a session on the Train tab, or take the interview and get a full block.`;
+  const acts = pt.day.acts, full = acts.filter(a=>!a.micro);
+  const boosters = acts.length - full.length;
+  const bits = full.map(a=>{
+    const D = DTYPES[a.type];
+    if(D.life) return `${a.label||D.t} (one tap when it's done)`;
+    const names = actNames(a);
+    const mins = (a.o&&a.o.time)||(S.profile&&S.profile.len)||30;
+    return `${a.label||D.t} — ${names.length?names.length+" movements, ":""}about ${mins} minutes${a.done?", done ✓":""}`;
+  });
+  let text = `Today is ${dateStr} — week ${pt.day.w+1} of your block. `;
+  text += full.length ? `On the plan: ${bits.join("; ")}.` : `Rest day — recovery is training too.`;
+  if(boosters>0) text += ` Plus ${boosters>1?boosters+" boosters":"a booster"}, about 12 minutes each.`;
+  const note = (pt.day.note||"").trim();
+  if(note && full.length) text += " " + note;
+  return text;
+}
+function speakBrief(){
+  try{
+    if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
+    if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
+    const u = new SpeechSynthesisUtterance(todayBrief().replace(/[·✓]/g,""));
+    u.rate = 1.02; speechSynthesis.speak(u);
+  }catch(e){}
+}
+/* build (or reuse) the session behind a plan act — Today check-offs and Start share this */
+function ensureActSession(idx, ai, force){
+  const ref = S.session && S.session.actRef;
+  if(!force && ref && ref.idx===idx && ref.ai===ai && S.session.items) return true;
+  const act = S.plan && S.plan.days[idx] && S.plan.days[idx].acts[ai]; if(!act) return false;
+  const D = DTYPES[act.type];
+  if(D.life || !D.focus) return false;
+  const tpl = act.tpl && S.plan.templates && S.plan.templates[act.tpl];
+  const micro = !!(act.micro || (tpl && tpl.micro) || D.micro);
+  const o = act.o||{};
+  const names = act.names || (tpl && tpl.names.length ? tpl.names : null);
+  if(!buildSession({ focus:D.focus, time: micro ? 12 : (o.time||(S.profile&&S.profile.len)||S.sel.time), micro,
+      style: o.style || (tpl && tpl.style) || null, mg: o.mg && o.mg.length ? o.mg : null,
+      maxLvl: o.intn==="easy" ? 1 : null,
+      fromNames: names, focusLabel: act.label || D.t })) return false;
+  S.session.actRef = {idx, ai}; save(); return true;
+}
+/* the movement checklist a Today card expands into */
+function actMoveList(a, idx, ai){
+  const D = DTYPES[a.type];
+  if(D.life || a.done && !(S.session&&S.session.actRef&&S.session.actRef.idx===idx&&S.session.actRef.ai===ai)) return "";
+  const names = actNames(a); if(!names.length) return "";
+  const tpl = a.tpl && S.plan.templates && S.plan.templates[a.tpl];
+  const style = (a.o&&a.o.style) || (tpl&&tpl.style) || null;
+  const ref = S.session && S.session.actRef;
+  const sess = (ref && ref.idx===idx && ref.ai===ai) ? S.session : null;
+  const seen = {};
+  return `<div class="td-moves">` + names.map(n=>{
+    const lib = allMoves().find(x=>x.n===n); if(!lib) return "";
+    let live = null;
+    if(sess){ const from = seen[n]||0;
+      const si = sess.items.findIndex((x,xi)=>xi>=from && x.n===n);
+      if(si>=0){ live = sess.items[si]; seen[n] = si+1; } }
+    const m = live || applyStyle([{...lib}], style)[0];
+    const dn = !!(live && live.done);
+    return `<div class="td-move ${dn?'done':''}">
+      <div class="checkbox" data-tcheck="${idx}|${ai}|${esc(n)}">${dn?'✓':''}</div>
+      <div class="ex-meta"><div class="ex-name" style="font-size:13.5px">${esc(n)}</div>
+        <div class="ex-sub">${esc(m.d)}${m.rest?` · rest ${m.rest}s`:""} · ${esc(m.eq)}</div></div>
+      <button class="chip" data-thow="1" style="padding:4px 10px; font-size:11px">how</button></div>
+    <div class="td-how" style="display:none"><p>${esc(lib.how)}</p>
+      ${lib.mod?`<p class="mut" style="margin-top:6px">🟢 Easier: ${esc(lib.mod.e)} · 🔴 Harder: ${esc(lib.mod.h)}</p>`:""}
+      <a class="btn sm ghost" style="text-decoration:none; margin-top:6px" href="${ytSearch(n)}" target="_blank" rel="noopener">▶ Demo</a></div>`;
+  }).join("") + `</div>`;
+}
 function renderTodayPage(){
   const now = new Date();
   $("#tdDate").textContent = now.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
   const pt = planToday();
   const acts = pt ? pt.day.acts : null;
+  $("#tdBrief").innerHTML = `<div class="today-card" style="margin-top:10px">
+    <div class="today-eyebrow">Today's brief</div>
+    <p style="margin:6px 0 10px; line-height:1.55; font-size:13.5px">${esc(todayBrief())}</p>
+    <button class="btn sm ghost" id="briefSpeak">🔊 Speak today</button></div>`;
   /* quad rings: activities · XP · time · habits */
   const dk = dayKey(); const log = S.habitLog[dk] || {}; const hs = habitSet();
   const ringDefs = [
@@ -3007,18 +3077,22 @@ function renderTodayPage(){
   }
   $("#tdActs").innerHTML = (acts && acts.length) ? acts.map((a,ai)=>{
     const D = DTYPES[a.type];
-    return `<div class="pday ${a.done?'done-hl':''}" style="cursor:default">
+    const list = actMoveList(a, pt.idx, ai);
+    const open = list && !a.micro && !a.done;   // today's real work arrives expanded — zero taps to see it
+    return `<div class="pday ${a.done?'done-hl':''}" style="cursor:default; display:block">
+      <div style="display:flex; align-items:center; gap:12px">
       <div class="dico">${D.icon}</div>
-      <div class="ex-meta"><div class="ex-name">${a.label||D.t}${a.done?" ✓":""}${a.adhoc?" <span class='tag' style='margin-left:4px'>added</span>":""}</div>
-      <div class="ex-sub">${a.done?"In the books.":"Any time today counts."}</div></div>
+      <div class="ex-meta" ${list?`data-texpand="1" style="cursor:pointer"`:""}><div class="ex-name">${a.label||D.t}${a.done?" ✓":""}${a.adhoc?" <span class='tag' style='margin-left:4px'>added</span>":""}</div>
+      <div class="ex-sub">${a.done?"In the books.":"Any time today counts."}${list?` <span class="mut">${open?"▾":"▸"}</span>`:""}</div></div>
       ${D.life ? `<button class="btn sm ${a.done?'ghost':''}" data-actdone="${pt.idx}:${ai}">${a.done?"Undo":"Done ✓"}</button>`
         : !a.done ? `<button class="btn sm" data-startact="${pt.idx}:${ai}">Start</button>`
-        : `<button class="btn sm ghost" data-startact="${pt.idx}:${ai}">Again</button>`}</div>`;
+        : `<button class="btn sm ghost" data-startact="${pt.idx}:${ai}">Again</button>`}</div>
+      ${list?`<div class="td-body" style="display:${open?'block':'none'}">${list}</div>`:""}</div>`;
   }).join("") : (S.plan && pt ? "" : "");
   const mySports = (S.profile && S.profile.sports)||[];
   $("#tdQuick").innerHTML = Object.entries(DTYPES).filter(([k])=>k!=="REST")
-    .filter(([k])=>k!=="SKL" || (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball"))
-    .filter(([k,D])=>!D.sport || mySports.includes(D.sport))
+    .filter(([k])=>k!=="SKL" || (soccerPicked() && (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball")))
+    .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy)
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
   renderCheckin(); renderStreakCard(); renderJournal();
 }
@@ -3162,9 +3236,9 @@ function renderPickers(){
   $("#timeChips").innerHTML = [15,30,45,60].map(t=>`<button class="chip alt ${S.sel.time===t?'on':''}" data-t="${t}">${t} min</button>`).join("");
   $("#eqGroups").innerHTML = Object.entries(EQ_GROUPS).map(([g,items])=>`<div class="eq-group"><div class="g">${g}</div><div class="chips">`+
     items.map(e=>`<button class="chip ${S.sel.eq.includes(e)?'on':''}" data-e="${e}">${e}</button>`).join("")+`</div></div>`).join("");
-  const hasBall = S.sel.eq.includes("Soccer Ball");
-  $("#focusChips").innerHTML = FOCI.map(f=>{
-    const locked = f==="Soccer" && !hasBall;
+  const soccerOn = soccerPicked() && S.sel.eq.includes("Soccer Ball");
+  $("#focusChips").innerHTML = FOCI.filter(f=>f!=="Soccer" || soccerPicked()).map(f=>{
+    const locked = f==="Soccer" && !soccerOn;
     return `<button class="chip ${S.sel.focus===f?'on':''}" data-f="${f}" ${locked?'disabled title="Add Soccer Ball to unlock"':''}>${f}${locked?" 🔒":""}</button>`;
   }).join("");
   const MGS = [["legs","Legs"],["glutes","Glutes"],["chest","Chest"],["back","Back"],["shoulders","Shoulders"],["arms","Arms"],["core","Core"]];
@@ -3195,6 +3269,9 @@ function exCard(m,i){
       <div class="ex-actions">
         ${m.dur && m.dur<=600 ? `<button class="btn sm ghost" data-timer="${m.dur}" data-tname="${esc(m.n)}">⏱ ${m.dur}s timer</button>`:""}
         <a class="btn sm ghost" style="text-decoration:none" href="${ytSearch(m.n)}" target="_blank" rel="noopener">▶ Demo</a>
+        ${!m.done ? `<button class="btn sm ghost" data-swap="${i}">⟳ Swap</button>
+        <button class="btn sm ghost" data-pick="${i}">☰ Choose</button>
+        <button class="btn sm ghost" data-rm="${i}">✕</button>` : ""}
       </div>
       ${(m.lift||m.cap||m.p==="strength") ? `<div class="ex-actions" style="align-items:center">
         <input type="number" inputmode="numeric" placeholder="Weight used (lb)" value="${S.logs[m.n]||""}"
@@ -3202,6 +3279,81 @@ function exCard(m,i){
         <button class="btn sm ghost" data-logw="${esc(m.n)}">Log</button></div>`:""}
       </div></div>`;
 }
+/* ---- in-session editing: swap / choose / remove / add without a random rebuild.
+   Plan-launched sessions write every edit back to the act (act.names) — your plan is yours. */
+function editPool(block){
+  const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) ||
+    (m.eq==="Dumbbells" && S.sel.eq.includes("Adjustable Dumbbells")) ||
+    (S.profile && S.profile.eq.includes(m.eq));
+  const info = (S.profile && S.profile.areaInfo)||{};
+  const avoid = Object.keys(info).filter(k=>info[k].mode==="avoid");
+  const cur = S.session.items.map(m=>m.n);
+  return allMoves().filter(m=>m.b===block).filter(eqOk)
+    .filter(m=>!m.area || !m.area.some(a=>avoid.includes(a)))
+    .filter(m=>!cur.includes(m.n));
+}
+function styledItem(nm, block){
+  const item = {...nm, done:false};
+  if(S.session.flow && block!=="warmup") item.d = `${S.session.flow.work}s on / ${S.session.flow.rest}s off`;
+  else return applyStyle([item], S.session.style)[0];
+  return item;
+}
+function syncActNames(){
+  const ref = S.session && S.session.actRef; if(!ref || !S.plan) return;
+  const act = S.plan.days[ref.idx] && S.plan.days[ref.idx].acts[ref.ai];
+  if(act) act.names = S.session.items.map(m=>m.n);
+}
+function replaceSessionMove(i, nm){
+  const cur = S.session.items[i]; if(!cur || cur.done) return;
+  S.session.items[i] = styledItem(nm, cur.b);
+  syncActNames(); save(); renderSession(); renderTodayPage();
+}
+function swapSessionMove(i){
+  const m = S.session.items[i]; if(!m || m.done) return;
+  let pool = editPool(m.b).filter(x=>x.p===m.p);
+  if(!pool.length) pool = editPool(m.b);
+  if(!pool.length){ toast("No alternatives fit your gear"); return; }
+  replaceSessionMove(i, wPick(pool,1)[0]);
+  SFX.play("select");
+}
+function removeSessionMove(i){
+  const m = S.session.items[i]; if(!m || m.done) return;
+  if(S.session.items.filter(x=>!x.done).length<=1){ toast("Keep at least one movement"); return; }
+  S.session.items.splice(i,1);
+  syncActNames(); save(); renderSession(); renderTodayPage();
+}
+function addSessionMove(block, nm){
+  const item = styledItem(nm, block);
+  const order = { warmup:0, main:1, finisher:2 };
+  let at = S.session.items.length;
+  for(let k=S.session.items.length-1; k>=0; k--){
+    if(order[S.session.items[k].b] <= order[block]){ at = k+1; break; }
+    if(k===0) at = 0;
+  }
+  S.session.items.splice(at, 0, item);
+  syncActNames(); save(); renderSession(); renderTodayPage();
+}
+/* movement picker sheet — filtered to gear + block, grouped by system */
+let PK = null;
+function openPickSheet(mode, i, block){
+  PK = { mode, i, block: block || (S.session.items[i]&&S.session.items[i].b) || "main" };
+  const pool = editPool(PK.block);
+  if(!pool.length){ toast("Nothing else fits your gear here"); PK=null; return; }
+  let h = `<h3>${PK.mode==="add" ? "＋ Add a movement" : "☰ Choose a replacement"}</h3>
+    <p class="mut">${PK.mode==="add" ? "Filtered to your gear." : `Swapping out <b>${esc(S.session.items[i].n)}</b>.`}</p>
+    <div style="max-height:52vh; overflow-y:auto; margin-top:6px">`;
+  for(const [k,P] of Object.entries(SYS)){
+    const rows = pool.filter(m=>m.p===k);
+    if(!rows.length) continue;
+    h += `<div class="block-label">${P.icon} ${P.name}</div>` + rows.map(m=>
+      `<div class="as-move">${esc(m.n)}<span class="mut" style="font-size:11px"> · ${esc(m.d)} · ${esc(m.eq)}</span>
+        <button class="sw" data-pickmove="${esc(m.n)}">${PK.mode==="add"?"＋ add":"⟳ use"}</button></div>`).join("");
+  }
+  h += `</div><div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Close</button></div>`;
+  $("#pkBody").innerHTML = h;
+  $("#pickSheet").classList.add("show"); SFX.play("select");
+}
+function closePickSheet(){ $("#pickSheet").classList.remove("show"); PK = null; }
 function sessionMedia(){
   if(!S.session || !(S.media||[]).length) return "";
   const tags = new Set([S.session.focus.toLowerCase(), "full workout"]);
@@ -3216,11 +3368,13 @@ function renderSession(){
   const it = S.session.items, done = it.filter(m=>m.done).length;
   const blocks = { warmup:"Warm-up", main:"Main work", finisher:"Finisher" };
   let html = `<div class="session-head"><h2>${esc(S.session.focus)} · ${S.session.time} min</h2><span class="mut">${done}/${it.length}</span></div>`;
+  if(S.session.actRef) html += `<p class="mut" style="margin:2px 0 6px; font-size:11.5px">✎ Every swap, add and remove here saves straight back to this plan slot.</p>`;
   if(done < it.length) html += `<button class="btn big" id="playBtn" style="margin:8px 0 14px">▶ START GUIDED</button>`;
   for(const b of ["warmup","main","finisher"]){
     const rows = it.map((m,i)=>({m,i})).filter(x=>x.m.b===b);
-    if(!rows.length) continue;
-    html += `<div class="block-label">${blocks[b]}</div>` + rows.map(x=>exCard(x.m,x.i)).join("");
+    if(!rows.length && b!=="main") continue;
+    html += `<div class="block-label">${blocks[b]}</div>` + rows.map(x=>exCard(x.m,x.i)).join("")
+      + `<div class="ex-actions" style="margin:2px 0 10px"><button class="chip" data-addmove="${b}">＋ Add a movement</button></div>`;
   }
   if(done===it.length && it.length) html += `<div class="complete-card"><h3>Session complete 💥</h3><p class="mut">+${Math.round(it.length*4)} bonus XP banked. See you tomorrow.</p></div>`;
   html += sessionMedia();
@@ -3329,9 +3483,9 @@ function renderActSheet(){
   const act = S.plan.days[AS.idx].acts[AS.ai]; if(!act){ closeActSheet(); return; }
   const D = DTYPES[act.type], o = act.o||{}, isLife = !!D.life;
   const names = actNames(act);
-  const typeKeys = Object.keys(DTYPES).filter(k=>k!=="REST")
+  const typeKeys = Object.keys(DTYPES).filter(k=>k!=="REST" && !DTYPES[k].legacy)
     .filter(k=>!DTYPES[k].sport || ((S.profile&&S.profile.sports)||[]).includes(DTYPES[k].sport))
-    .filter(k=>k!=="SKL" || !S.profile || S.profile.eq.includes("Soccer Ball"));
+    .filter(k=>k!=="SKL" || (soccerPicked() && (!S.profile || S.profile.eq.includes("Soccer Ball"))));
   let h = `<h3>${D.icon} ${esc(act.label||D.t)}${act.lock?" 🔒":""}</h3>
     <p class="mut">${act.done?"Completed — the work is banked; edits only change future runs.":"Tune this slot — changes stick to it."}</p>
     <div class="sec-label">Type</div><div class="chips">` +
@@ -3534,16 +3688,14 @@ $$(".nav button").forEach(b=>b.addEventListener("click", ()=>go(b.dataset.page))
 
 function openOnb(){ const P = S.profile;
   onb = { i:0, _last:null, a:Object.assign({ name:"", age:"", gender:"", exps:{}, activities:{},
-  work:"wfh", eve:"free", motiv:"progress", streakTol:4, tech:"standard",
-  windows:{ main:"evening", secondary:"", mobility:"", family:"", booster:"" },
+  streakTol:4,
   goals:[], areas:["ankle"], areaInfo:{}, runFocus:"both",
-  eq:(P&&P.eq.slice())||[], eqPref:(P&&Object.assign({},P.eqPref))||{},
+  eq:(P&&P.eq.slice())||[],
   lifts:(P&&P.lifts)||{}, caps:(P&&P.caps)||{},
   days:3, len:30, weeks:6, boost:0, mode:"coach" }, P ? { name:P.name, age:P.age, gender:P.gender,
   exps:Object.assign({}, P.exps||{}),
   activities:Object.assign({}, P.activities||{}),
-  work:P.work||"wfh", eve:P.eve||"free", motiv:P.motiv||"progress", streakTol:P.streakTol||4, tech:P.tech||"standard",
-  windows:Object.assign({ main:P.window||"evening", secondary:"", mobility:"", family:"", booster:"" }, P.windows||{}),
+  streakTol:P.streakTol||4,
   goals:(P.goals||[]).slice(), areas:(P.areas||["ankle"]).slice(),
   areaInfo:JSON.parse(JSON.stringify(P.areaInfo||{})),
   runFocus:P.runFocus, days:P.days, len:P.len, weeks:P.weeks,
@@ -3571,17 +3723,7 @@ document.addEventListener("click", ev=>{
   const olv = t.closest("[data-alevel]"); if(olv){ const s=olv.dataset.alevel, ix=s.lastIndexOf(":");
     onb.a.activities[s.slice(0,ix)] = +s.slice(ix+1); buzz(); onbRender(); return; }
   const oexp = t.closest("[data-exp]"); if(oexp){ onb.a.exps[oexp.dataset.track||"lift"] = oexp.dataset.exp; buzz(); onbRender(); return; }
-  const oep = t.closest("[data-epref]"); if(oep){ const s=oep.dataset.epref, ix=s.lastIndexOf(":");
-    onb.a.eqPref[s.slice(0,ix)] = s.slice(ix+1); buzz(); onbRender(); return; }
-  const owork = t.closest("[data-work]"); if(owork){ onb.a.work = owork.dataset.work; buzz(); onbRender(); return; }
-  const oeve = t.closest("[data-eve]"); if(oeve){ onb.a.eve = oeve.dataset.eve; buzz(); onbRender(); return; }
-  const omv = t.closest("[data-motiv]"); if(omv){ onb.a.motiv = omv.dataset.motiv; buzz(); onbRender(); return; }
-  const otk = t.closest("[data-tech]"); if(otk){ onb.a.tech = otk.dataset.tech; buzz(); onbRender(); return; }
   const owt = t.closest("[data-wktarget]"); if(owt){ onb.a.streakTol = +owt.dataset.wktarget; buzz(); onbRender(); return; }
-  const owin = t.closest("[data-owin]"); if(owin){ const s=owin.dataset.owin, ix=s.lastIndexOf(":");
-    onb.a.windows[s.slice(0,ix)] = s.slice(ix+1); buzz(); onbRender(); return; }
-  const opre = t.closest("[data-preset]"); if(opre){ const p=WIN_PRESETS[opre.dataset.preset];
-    if(p) onb.a.windows = Object.assign({}, p.w); buzz(); SFX.play("select"); onbRender(); return; }
   const oarea = t.closest("[data-area]"); if(oarea){ const k=oarea.dataset.area, a=onb.a;
     if(a.areas.includes(k)){ a.areas.splice(a.areas.indexOf(k),1); delete a.areaInfo[k]; }
     else a.areas.push(k); buzz(); onbRender(); return; }
@@ -3636,6 +3778,18 @@ document.addEventListener("click", ev=>{
   if(chk && S.session){ toggleItem(+chk.dataset.check, false);
     save(); renderSession(); renderHero(); renderTodayPage(); return; }
 
+  /* ---- in-session editing (Train tab) ---- */
+  const sw = t.closest("[data-swap]"); if(sw && S.session){ swapSessionMove(+sw.dataset.swap); buzz(); return; }
+  const pk = t.closest("[data-pick]"); if(pk && S.session){ openPickSheet("swap", +pk.dataset.pick); return; }
+  const rmv = t.closest("[data-rm]"); if(rmv && S.session){ removeSessionMove(+rmv.dataset.rm); buzz(); return; }
+  const am = t.closest("[data-addmove]"); if(am && S.session){ openPickSheet("add", null, am.dataset.addmove); return; }
+  const pmv = t.closest("[data-pickmove]");
+  if(pmv && PK && S.session){
+    const nm = allMoves().find(m=>m.n===pmv.dataset.pickmove);
+    if(nm){ PK.mode==="add" ? addSessionMove(PK.block, nm) : replaceSessionMove(PK.i, nm); }
+    closePickSheet(); return; }
+  if(t.id==="pkClose" || (t.id==="pickSheet" && PK)){ closePickSheet(); return; }
+
   if(t.closest("[data-winput]")) return;
   const op = t.closest("[data-open]"); if(op){ op.closest(".ex").classList.toggle("open"); return; }
   const lo = t.closest("[data-libopen]"); if(lo && !t.closest("a") && !t.closest(".fav")){
@@ -3660,19 +3814,30 @@ document.addEventListener("click", ev=>{
     else delete S.habitLog[today][id];
     save(); renderHabits(); renderHero(); return; }
 
+  if(t.id==="briefSpeak"){ speakBrief(); return; }
+  const tex = t.closest("[data-texpand]");
+  if(tex){ const card = tex.closest(".pday"), body = card && card.querySelector(".td-body");
+    if(body){ body.style.display = body.style.display==="none" ? "block" : "none";
+      const ar = tex.querySelector(".mut"); if(ar) ar.textContent = body.style.display==="none" ? "▸" : "▾"; } return; }
+  const thw = t.closest("[data-thow]");
+  if(thw){ const row = thw.closest(".td-move"), how = row && row.nextElementSibling;
+    if(how && how.classList.contains("td-how")) how.style.display = how.style.display==="none" ? "block" : "none";
+    return; }
+  const tc = t.closest("[data-tcheck]");
+  if(tc){ const parts = tc.dataset.tcheck.split("|");
+    if(!ensureActSession(+parts[0], +parts[1])) return;
+    const name = parts.slice(2).join("|");
+    let i = S.session.items.findIndex(m=>m.n===name && !m.done);
+    if(i<0) i = S.session.items.findIndex(m=>m.n===name);
+    if(i>=0) toggleItem(i, false);
+    save(); renderTodayPage(); renderHero(); return; }
   const sa = t.closest("[data-startact]");
   if(sa){ const [idx,ai] = sa.dataset.startact.split(":").map(Number);
     const act = S.plan.days[idx].acts[ai], D = DTYPES[act.type];
     if(D.life) return;   // life rows complete with one tap, no session
-    const tpl = act.tpl && S.plan.templates && S.plan.templates[act.tpl];
-    const micro = !!(act.micro || (tpl && tpl.micro) || D.micro);
-    const o = act.o||{};
-    const names = act.names || (tpl && tpl.names.length ? tpl.names : null);
-    if(buildSession({ focus:D.focus, time: micro ? 12 : (o.time||(S.profile&&S.profile.len)||S.sel.time), micro,
-        style: o.style || (tpl && tpl.style) || null, mg: o.mg && o.mg.length ? o.mg : null,
-        maxLvl: o.intn==="easy" ? 1 : null,
-        fromNames: names, focusLabel: act.label || D.t })){
-      S.session.actRef = {idx, ai}; save(); go("train"); renderSession(); renderMusic(); } return; }
+    const ref = S.session && S.session.actRef;
+    const force = !!(ref && ref.idx===idx && ref.ai===ai && S.session.items && S.session.items.every(m=>m.done));
+    if(ensureActSession(idx, ai, force)){ go("train"); renderSession(); renderMusic(); } return; }
   const aed = t.closest("[data-actedit]");
   if(aed){ const [idx,ai] = aed.dataset.actedit.split(":").map(Number); openActSheet(idx, ai); return; }
   /* ---- check-in + recovery adaptation ---- */
