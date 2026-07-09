@@ -66,7 +66,9 @@ body::after{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E")}
 body.hasphoto::before{background-image:var(--bgphoto); background-position:center; background-size:cover; background-repeat:no-repeat}
 body.hasphoto{--panel:rgba(26,26,33,.7); --panel2:rgba(37,38,48,.76)}
-.card,.stat,.sys,.ex,.pday,.habit,.lib-item,.media-card,.today-card,.hero-card,.opt,.chip,.field input,.field select,.field textarea,.search,.seg{backdrop-filter:blur(14px) saturate(1.25); -webkit-backdrop-filter:blur(14px) saturate(1.25)}
+/* real blur only on LARGE glass surfaces — blurring every chip/input multiplied
+   compositor cost ~5x for near-zero visual gain (small elements sit on panels) */
+.card,.stat,.sys,.ex,.pday,.habit,.lib-item,.media-card,.today-card,.hero-card,.opt{backdrop-filter:blur(14px) saturate(1.25); -webkit-backdrop-filter:blur(14px) saturate(1.25)}
 h1,h2,h3,.disp{font-family:'Chakra Petch',sans-serif; letter-spacing:.02em}
 button{font-family:inherit; color:inherit; background:none; border:none; cursor:pointer}
 input,select,textarea{font-family:inherit; font-size:15px; color:var(--text)}
@@ -119,7 +121,7 @@ a{color:var(--accent)}
 .today-card{border:1px solid var(--accent); background:linear-gradient(160deg, var(--panel), var(--panel2)); border-radius:18px; padding:16px; margin-top:14px}
 .today-eyebrow{font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--accent); font-family:'Chakra Petch'; font-weight:600}
 .today-title{font-family:'Chakra Petch'; font-weight:700; font-size:18px; margin-top:4px}
-.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border-radius:14px; font-family:'Chakra Petch'; font-weight:700; font-size:14px; letter-spacing:.06em; background:var(--accent); color:var(--onaccent); transition:transform .12s}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border-radius:14px; font-family:'Chakra Petch'; font-weight:700; font-size:14px; letter-spacing:.06em; background:var(--accent); color:var(--onaccent); transition:transform .12s; white-space:nowrap}
 .btn:active{transform:scale(.97)}
 .btn.big{width:100%; padding:15px; font-size:15px; margin-top:16px; box-shadow:0 6px 22px color-mix(in srgb, var(--accent) 30%, transparent)}
 .btn.ghost{background:var(--panel2); color:var(--text); border:1px solid var(--line); box-shadow:none}
@@ -185,6 +187,7 @@ a{color:var(--accent)}
 .td-move:last-child{border-bottom:none}
 .td-move.done .ex-name{text-decoration:line-through; opacity:.55}
 .td-move .checkbox{flex:none}
+.td-move.done .checkbox{background:var(--accent); border-color:var(--accent); color:#0b0b0f; font-weight:800}
 .td-how{background:var(--panel2); border-radius:10px; padding:10px 12px; margin:4px 0 8px; font-size:12.5px; line-height:1.5}
 /* v6 — Viking hero scene */
 .hero-scene{position:relative; height:230px; overflow:hidden; background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 18%, var(--panel)), var(--panel2)); border-bottom:1px solid var(--line)}
@@ -210,9 +213,7 @@ a{color:var(--accent)}
 .tourc-title{font-family:'Chakra Petch'; font-size:16px; margin:4px 0 4px}
 .tourc-text{color:var(--dim); font-size:13px; line-height:1.5; margin-bottom:10px}
 .tour-hl{outline:2px solid var(--accent); outline-offset:3px; border-radius:14px; position:relative; z-index:95}
-/* v6 — video layers (backdrop, hero loop, level-up) */
-#bgVid{position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover; z-index:-3; pointer-events:none}
-body.hasvideo::before{background-image:none !important}
+/* v6 — video layers (hero loop, level-up) */
 .lu-card{position:relative; overflow:hidden}
 #luVid{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:.45; pointer-events:none}
 .lu-card>*:not(#luVid){position:relative; z-index:1}
@@ -580,8 +581,6 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="sec-label">Ambience</div>
       <p class="mut" style="margin-bottom:10px">Lofi viking loops, generated once and bundled — they play offline, no streaming.</p>
       <div class="chips" id="ambChips"></div>
-      <div class="sec-label">Animated backdrop</div>
-      <div class="chips" id="bgvChips"></div>
       <div class="sec-label">Music</div>
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
@@ -650,7 +649,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 <div class="levelup" id="levelup"><div class="lu-card">
   <div class="sub">Level up</div><div class="big" id="luLvl">LVL 2</div>
   <p id="luMsg"></p>
-  <button onclick="document.getElementById('levelup').classList.remove('show')">KEEP GOING</button>
+  <button onclick="document.getElementById('levelup').classList.remove('show'); var v=document.getElementById('luVid'); if(v) v.pause();">KEEP GOING</button>
 </div></div>
 
 <div class="player" id="player"><div class="pl-inner">
@@ -2027,11 +2026,11 @@ const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
-  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", sound:"low", amb:"off", bgv:"on"} };
+  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", sound:"low", amb:"off"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
 S.avatar = Object.assign({}, DEF.avatar, S.avatar||{});
-["bannerUrl","avatarUrl","bgUrl"].forEach(k=>{ if(S.settings) delete S.settings[k]; });   // v6: custom art URLs retired
+["bannerUrl","avatarUrl","bgUrl","bgv"].forEach(k=>{ if(S.settings) delete S.settings[k]; });   // v6: custom art URLs + backdrop video retired
 S.settings = Object.assign({}, DEF.settings, S.settings||{}); S.moveMeta = S.moveMeta||{};
 const save = () => { store.set("mo_state", S); pushWidgets(); };
 
@@ -2154,6 +2153,7 @@ function grantXp(sysKey, amount){
     $("#luMsg").textContent = "You're " + tierFor(after) + " now." +
       (unlocked.length ? " Unlocked — " + unlocked.join(" · ") + "." : " Momentum compounds — keep stacking days.");
     $("#levelup").classList.add("show");
+    try{ const v=$("#luVid"); if(v){ v.currentTime=0; const p=v.play(); if(p&&p.catch)p.catch(()=>{}); } }catch(e){}
     SFX.play("fanfare"); bigBurst({n:150, spread:90, origin:{x:.5,y:.45}});
   }
 }
@@ -3116,9 +3116,9 @@ function renderHeroScene(){
     if($("#hsBgVid")) return;
     try{
       const v = document.createElement("video"); v.id = "hsBgVid"; v.className = "hs-bg";
-      v.src = src; v.muted = true; v.loop = true; v.autoplay = true; v.setAttribute("playsinline","");
+      v.src = src; v.muted = true; v.loop = true; v.setAttribute("playsinline","");
       const scene = $("#heroScene"); if(scene) scene.insertBefore(v, scene.firstChild);
-      const p = v.play(); if(p && p.catch) p.catch(()=>{});
+      if($("#page-home").classList.contains("on")){ const p = v.play(); if(p && p.catch) p.catch(()=>{}); }
     }catch(e){}
   });
   const comp = COMPANIONS.find(c=>c.id===A.companion);
@@ -3250,6 +3250,8 @@ function ensureActSession(idx, ai, force){
       fromNames: names, focusLabel: act.label || D.t })) return false;
   S.session.actRef = {idx, ai}; save(); return true;
 }
+/* open "how" panels survive re-renders — checking a box shouldn't slam them shut */
+const openHow = new Set();
 /* the movement checklist a Today card expands into */
 function actMoveList(a, idx, ai){
   const D = DTYPES[a.type];
@@ -3268,12 +3270,13 @@ function actMoveList(a, idx, ai){
       if(si>=0){ live = sess.items[si]; seen[n] = si+1; } }
     const m = live || applyStyle([{...lib}], style)[0];
     const dn = !!(live && live.done);
+    const hk = `${idx}|${ai}|${n}`;
     return `<div class="td-move ${dn?'done':''}">
       <div class="checkbox" data-tcheck="${idx}|${ai}|${esc(n)}">${dn?'✓':''}</div>
       <div class="ex-meta"><div class="ex-name" style="font-size:13.5px">${esc(n)}</div>
         <div class="ex-sub">${esc(m.d)}${m.rest?` · rest ${m.rest}s`:""} · ${esc(m.eq)}</div></div>
       <button class="chip" data-thow="1" style="padding:4px 10px; font-size:11px">how</button></div>
-    <div class="td-how" style="display:none"><p>${esc(lib.how)}</p>
+    <div class="td-how" style="display:${openHow.has(hk)?'block':'none'}"><p>${esc(lib.how)}</p>
       ${lib.mod?`<p class="mut" style="margin-top:6px">🟢 Easier: ${esc(lib.mod.e)} · 🔴 Harder: ${esc(lib.mod.h)}</p>`:""}
       <a class="btn sm ghost" style="text-decoration:none; margin-top:6px" href="${ytSearch(n)}" target="_blank" rel="noopener">▶ Demo</a></div>`;
   }).join("") + `</div>`;
@@ -3320,7 +3323,7 @@ function renderTodayPage(){
       doneN===acts.length ? "Day complete 💥" :
       !full.length ? "Recovery + booster" :
       `${full.length} ${full.length>1?"activities":"activity"}${acts.length>full.length?" + booster":""} today`;
-    $("#tdSub").textContent = `Week ${pt.day.w+1} · ${pt.day.note.replace(/^Week \d+: /,"")}`;
+    $("#tdSub").textContent = `Week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}`;   // the coach note lives in the brief — once
   }
   $("#tdActs").innerHTML = (acts && acts.length) ? acts.map((a,ai)=>{
     const D = DTYPES[a.type];
@@ -3588,7 +3591,8 @@ function openPickSheet(mode, i, block){
   if(!pool.length){ toast("Nothing else fits your gear here"); PK=null; return; }
   let h = `<h3>${PK.mode==="add" ? "＋ Add a movement" : "☰ Choose a replacement"}</h3>
     <p class="mut">${PK.mode==="add" ? "Filtered to your gear." : `Swapping out <b>${esc(S.session.items[i].n)}</b>.`}</p>
-    <div style="max-height:52vh; overflow-y:auto; margin-top:6px">`;
+    <input id="pkSearch" placeholder="🔍 Search ${pool.length} movements…" style="width:100%; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px">
+    <div style="max-height:48vh; overflow-y:auto; margin-top:6px">`;
   for(const [k,P] of Object.entries(SYS)){
     const rows = pool.filter(m=>m.p===k);
     if(!rows.length) continue;
@@ -3598,6 +3602,16 @@ function openPickSheet(mode, i, block){
   }
   h += `</div><div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Close</button></div>`;
   $("#pkBody").innerHTML = h;
+  const inp = $("#pkSearch");
+  if(inp) inp.addEventListener("input", ()=>{
+    const q = inp.value.toLowerCase();
+    $$("#pkBody .as-move").forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none"; });
+    $$("#pkBody .block-label").forEach(l=>{   // hide group headers whose whole group is filtered out
+      let el = l.nextElementSibling, any = false;
+      while(el && !el.classList.contains("block-label")){ if(el.classList.contains("as-move") && el.style.display!=="none") any = true; el = el.nextElementSibling; }
+      l.style.display = any ? "" : "none";
+    });
+  });
   $("#pickSheet").classList.add("show"); SFX.play("select");
 }
 function closePickSheet(){ $("#pickSheet").classList.remove("show"); PK = null; }
@@ -3874,8 +3888,6 @@ function renderMore(){
   $("#soundChips").innerHTML = [["off","🔇 Off"],["low","🔉 Subtle"],["full","🔊 Full"]]
     .map(([k,l])=>`<button class="chip ${(S.settings.sound||"low")===k?'on':''}" data-sound="${k}">${l}</button>`).join("");
   $("#ambChips").innerHTML = ambChips();
-  $("#bgvChips").innerHTML = [["on","🎞 Animated"],["off","🖼 Static"]]
-    .map(([k,l])=>`<button class="chip ${(S.settings.bgv||"on")===k?'on':''}" data-bgv="${k}">${l}</button>`).join("");
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
   const p = S.profile||{lifts:{},caps:{}};
   $("#wSquat").value=p.lifts.squat||""; $("#wBench").value=p.lifts.bench||""; $("#wDead").value=p.lifts.deadlift||"";
@@ -3934,6 +3946,9 @@ function go(page){
   $$(".nav button").forEach(x=>x.classList.toggle("on", x.dataset.page===page));
   $$(".page").forEach(p=>p.classList.toggle("on", p.id==="page-"+page));
   window.scrollTo({top:0});
+  /* video decodes only while its page is on screen — battery + compositor courtesy */
+  try{ const hv = $("#hsBgVid");
+    if(hv){ if(page==="home"){ const p=hv.play(); if(p&&p.catch)p.catch(()=>{}); } else hv.pause(); } }catch(e){}
 }
 $$(".nav button").forEach(b=>b.addEventListener("click", ()=>go(b.dataset.page)));
 
@@ -4072,7 +4087,12 @@ document.addEventListener("click", ev=>{
       const ar = tex.querySelector(".mut"); if(ar) ar.textContent = body.style.display==="none" ? "▸" : "▾"; } return; }
   const thw = t.closest("[data-thow]");
   if(thw){ const row = thw.closest(".td-move"), how = row && row.nextElementSibling;
-    if(how && how.classList.contains("td-how")) how.style.display = how.style.display==="none" ? "block" : "none";
+    if(how && how.classList.contains("td-how")){
+      const open = how.style.display==="none";
+      how.style.display = open ? "block" : "none";
+      const cb = row.querySelector("[data-tcheck]");
+      if(cb){ open ? openHow.add(cb.dataset.tcheck) : openHow.delete(cb.dataset.tcheck); }
+    }
     return; }
   const tc = t.closest("[data-tcheck]");
   if(tc){ const parts = tc.dataset.tcheck.split("|");
@@ -4197,8 +4217,6 @@ document.addEventListener("click", ev=>{
     renderMore(); renderMusic();
     if(dOpen){ const d2=$("#musicDrawer"); if(d2) d2.style.display="block"; }
     SFX.play("select"); return; }
-  const bgvBtn = t.closest("[data-bgv]");
-  if(bgvBtn){ S.settings.bgv = bgvBtn.dataset.bgv; save(); applyBg(); renderMore(); SFX.play("select"); return; }
   const md = t.closest("[data-mdel]"); if(md){ S.media.splice(+md.dataset.mdel,1); save(); renderMedia(); return; }
   const dl = t.closest("[data-del]"); if(dl){ S.custom.splice(+dl.dataset.del,1); save(); renderMore(); renderLib(); return; }
   const seg = t.closest("#libSeg button");
@@ -4280,8 +4298,8 @@ migrateProfile(); migratePlan();
   probeVid(["lu-burst.webm","lu-burst.mp4"], src=>{ const lc = $(".lu-card"); if(lc && !$("#luVid")){
     try{
       const v = document.createElement("video"); v.id = "luVid"; v.src = src;
-      v.muted = true; v.loop = true; v.autoplay = true; v.setAttribute("playsinline","");
-      lc.prepend(v); const p = v.play(); if(p && p.catch) p.catch(()=>{});
+      v.muted = true; v.loop = true; v.setAttribute("playsinline","");   // plays only while the card shows
+      lc.prepend(v);
     }catch(e){} } });
   probeImg(["lu-burst.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_014051_622b187f-72b1-4a42-9bb4-6a5f38a17ce5_min.webp"], u=>{ const lc = $(".lu-card"); if(lc){
     lc.style.backgroundImage = `linear-gradient(color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 90%, transparent)), url("${u}")`;
@@ -4295,21 +4313,9 @@ function applyBg(){
     document.body.style.setProperty("--bgphoto", `url("${url}")`);
     document.body.classList.add("hasphoto");
   });
-  /* animated backdrop (v6): local video loop when present + enabled; photo stays the fallback */
-  const old = $("#bgVid"); if(old) old.remove();
-  document.body.classList.remove("hasvideo");
-  const wantVid = (S.settings.bgv||"on")!=="off" &&
-    !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  if(wantVid) probeVid(["bgv-"+S.settings.theme+".webm","bgv-"+S.settings.theme+".mp4"], src=>{
-    try{
-      const v = document.createElement("video");
-      v.id = "bgVid"; v.src = src; v.muted = true; v.loop = true; v.autoplay = true;
-      v.setAttribute("playsinline",""); v.setAttribute("aria-hidden","true");
-      document.body.prepend(v);
-      const p = v.play(); if(p && p.catch) p.catch(()=>{});
-      document.body.classList.add("hasvideo");
-    }catch(e){}
-  });
+  /* NOTE (v6.1): full-screen backdrop VIDEO was cut — a moving layer under a
+     stack of backdrop-filter panels stalls the compositor (froze desktop Chrome,
+     would drain iPhone batteries). Static theme art is the design. */
 }
 document.body.dataset.theme = S.settings.theme || "ember";
 applyBg();
