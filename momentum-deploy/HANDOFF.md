@@ -7,6 +7,25 @@ Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-spa
 5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
 **Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
 
+## New in v5 Phase 5 (Today 2.0 — check-ins, journal, Streak 2.0, armor shields)
+- **Daily check-in strip** (energy/sleep/soreness, 3 taps → `S.checkins[day]`). Low scores
+  (or Recovery-First mode at moderate scores) surface the **Adapt card**: 🌿 Minimum
+  viable workout (15-min maxLvl-1 session crediting today's planned act via actRef),
+  🛡️ mobility swap, 🌙 rest-with-credit (recharge XP + streak). Never auto-overwrites;
+  asks once per day (`adapted`/`rested` flags).
+- **Journal & voice notes** (typed or iOS keyboard dictation): `tagJournal()` rule-based
+  tagger extracts duration, activity, category, muscle scope, effort/feel; completed
+  statements append a done "(logged)" act, credit minutes + streak + system XP
+  (`saveJournal`). Reflective notes store without fake credit. `S.journal[]`.
+- **Streak 2.0** (`S.streak2 {freezes,best,milestones,comeback}`): freezes auto-granted
+  at 7/14/30/50/100 milestones (cap 3, fanfare + confetti), silently bridge a one-day
+  gap; comeback remembered and celebrated, never shamed; weekly consistency target from
+  interview (`streakTol`) is the headline metric — streak card shows week dots, freezes,
+  minutes. Partial credit was already structural (any habit/booster/journal touch).
+- **Armor shields**: `S.areaXP[area]` accrues from area-tagged completed moves;
+  per-area shield bars on Stats (`#armorCard`) with rehab/protected labels.
+- validate.js: **187 checks** including the brief's exact voice-note example.
+
 ## New in v5 Phase 4 (Planner 2.0 — drag & drop, act editor, whole-life plan)
 - **SortableJS v1.15.6 vendored** (2nd vendored lib — one more triggers the Vite note).
   Plan → 🖐 Arrange: 7 day containers per week, act chips drag between days

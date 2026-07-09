@@ -430,6 +430,68 @@ setTimeout(()=>{ try {
   T("widget payload has stacked acts", Array.isArray(wp.today.acts) && wp.today.acts.length>=1);
   T("widget payload has 6 systems", wp.systems.length===6);
 
+  /* ---- Phase 5: check-ins, adaptation, journal tagger, streak 2.0, armor ---- */
+  d.querySelectorAll(".nav button")[0].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("check-in strip renders (energy/sleep/soreness)", $$("[data-ci]").length===9);
+  click($('[data-ci="energy:1"]')); click($('[data-ci="sleep:2"]')); click($('[data-ci="sore:3"]'));
+  T("check-ins persist per day", w.eval(`todayCI().energy===1 && todayCI().sore===3`));
+  T("low check-in surfaces adaptation options", !!$("#adMVW") && !!$("#adMob") && !!$("#adRest"));
+  click($('[data-qadd="MOT"]'));   // guarantee an undone act for MVW to credit
+  click($("#adMVW"));
+  const mvw = state().session;
+  T("MVW builds a short beginner-level session", mvw.time<=15 && mvw.items.filter(m=>m.b==="main").every(m=>(m.lvl||1)<=1));
+  T("MVW credits toward today's planned act", !!mvw.actRef);
+  T("adaptation asks once, never nags", w.eval(`needsAdapt()===false`));
+  w.eval(`S.checkins[dayKey()].adapted=0; save(); renderCheckin();`);
+  const rchB = state().sys.recharge;
+  click($("#adRest"));
+  T("rest-with-credit grants recovery XP", state().sys.recharge > rchB && w.eval(`todayCI().rested===1`));
+
+  const minB5 = state().minutes;
+  w.eval(`saveJournal("Did a 25 minute kettlebell workout, mostly swings and presses. Felt tired but got it done.")`);
+  const je = state().journal[0];
+  T("journal saves with auto-tags", !!je && je.tags.includes("kettlebell") && je.tags.includes("25 min"));
+  T("tagger reads duration, category, muscle scope, feel", je.dur===25 && je.tags.includes("strength/conditioning")
+    && je.tags.includes("full body") && je.tags.includes("fatigue noted"));
+  T("completed speech counts as unscheduled activity + streak", je.tags.includes("completed") && je.tags.includes("streak credit"));
+  T("journal creates a logged done act on today", state().plan.days.some(dd=>dd.acts.some(a=>a.adhoc && /logged/.test(a.label||""))));
+  T("journal minutes credit the day", state().minutes >= minB5+25);
+  w.eval(`saveJournal("feeling good about tomorrow")`);
+  T("reflections don't fake activity credit", !state().journal[0].tags.includes("streak credit"));
+  T("journal list renders on Today", $$("#jrnList .card").length>=1);
+
+  T("milestone grants a freeze + celebration", w.eval(`
+    (function(){ const s={streak:S.streak,last:S.lastDay,s2:JSON.parse(JSON.stringify(S.streak2||{}))};
+      const y=new Date(); y.setDate(y.getDate()-1);
+      S.streak=6; S.lastDay=dayKey(y); S.streak2={freezes:0,best:6,milestones:[],comeback:0};
+      touchStreak();
+      const ok = S.streak===7 && S.streak2.freezes===1 && S.streak2.milestones.includes(7);
+      S.streak=s.streak; S.lastDay=s.last; S.streak2=s.s2; save(); return ok; })()`));
+  T("freeze silently bridges a one-day gap", w.eval(`
+    (function(){ const s={streak:S.streak,last:S.lastDay,s2:JSON.parse(JSON.stringify(S.streak2||{}))};
+      const y2=new Date(); y2.setDate(y2.getDate()-2);
+      S.streak=9; S.lastDay=dayKey(y2); S.streak2={freezes:2,best:9,milestones:[],comeback:0};
+      touchStreak();
+      const ok = S.streak===10 && S.streak2.freezes===1;
+      S.streak=s.streak; S.lastDay=s.last; S.streak2=s.s2; save(); return ok; })()`));
+  T("no freeze → comeback remembered, never shamed", w.eval(`
+    (function(){ const s={streak:S.streak,last:S.lastDay,s2:JSON.parse(JSON.stringify(S.streak2||{}))};
+      const y3=new Date(); y3.setDate(y3.getDate()-3);
+      S.streak=12; S.lastDay=dayKey(y3); S.streak2={freezes:0,best:12,milestones:[],comeback:0};
+      touchStreak();
+      const ok = S.streak===1 && S.streak2.comeback===12;
+      S.streak=s.streak; S.lastDay=s.last; S.streak2=s.s2; save(); return ok; })()`));
+  T("weekly consistency target comes from the interview", w.eval(`weekStats().target===4 && weekStats().hits>=1`));
+  T("streak card renders with freezes + week dots", $("#streakCard").textContent.includes("streak") && $("#streakCard").textContent.includes("❄️"));
+  T("armor shields fill from area-tagged work", w.eval(`
+    (function(){ const b=(S.areaXP&&S.areaXP.ankle)||0;
+      const mv = Object.assign({}, LIB.find(m=>m.n==="Tibialis raises"), {done:false});
+      const sv = S.session; S.session = {time:5, focus:"Mobility", items:[mv]};
+      toggleItem(0, true); const ok = ((S.areaXP&&S.areaXP.ankle)||0) > b;
+      S.session = sv; save(); return ok; })()`));
+  d.querySelectorAll(".nav button")[1].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("armor card renders per-area shields", $$("#armorCard .sys").length>=1);
+
   /* ---- habits + migration ---- */
   d.querySelectorAll(".nav button")[0].dispatchEvent(new w.Event("click",{bubbles:true}));
   click($("[data-habit]"));

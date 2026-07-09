@@ -402,11 +402,23 @@ a{color:var(--accent)}
       <div class="today-eyebrow" id="tdDate" style="margin-top:10px"></div>
       <h2 style="font-size:22px; margin:4px 0 2px" id="tdTitle">Today</h2>
       <p class="mut" id="tdSub"></p>
+      <div id="checkinCard" style="margin-top:12px"></div>
+      <div id="adaptCard"></div>
       <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
       <div class="rings4" id="rings4"></div></div>
+      <div id="streakCard"></div>
       <div id="tdActs" style="margin-top:14px"></div>
       <div class="sec-label">Add something unscheduled</div>
       <div class="chips" id="tdQuick"></div>
+      <div class="sec-label">Journal & voice notes</div>
+      <div class="card">
+        <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="Type — or tap the mic on your keyboard and just talk. &quot;Did a 25 minute kettlebell workout, mostly swings and presses…&quot;"></textarea>
+        <div style="display:flex; gap:8px; margin-top:10px; align-items:center">
+          <button class="btn sm" id="jrnSave">📓 Log it</button>
+          <span class="mut" style="font-size:11.5px">Auto-tags activity, duration & effort — completed work counts toward your streak.</span>
+        </div>
+      </div>
+      <div id="jrnList"></div>
       <div class="sec-label">Today's habits</div>
       <div id="habitList"></div>
     </div>
@@ -437,6 +449,8 @@ a{color:var(--accent)}
       </div>
       <div class="sec-label">Your systems</div>
       <div id="systems"></div>
+      <div class="sec-label">Body armor</div>
+      <div id="armorCard"></div>
     </div>
   </section>
 
@@ -1856,6 +1870,7 @@ function whyFor(m, p){
 /* ================= STATE ================= */
 const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0,recharge:0},
   done:0, sessions:0, microDone:0, minutes:0, streak:0, lastDay:"", custom:[], media:[], logs:{}, dayXP:{}, dayMin:{}, moveMeta:{},
+  checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", bannerUrl:"", avatarUrl:"", sound:"low"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
@@ -1976,12 +1991,41 @@ function grantXp(sysKey, amount){
     SFX.play("fanfare"); bigBurst({n:150, spread:90, origin:{x:.5,y:.45}});
   }
 }
+/* Streak 2.0 — guilt-free by design: freezes auto-granted BEFORE they're needed,
+   silently consumed on a one-day gap; comebacks celebrated, never shamed. */
 function touchStreak(){
   const today = dayKey();
   if(S.lastDay === today) return;
+  S.streak2 = Object.assign({ freezes:1, best:0, milestones:[], comeback:0 }, S.streak2||{});
   const y = new Date(); y.setDate(y.getDate()-1);
-  S.streak = (S.lastDay === dayKey(y)) ? S.streak + 1 : 1;
+  const y2 = new Date(); y2.setDate(y2.getDate()-2);
+  if(S.lastDay === dayKey(y)) S.streak = S.streak + 1;
+  else if(S.lastDay === dayKey(y2) && S.streak2.freezes > 0){
+    S.streak2.freezes--; S.streak = S.streak + 1;
+    toast("❄️ Streak protected — a freeze covered yesterday");
+  } else {
+    if(S.streak >= 3) S.streak2.comeback = S.streak;   // remember what they're coming back from
+    S.streak = 1;
+  }
   S.lastDay = today;
+  S.streak2.best = Math.max(S.streak2.best, S.streak);
+  const MS = [7,14,30,50,100];
+  if(MS.includes(S.streak) && !S.streak2.milestones.includes(S.streak)){
+    S.streak2.milestones.push(S.streak);
+    S.streak2.freezes = Math.min(3, S.streak2.freezes + 1);
+    SFX.play("fanfare"); bigBurst({n:170, spread:100, origin:{x:.5,y:.4}});
+    toast(`🔥 ${S.streak}-day streak! Freeze earned (${S.streak2.freezes} banked)`);
+  }
+  if(S.streak2.comeback && S.streak >= S.streak2.comeback){ S.streak2.comeback = 0; }  // fully back
+}
+/* weekly consistency — days-you-showed-up beats perfection */
+function weekStats(){
+  const now = new Date(); const mon = new Date(now);
+  mon.setDate(now.getDate() - ((now.getDay()+6)%7)); mon.setHours(0,0,0,0);
+  let hits = 0;
+  for(let i=0;i<7;i++){ const d2 = new Date(mon); d2.setDate(mon.getDate()+i);
+    if((S.dayXP||{})[d2.toDateString()] > 0) hits++; }
+  return { hits, target:(S.profile&&S.profile.streakTol)||4 };
 }
 
 /* ================= HABITS (derived from goals) ================= */
@@ -2686,6 +2730,9 @@ function toggleItem(i, fromPlayer){
     /* frequency feeds the library's "most used" view and the weighted builder */
     S.moveMeta = S.moveMeta||{}; const mm = S.moveMeta[m.n] = S.moveMeta[m.n]||{};
     mm.used = (mm.used||0)+1; mm.last = Date.now();
+    /* body-armor progress: area-tagged work fills that area's shield */
+    (m.area||[]).forEach(a=>{ if(((S.profile&&S.profile.areas)||[]).includes(a)){
+      S.areaXP = S.areaXP||{}; S.areaXP[a] = (S.areaXP[a]||0) + m.xp; } });
     const it = S.session.items;
     if(it.every(x=>x.done)){
       /* boosters are real work but NOT full workouts — tracked separately, smaller bonus */
@@ -2899,6 +2946,19 @@ function renderHero(){
       <div class="pbar"><div style="width:${pct}%; background:${sysColor(k)}"></div></div>
       <div class="nums">${pl.into} / ${pl.next} XP</div></div>`;
   }).join("");
+  /* body-armor shields: per-area progress from area-tagged work */
+  const areas = (S.profile && S.profile.areas)||[];
+  const ac = $("#armorCard");
+  if(ac) ac.innerHTML = areas.length ? areas.map(a=>{
+    const A = AREAS.find(x=>x[0]===a); const xp = (S.areaXP||{})[a]||0;
+    const lvl = Math.floor(xp/150)+1, pct2 = Math.round((xp%150)/1.5);
+    const info = (S.profile.areaInfo||{})[a];
+    return `<div class="sys"><div class="sys-top"><div class="sys-ico">${A?A[1]:"🛡️"}</div>
+      <div class="sys-meta"><div class="sys-name" style="color:var(--c-armor)">${A?A[2]:a}</div>
+      <div class="sys-sub">armor level ${lvl}${info&&info.mode==="rehab"?" · rehab":info&&info.mode==="avoid"?" · protected":""}</div></div>
+      <div class="sys-lvl" style="color:var(--c-armor)">${xp} XP</div></div>
+      <div class="pbar"><div style="width:${pct2}%; background:var(--c-armor)"></div></div></div>`;
+  }).join("") : `<div class="empty">Pick body areas in the interview and armor work will fill these shields.</div>`;
 }
 function renderTodayPage(){
   const now = new Date();
@@ -2955,6 +3015,7 @@ function renderTodayPage(){
     .filter(([k])=>k!=="SKL" || (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball"))
     .filter(([k,D])=>!D.sport || mySports.includes(D.sport))
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
+  renderCheckin(); renderStreakCard(); renderJournal();
 }
 function renderHabits(){
   const today = dayKey(); const log = S.habitLog[today] || {};
@@ -2962,6 +3023,128 @@ function renderHabits(){
     <div class="habit ${log[h.id]?'done':''}" data-habit="${h.id}">
       <div class="hbox">${log[h.id]?'✓':''}</div><div class="hname">${esc(h.n)}</div>
       <div class="hxp" style="color:${sysColor(h.sys)}">+${h.xp} ${SYS[h.sys].name}</div></div>`).join("");
+}
+
+/* ================= TODAY 2.0: CHECK-INS · ADAPTATION · JOURNAL · STREAK ================= */
+const CI_QS = [["energy","⚡","Energy"],["sleep","😴","Sleep"],["sore","🦵","Soreness"]];
+const CI_OPTS = { energy:[["1","🥱 Low"],["2","😐 OK"],["3","⚡ High"]],
+  sleep:[["1","😵 Rough"],["2","😐 OK"],["3","😴 Great"]],
+  sore:[["1","🙂 Fresh"],["2","😬 A bit"],["3","🥵 Very"]] };
+function todayCI(){ return (S.checkins||{})[dayKey()] || {}; }
+function needsAdapt(){
+  const ci = todayCI();
+  if(!(ci.energy && ci.sleep && ci.sore)) return false;
+  if(ci.rested || ci.adapted) return false;
+  const low = ci.energy===1 || ci.sleep===1 || ci.sore===3;
+  const rec = S.profile && S.profile.mode==="recovery" && (ci.energy<=2 || ci.sleep<=2 || ci.sore>=2);
+  return !!(low || rec);
+}
+function renderCheckin(){
+  const ci = todayCI();
+  $("#checkinCard").innerHTML = `<div class="card"><div style="font-family:'Chakra Petch'; font-weight:700; font-size:14px">Quick check-in</div>` +
+    CI_QS.map(([k,ic,label])=>`<div style="display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap">
+      <span style="width:88px; font-size:12.5px; color:var(--dim); font-weight:600">${ic} ${label}</span>
+      <span class="chips" style="gap:6px">${CI_OPTS[k].map(([v,l])=>`<button class="chip ${String(ci[k])===v?'on':''}" data-ci="${k}:${v}" style="padding:6px 11px; font-size:12px">${l}</button>`).join("")}</span></div>`).join("") + `</div>`;
+  renderAdapt();
+}
+function renderAdapt(){
+  const box = $("#adaptCard"); if(!box) return;
+  if(!needsAdapt()){ box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="today-card" style="margin-top:10px">
+    <div class="today-eyebrow">Adapt today?</div>
+    <div class="today-title" style="font-size:15px">Your body says take it easier — small still counts.</div>
+    <div class="ex-actions" style="margin-top:10px">
+      <button class="btn sm" id="adMVW">🌿 Minimum viable workout</button>
+      <button class="btn sm ghost" id="adMob">🛡️ Mobility instead</button>
+      <button class="btn sm ghost" id="adRest">🌙 Rest — with credit</button>
+    </div></div>`;
+}
+function firstUndoneAct(){
+  const pt = planToday(); if(!pt) return null;
+  const ai = pt.day.acts.findIndex(a=>!a.done && !a.micro && !DTYPES[a.type].life);
+  return ai>=0 ? { idx:pt.idx, ai, act:pt.day.acts[ai] } : null;
+}
+function markAdapted(flag){ S.checkins = S.checkins||{}; S.checkins[dayKey()] = Object.assign({}, todayCI(), flag); save(); renderCheckin(); }
+function weekMinutes(){ const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  let m = 0; for(let i=0;i<7;i++){ const d2 = new Date(mon); d2.setDate(mon.getDate()+i); m += (S.dayMin||{})[d2.toDateString()]||0; } return m; }
+function renderStreakCard(){
+  const box = $("#streakCard"); if(!box) return;
+  const s2 = Object.assign({ freezes:1, best:0, milestones:[], comeback:0 }, S.streak2||{});
+  const wk = weekStats();
+  const dots = Array.from({length:7},(_,i)=>`<span style="width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;background:${i<wk.hits?'var(--accent)':'color-mix(in srgb, var(--text) 15%, transparent)'}"></span>`).join("");
+  const comeback = s2.comeback && S.streak < s2.comeback ?
+    `<div class="mut" style="margin-top:6px">💪 Day ${S.streak} of your comeback — showing up again is the hard part, and you just did it.</div>` : "";
+  box.innerHTML = `<div class="card" style="margin-top:10px">
+    <div style="display:flex; align-items:baseline; gap:10px">
+      <span style="font-family:'Chakra Petch'; font-weight:700; font-size:16px">🔥 ${S.streak}-day streak</span>
+      <span class="mut" style="font-size:12px">best ${Math.max(s2.best, S.streak)}</span>
+      <span class="mut" style="margin-left:auto" title="Freezes protect your streak automatically">❄️ ×${s2.freezes}</span></div>
+    <div style="margin-top:8px">${dots}<span class="mut" style="font-size:11.5px"> ${wk.hits}/${wk.target} days this week · ${weekMinutes()} min</span></div>
+    ${comeback}
+    ${wk.hits>=wk.target?`<div style="margin-top:6px; color:var(--accent2); font-family:'Chakra Petch'; font-weight:700; font-size:12.5px">✓ Weekly target hit — everything else is bonus</div>`:""}
+  </div>`;
+}
+/* ---- journal: rule-based metadata tagger (real, on-device, offline) ---- */
+const JR_ACTS = [
+  ["kettlebell", /kettle\s?bells?|\bkbs?\b/, "STR", "strength/conditioning"],
+  ["running", /\b(run|running|jog|jogged|ran)\b/, "RUNF", "cardio"],
+  ["walking", /\bwalk(ed|ing)?\b/, "MOT", "cardio"],
+  ["cycling", /\b(bike|biked|cycling|rode|ride)\b/, "MOT", "cardio"],
+  ["swimming", /\bswim|swam\b/, "MOT", "cardio"],
+  ["hiking", /\bhike|hiked|ruck\b/, "MOT", "cardio"],
+  ["yoga", /\byoga\b/, "ARM", "mobility"],
+  ["mobility", /stretch|mobility|foam roll/, "ARM", "mobility"],
+  ["soccer", /soccer/, "SKL", "skill"],
+  ["basketball", /basketball|hoops/, "SP_basketball", "skill"],
+  ["hiit", /\bhiit\b|circuit/, "MOT", "conditioning"],
+  ["lifting", /\blift(ed|ing)?\b|weights|\bgym\b|bench|squat|deadlift|press/, "STR", "strength"]
+];
+function tagJournal(txt){
+  const t = txt.toLowerCase();
+  const tags = [];
+  const md = t.match(/(\d{1,3})\s*(?:-|\s)?(?:min|minute)s?\b/);
+  const dur = md ? +md[1] : 0;
+  if(dur) tags.push(`${dur} min`);
+  let act = null, typ = "MOT";
+  for(const [name, re, ty, cat] of JR_ACTS){
+    if(re.test(t)){ if(!act){ act = name; typ = ty; } if(!tags.includes(name)) tags.push(name); if(!tags.includes(cat)) tags.push(cat); }
+  }
+  if(act==="kettlebell" && /swing|press|clean|snatch|full body/.test(t) && !tags.includes("full body")) tags.push("full body");
+  if(/tired|exhausted|wiped|drained|fatigued/.test(t)) tags.push("fatigue noted");
+  if(/\bstrong\b|energi[sz]ed|felt great/.test(t)) tags.push("felt strong");
+  if(/\bsore\b/.test(t)) tags.push("soreness noted");
+  const completed = /\b(did|finished|completed|crushed)\b|got it done/.test(t);
+  if(completed) tags.push("completed");
+  return { tags, dur, act, typ, completed };
+}
+function saveJournal(txt){
+  if(!txt || !txt.trim()){ toast("Say or type something first"); return false; }
+  const m = tagJournal(txt);
+  S.journal = S.journal||[];
+  const entry = { d:dayKey(), txt:txt.trim(), tags:m.tags.slice(), dur:m.dur, act:m.act };
+  if(m.completed && m.act){
+    const pt = planToday();
+    const typ = DTYPES[m.typ] ? m.typ : "MOT";
+    if(pt) pt.day.acts.push({ type:typ, done:true, adhoc:true,
+      label:(m.act.charAt(0).toUpperCase()+m.act.slice(1)) + " (logged)" });
+    if(m.dur){ S.minutes += m.dur; S.dayMin = S.dayMin||{}; S.dayMin[dayKey()] = (S.dayMin[dayKey()]||0) + m.dur; }
+    touchStreak();
+    grantXp(m.typ==="STR" ? "strength" : m.typ==="ARM" ? "armor" : m.typ==="SKL" ? "skill" : "motor",
+      Math.min(30, 10 + Math.round((m.dur||10)/3)));
+    entry.tags.push("streak credit");
+    SFX.play("done"); toast("Logged & credited 💪");
+  } else { SFX.play("tap"); toast("Noted 📓"); }
+  S.journal.unshift(entry);
+  save(); renderTodayPage(); renderHero(); renderPlan();
+  return true;
+}
+function renderJournal(){
+  const box = $("#jrnList"); if(!box) return;
+  const list = (S.journal||[]).slice(0,3);
+  box.innerHTML = list.map(e=>`<div class="card" style="margin-top:8px">
+    <div class="mut" style="font-size:11px">${esc(e.d)}</div>
+    <div style="font-size:14px; margin-top:3px">${esc(e.txt)}</div>
+    <div class="ex-tags" style="margin-top:8px">${e.tags.map(tg=>`<span class="tag">${esc(tg)}</span>`).join("")}</div></div>`).join("");
 }
 
 /* ================= RENDER: TRAIN ================= */
@@ -3487,6 +3670,29 @@ document.addEventListener("click", ev=>{
       S.session.actRef = {idx, ai}; save(); go("train"); renderSession(); renderMusic(); } return; }
   const aed = t.closest("[data-actedit]");
   if(aed){ const [idx,ai] = aed.dataset.actedit.split(":").map(Number); openActSheet(idx, ai); return; }
+  /* ---- check-in + recovery adaptation ---- */
+  const ci = t.closest("[data-ci]");
+  if(ci){ const [k,v] = ci.dataset.ci.split(":");
+    S.checkins = S.checkins||{}; const day = S.checkins[dayKey()] = S.checkins[dayKey()]||{};
+    day[k] = +v; buzz(); save(); renderCheckin(); return; }
+  if(t.id==="adMVW"){ const f = firstUndoneAct();
+    const D = f ? DTYPES[f.act.type] : null;
+    if(buildSession({ focus:(D&&D.focus)||"Full Body", time:15, maxLvl:1,
+        focusLabel:"Minimum viable · "+((f&&(f.act.label||(D&&D.t)))||"today") })){
+      if(f) S.session.actRef = { idx:f.idx, ai:f.ai };
+      markAdapted({adapted:1}); go("train"); renderSession(); renderMusic();
+      toast("Small wins count — 15 easy minutes"); }
+    return; }
+  if(t.id==="adMob"){
+    if(buildSession({ focus:"Mobility", time:15, focusLabel:"Recovery mobility" })){
+      const f = firstUndoneAct(); if(f) S.session.actRef = { idx:f.idx, ai:f.ai };
+      markAdapted({adapted:1}); go("train"); renderSession(); renderMusic();
+      toast("Mobility day — your plan adapts, not you"); }
+    return; }
+  if(t.id==="adRest"){
+    touchStreak(); grantXp("recharge", 12);
+    markAdapted({rested:1}); renderTodayPage(); renderHero();
+    toast("Recovery credited — streak safe 🌙"); return; }
   /* ---- act editor sheet interactions ---- */
   if(AS && $("#actSheet").classList.contains("show")){
     const act = S.plan.days[AS.idx] && S.plan.days[AS.idx].acts[AS.ai];
@@ -3566,6 +3772,7 @@ document.addEventListener("click", ev=>{
   if(t.id==="musicToggle"){ const d=$("#musicDrawer"); d.style.display = d.style.display==="none"?"block":"none"; return; }
 });
 
+$("#jrnSave").addEventListener("click", ()=>{ const ta = $("#jrnText"); if(saveJournal(ta.value)) ta.value = ""; });
 $("#buildBtn").addEventListener("click", ()=>{ if(buildSession()){ renderSession(); renderMusic();
   const el=$("#session"); if(el.scrollIntoView) el.scrollIntoView({behavior:"smooth"}); } });
 $("#libSearch").addEventListener("input", renderLib);
