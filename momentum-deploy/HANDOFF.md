@@ -7,6 +7,19 @@ Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-spa
 5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
 **Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
 
+## New in v5 Phase 6 (Higgsfield art + polish) — v5.0 COMPLETE
+- **6 generated images, 0.72 credits total spent (39.28 of 40 remain)** — soul_2 at
+  0.12/image, shipped as compressed `_min.webp` (~90–250KB each vs 3MB PNGs):
+  `bg-steel/turf/night/retro/daylight.webp` fill the previously empty `BG_ART` slots
+  (local-first, CDN fallback), `lu-burst.webp` backs the level-up card (probeImg wired
+  in `applyArt`). Every theme now has a photo backdrop behind the glass.
+- Focus-visible outlines on all interactive elements; WIDGETS.md updated
+  (`@capacitor/haptics`, copy *.png+*.webp into www/).
+- Deliberately NOT spent: video (multi-MB payload in an offline single-file app),
+  armor concept art (shields are already data-driven UI). ~39 credits banked for
+  future art passes.
+- Final: **187 harness checks**, all six phases browser-verified.
+
 ## New in v5 Phase 5 (Today 2.0 — check-ins, journal, Streak 2.0, armor shields)
 - **Daily check-in strip** (energy/sleep/soreness, 3 taps → `S.checkins[day]`). Low scores
   (or Recovery-First mode at moderate scores) surface the **Adapt card**: 🌿 Minimum

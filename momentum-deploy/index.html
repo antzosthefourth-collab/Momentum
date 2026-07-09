@@ -390,6 +390,7 @@ a{color:var(--accent)}
 .stars .st.on{color:var(--accent2); text-shadow:0 0 10px color-mix(in srgb, var(--accent2) 55%, transparent)}
 .stars .st-lab{font-size:11px; color:var(--faint); margin-left:8px; font-family:'Chakra Petch'; letter-spacing:.08em; text-transform:uppercase}
 .empty{text-align:center; color:var(--faint); padding:30px 16px; font-size:14px}
+button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 </style>
 </head>
@@ -1514,7 +1515,11 @@ const ART = {
 };
 const BG_ART = {
   ember:["bg-ember.png","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260708_032139_d83fc44a-3f24-4453-9fe1-8bd975b9b77b.png"],
-  steel:[], turf:[], night:[], retro:[], daylight:[]
+  steel:["bg-steel.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013635_2d2da825-d798-4370-a861-6fad32af68ae_min.webp"],
+  turf:["bg-turf.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013705_7391005a-a7b5-4264-a0e9-7a30895da292_min.webp"],
+  night:["bg-night.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013707_4f9871fe-f7aa-4b6b-ae22-e5016c71cf3d_min.webp"],
+  retro:["bg-retro.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013708_e997c931-64f1-49b6-8c18-34e04fd030fb_min.webp"],
+  daylight:["bg-daylight.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_014049_bf12875f-eb2c-4bd6-893a-3c375905fcb5_min.webp"]
 };
 function probeImg(candidates, ok){
   const list = [].concat(candidates).filter(Boolean);
@@ -3847,6 +3852,11 @@ migrateProfile(); migratePlan();
   const bi = $("#bannerImg"), ai = $("#avatarImg");
   if(bi) probeImg([S.settings.bannerUrl].concat(ART.banner), u=>{ bi.src=u; });
   if(ai) probeImg([S.settings.avatarUrl].concat(ART.avatar), u=>{ ai.src=u; });
+  /* celebration art behind the level-up card */
+  probeImg(["lu-burst.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_014051_622b187f-72b1-4a42-9bb4-6a5f38a17ce5_min.webp"], u=>{ const lc = $(".lu-card"); if(lc){
+    lc.style.backgroundImage = `linear-gradient(color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 90%, transparent)), url("${u}")`;
+    lc.style.backgroundSize = "cover"; lc.style.backgroundPosition = "center";
+    lc.style.borderRadius = "24px"; lc.style.border = "1px solid var(--line)"; } });
 })();
 function applyBg(){
   document.body.classList.remove("hasphoto");

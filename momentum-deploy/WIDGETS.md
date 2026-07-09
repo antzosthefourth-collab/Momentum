@@ -4,11 +4,14 @@
 Same route as Glissé: **Capacitor + Codemagic**, no Mac needed for the app itself.
 
 ```bash
-npm init -y && npm i @capacitor/core @capacitor/cli @capacitor/ios
+npm init -y && npm i @capacitor/core @capacitor/cli @capacitor/ios @capacitor/haptics
 npx cap init Momentum com.raddad.momentum --web-dir=www
-mkdir www && cp index.html www/
+mkdir www && cp index.html *.png www/
 npx cap add ios
 ```
+**v5 note:** `@capacitor/haptics` powers real taptic feedback — `buzz()` in index.html
+already detects `Capacitor.Plugins.Haptics` and uses impact styles; web falls back to
+`navigator.vibrate`. Copy ALL png assets into `www/` (theme backdrops load local-first).
 Push to GitHub → Codemagic iOS workflow → TestFlight. The app is fully offline
 (localStorage), so no backend, no privacy-nutrition surprises beyond "data not
 collected." Embedded Spotify/YouTube iframes require adding those domains to
