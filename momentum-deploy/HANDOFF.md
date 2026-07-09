@@ -23,9 +23,26 @@ bg-remover, resized via System.Drawing; 3 seedance videos `bgv-ember.mp4` (9:16
 animated backdrop), `hero-loop.mp4` (hero scene), `lu-burst.mp4` (level-up) wired
 through `probeVid` w/ static fallbacks + More toggles; lofi viking ambience via
 ACE-Step (victor/ace-step-jam space) + `playAmbience()` player (More + Train drawer).
-banner.png/avatar.png deleted (orphaned). **validate.js: 237 checks.**
-**Higgsfield: 7.36 credits remain.** Remaining theme backdrop videos (steel/turf/
-night/retro/daylight) are future work — static webp stays the fallback by design. Owner decisions: Viking athlete art direction; video in
+banner.png/avatar.png deleted (orphaned). **validate.js: 236 checks.**
+**Higgsfield: 7.36 credits remain.**
+
+## v6.1 — UX audit polish + music (July 9, same day)
+- Full end-user audit in real Chrome (fresh interview → tour → every tab). All flows
+  verified working; findings fixed: blur diet (backdrop-filter only on large glass —
+  chips/inputs render translucent, ~5x fewer compositor layers), **full-screen
+  animated backdrop REMOVED** (video under glass = battery sink; static art is the
+  design), hero/level-up videos gated to visibility, Today checked-boxes get accent
+  fill, open "how" panels survive re-renders, `#tdSub` reads "Week N of M" (coach
+  note lives only in the brief), `.btn` nowrap, movement picker gained live search.
+- **Ambience shipped**: `amb-viking-1.mp3` (Fire & Frost) + `amb-viking-2.mp3`
+  (Long Night) — 60s seamless loops, 821KB each, PROCEDURALLY synthesized
+  (scratch Node DSP: loop-safe drone partials/heartbeat/fire-crackle/vinyl-hiss +
+  lamejs MP3; script preserved in session scratchpad `music/synth.mjs`). ACE-Step
+  (victor/ace-step-jam) produced one lovely track ("Frostfire Focus") but its
+  download path re-encodes video in-browser and the account's ZeroGPU quota
+  exhausted — swap in ACE tracks later if wanted (route documented in memory).
+- Tab-visibility gotcha for future auditing: background Chrome tabs stop rAF +
+  CDP screenshots (looks like a freeze; it isn't — app measured 132fps). Owner decisions: Viking athlete art direction; video in
 level-up + hero loop + theme backdrops (free-first: nanobanana/HF/GPT before
 Higgsfield's 39.28 credits); windows return in-app at Phase-7 scheduling.
 
