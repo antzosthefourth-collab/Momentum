@@ -7,6 +7,23 @@ Six phases toward a "personal fitness OS" — see `~/.claude/plans/iterative-spa
 5 Today 2.0 + streaks · 6 Higgsfield assets (40 credits, images-first) + polish.
 **Vite migration trigger:** move to a build when index.html >~9k lines OR a 3rd vendored lib OR team >1.
 
+## New in v5 Phase 4 (Planner 2.0 — drag & drop, act editor, whole-life plan)
+- **SortableJS v1.15.6 vendored** (2nd vendored lib — one more triggers the Vite note).
+  Plan → 🖐 Arrange: 7 day containers per week, act chips drag between days
+  (long-press on touch, ⠿ handle). Core is `movePlanAct(from, ai, to, pos)` — harness
+  calls it directly. Sortables destroyed/rebuilt per render (`sortables[]`).
+- **Act editor sheet** (✎ on any plan act → `openActSheet`): change type (incl. life
+  rows), duration/intensity/style/muscle-focus overrides (`act.o = {time,intn,style,mg}`),
+  per-exercise ⟳ swap (pins `act.names`), 🎲 rebuild slot, 🔒 lock, ⧉ duplicate, ✕ delete
+  (confirm when done/locked). `startact` honors `act.names` + `act.o`.
+- **Whole-life plan rows**: NUT/SLP/MIND/JRNL day types (`DTYPES[x].life` = system) —
+  one-tap Done grants FUEL/RECHARGE XP + streak credit, in quick-add for everyone.
+- **Regenerate 2.0**: pre-flight summary counts ("Keeps N completed and M locked —
+  rebuilds K"); locked acts survive regeneration (merge from Phase 1 handles both).
+- Old ⟳ type-cycling swap removed in favor of the editor sheet.
+- validate.js: **166 checks** (drag persistence, overrides, swap, lock-survives-regen,
+  life-act XP, duplicate).
+
 ## New in v5 Phase 3 (Library 2.0 · why engine · follow-along circuits)
 - **Every move enriched**: `m.mgf` (16 fine muscle groups incl. biceps/triceps/quads/
   hamstrings/calves/forearms/neck-traps), `m.pattern` (squat/hinge/push/pull/carry/

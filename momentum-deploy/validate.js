@@ -327,8 +327,8 @@ setTimeout(()=>{ try {
   T("circuit walks to completion via skips", !$("#player").classList.contains("show"), `(${cguard} steps)`);
   T("circuit completion credits every movement", state().session.items.every(m=>m.done));
   w.eval(`applyRecipe("desk")`);
-  T("desk posture recipe targets neck/back/shoulder", state().session.items.filter(m=>m.area).length>0 &&
-    state().session.items.filter(m=>m.area).every(m=>m.area.some(a=>["neck","back","shoulder","general"].includes(a))));
+  T("desk posture recipe targets neck/back/shoulder", state().session.items.filter(m=>m.b!=="warmup" && m.area).length>0 &&
+    state().session.items.filter(m=>m.b!=="warmup" && m.area).every(m=>m.area.some(a=>["neck","back","shoulder","general"].includes(a))));
   w.eval(`applyRecipe("heart")`);
   T("heart-health recipe sticks to beginner moves", state().session.items.filter(m=>m.b==="main").every(m=>(m.lvl||1)<=1));
 
@@ -343,18 +343,73 @@ setTimeout(()=>{ try {
   T("machine movements in library", w.eval(`["Lat pulldown","Leg press","Smith machine squat","Machine chest press","Seated row machine"].every(n=>LIB.some(m=>m.n===n))`));
   T("sport movements in library", w.eval(`["Swim: steady laps","Outdoor ride: endurance","Wall rally drill","Ruck walk (loaded)","Sun salutation flow"].every(n=>LIB.some(m=>m.n===n))`));
 
-  /* ---- plan editing: add / swap / remove / rest ---- */
+  /* ---- Phase 4: planner 2.0 — drag & drop, act editor, locks, life rows ---- */
+  d.querySelectorAll(".nav button")[3].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("SortableJS vendored inline", w.eval(`typeof Sortable==="function"`));
+  click($("#arrangeBtn"));
+  T("arrange mode renders 7 drag containers", $$("#planDays .arr-acts").length===7, `(${$$("#planDays .arr-acts").length})`);
+  T("arrange shows draggable act chips with handles", $$("#planDays .arr-act .drag-h").length>=3);
+  const dFrom = state().plan.days.findIndex(dd=>dd.acts.some(a=>!a.micro));
+  const dTo = state().plan.days.findIndex(dd=>!dd.acts.some(a=>!a.micro));
+  const aiF = state().plan.days[dFrom].acts.findIndex(a=>!a.micro);
+  const movedType = state().plan.days[dFrom].acts[aiF].type;
+  w.eval(`movePlanAct(${dFrom}, ${aiF}, ${dTo}, 0)`);
+  T("drag core moves an act between days and persists", state().plan.days[dTo].acts[0].type===movedType);
+  w.eval(`movePlanAct(${dTo}, 0, ${dFrom}, ${aiF})`);
+  click($("#arrangeBtn"));
+
+  /* act editor sheet */
+  const editBtn = $("[data-actedit]");
+  const [eIdx, eAi] = editBtn.dataset.actedit.split(":").map(Number);
+  click(editBtn);
+  T("act editor sheet opens", $("#actSheet").classList.contains("show"));
+  T("act sheet offers type / duration / intensity / style", !!$("[data-astype]") && !!$('[data-astime="15"]') && !!$('[data-asint="easy"]'));
+  click($('[data-astime="15"]'));
+  T("duration override persists on the act", (state().plan.days[eIdx].acts[eAi].o||{}).time===15);
+  click($("#asLock"));
+  T("lock toggles from the sheet", state().plan.days[eIdx].acts[eAi].lock===true);
+  const namesBefore = w.eval(`actNames(S.plan.days[${eIdx}].acts[${eAi}])`);
+  click($('[data-asswap="0"]'));
+  T("exercise swap changes exactly that movement", namesBefore.length>0 &&
+    w.eval(`(S.plan.days[${eIdx}].acts[${eAi}].names||[])[0]`)!==namesBefore[0], `was ${namesBefore[0]}`);
+  const cnt4 = state().plan.days[eIdx].acts.length;
+  click($("#asDup"));
+  T("duplicate adds a copy on the same day", state().plan.days[eIdx].acts.length===cnt4+1);
+  click($("#asRebuild"));
+  T("rebuild pins a fresh movement set to the slot", (state().plan.days[eIdx].acts[eAi].names||[]).length>0);
+  click($("#asDone"));
+  T("act sheet closes", !$("#actSheet").classList.contains("show"));
+
+  /* locked acts survive a full regenerate */
+  click($("#replanBtn")); click($("#cfYes"));
+  T("locked act survives full regenerate", state().plan.days[eIdx].acts.some(a=>a.lock));
+
+  /* whole-life plan rows */
+  d.querySelectorAll(".nav button")[0].dispatchEvent(new w.Event("click",{bubbles:true}));
+  T("life rows offered in quick-add", !!$('[data-qadd="NUT"]') && !!$('[data-qadd="MIND"]') && !!$('[data-qadd="JRNL"]') && !!$('[data-qadd="SLP"]'));
+  click($('[data-qadd="MIND"]'));
+  const xpRB = state().sys.recharge;
+  const lifeBtn = $$("#tdActs [data-actdone]").find(b=>{
+    const [i2,a2] = b.dataset.actdone.split(":").map(Number);
+    return state().plan.days[i2].acts[a2] && state().plan.days[i2].acts[a2].type==="MIND"; });
+  T("life act renders one-tap Done on Today", !!lifeBtn);
+  click(lifeBtn);
+  T("life act completion grants system XP", state().sys.recharge > xpRB, `${xpRB} -> ${state().sys.recharge}`);
+  T("life acts never offer a Start button", !$$("#tdActs [data-startact]").some(b=>{
+    const [i3,a3] = b.dataset.startact.split(":").map(Number);
+    const act3 = state().plan.days[i3].acts[a3];
+    return act3 && ["NUT","SLP","MIND","JRNL"].includes(act3.type); }));
+
+  /* add / remove still work */
   d.querySelectorAll(".nav button")[3].dispatchEvent(new w.Event("click",{bubbles:true}));
   const addBtn = $("[data-actadd]");
   const editIdx = +addBtn.dataset.actadd;
   const cBefore = state().plan.days[editIdx].acts.length;
   click(addBtn);
   T("add activity to a plan day", state().plan.days[editIdx].acts.length === cBefore+1);
-  click($(`[data-actswap="${editIdx}:0"]`));
-  T("swap activity type", true);
   click($(`[data-actdel="${editIdx}:0"]`));
   if($("#confirmSheet").classList.contains("show")){
-    T("deleting a completed act asks first", true);
+    T("deleting a completed/locked act asks first", true);
     click($("#cfYes"));
   }
   T("remove activity", state().plan.days[editIdx].acts.length === cBefore);
