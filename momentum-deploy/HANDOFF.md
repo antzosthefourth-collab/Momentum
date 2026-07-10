@@ -1,6 +1,20 @@
 # MOMENTUM — Session Handoff
 *Training + life OS · single-file web app → iOS via Capacitor · v8 · July 2026*
 
+## Queued for v9 (owner feedback, July 10)
+- **Move HIIT out of the activities/hobby grid.** HIIT currently sits in the
+  interview's "What activities do you do?" step alongside soccer/hiking/yoga —
+  wrong home: it's a workout TYPE, not a hobby. Give it a natural training-side
+  home instead — e.g. a chip on the schedule step ("Include conditioning circuits
+  in your week?"), or surface it with the goal families / training-style side;
+  the MOT day type + Train quick starts already carry the actual sessions.
+  Wiring to touch: `ACTIVITIES` grid entry `["hiit","🔥","HIIT"]` (~line 2327),
+  `ACT_DAY.hiit → "MOT"` (~2338), cardio exp derivation list (~2355), and
+  `weekTypes`'s `acts.hiit` check (~2684). Migration: existing
+  `p.activities.hiit` must keep producing a MOT day (map to a flag like
+  `p.wantsHiit` or fold into the heart/athletic goal path) so no one loses
+  their conditioning day on regenerate. Journal tagger (~3704) can stay.
+
 ## v8 — per-set tracking + windows, July 10 (same day as v7)
 - **Per-set tracking + history (the retention feature)**: `S.setLog[move]` =
   `[{d, t, sets:[{w,r}]}]`, one entry/move/day, cap 30. Train session strength cards
