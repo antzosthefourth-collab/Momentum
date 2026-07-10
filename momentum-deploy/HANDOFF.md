@@ -1,7 +1,56 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v6-in-progress · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v7 · July 2026*
 
-## v6 program — IN PROGRESS (see `PLAN-v6.md`) — owner feedback pass, July 9
+## v7 — owner feedback pass, July 10 (this session)
+- **Real 5-day lifting splits** (researched: bro split, Arnold split, PPLUL, Sulek/Zyzz
+  volume norms, Nippard 5×): `SPLITS` {bro, arnold, pplul} · `liftSplit(p)` activates at
+  days≥5 + lift goal (auto: muscle/aesthetic→bro, else pplul) · each STR slot becomes a
+  named bodypart day (`opts.mg`+`mgStrict` — chest day IS chest work) at hypertrophy
+  volume · split picker chips on Plan tab (`#splitRow`, `data-split`, incl. "Classic A/B"
+  opt-out) · interview hints splits at 5+ days.
+- **Volume audit** (bro-science canon): barbell compounds 4×6–8 @150s (deadlift stays
+  3×5 @180s), rows/curls 4×8–10, push-ups 3×15–25 AMRAP−2, pull-ups 4×AMRAP−1;
+  `applyStyle` no longer crushes bodyweight moves with loaded 4×5/5×3 schemes
+  (`STYLES.strength/power.loaded`) — the "3×5 push-ups" bug. +24 new moves: laterals,
+  incline DB, DB shoulder press, curls (BB/DB/hammer/cable), CGBP, dips, Bulgarian SS,
+  hip thrust, hanging leg raise, KB snatch, KB DL high-pull + HIIT circuit fuel.
+- **HIIT quick starts return as true circuits**: hiit20 (bodyweight 40/20) + hiitnr
+  (30-min no-repeat). Conditioning was already circuit-only; validated end-to-end.
+- **Plan = real calendar**: `planDate(idx)` + `WDAYS`; day cards show actual date +
+  weekday ("today" badge), arrange mode too, plan meta shows start date, plan opens on
+  the CURRENT week (`planWeek=-1` sentinel), current-week dot on tabs. No more
+  assumed-Monday grid.
+- **Avatars 2.0**: `AVATAR_STYLES` — viking (6 stages) + Lil Buddy 🐣 / Rose 🎀 / Mini ⚪ /
+  Owlbear 🦉 (2 stages each, local-first + CDN cutouts via `HFCDN`), interview gained an
+  avatar step, look card has identity chips, `heroStage()` is style-aware. **Pet fix**:
+  slime unlocks at 3-day streak (was 7), earned pets auto-equip (`petOff` respects Lone
+  wolf), locked pet chips show streak progress.
+- **Voice matches avatar**: `speakBrief` uses per-identity pitch/rate + gendered voice
+  pick (`briefVoice()`); **brief reformat**: date → workouts BY NAME → minutes → boosters
+  → week — in that order.
+- **Themes**: `glass` (light-lavender iOS liquid-glass, monochromatic) is the NEW DEFAULT
+  (one-time `tv7` migration from ember; explicit choices respected) with generated
+  backdrop (`bg-glass.webp` local slot + CDN); minimalist `paper` + `ink` (no grain, no
+  photo); light themes keep light panels over photos (`body[data-theme=…].hasphoto`);
+  meta theme-color follows the theme.
+- **Lofi ambience** matching the owner's playlist vibe: `amb-lofi-1/2.mp3` (Lofi Flow
+  64 BPM / Midnight Tape 80 BPM) — procedurally synthesized 60s seamless loops (Rhodes
+  chords, boom-bap, vinyl crackle; script: scratchpad `music/lofi.mjs`, lamejs encode).
+  AMBIENCE now 4 tracks, lofi first.
+- **Adjustable Dumbbells retired** (EQ_GROUPS, all gearOk paths); migration folds them
+  into Dumbbells (profile + sel).
+- **QoL**: quick-add chips collapsed behind "＋ Add something unscheduled" (auto-folds
+  after picking); tomorrow-preview card when today is fully done; hero char resets
+  cleanly on identity switch.
+- **validate.js: 273 checks.** ⚠️ **Higgsfield: 0.28 credits — EMPTY.** (2k-quality gens
+  cost ~0.7 ea, not 0.12.) Owlbear cutouts still needed: raw gens
+  `hf_20260710_040124_e6e8eba2…_min.webp` (cub) + `hf_20260710_041604_a8e4901f…_min.webp`
+  (elder) on the usual CDN — run bg-removal (or nano-banana) next session and fill the
+  `cdn:` slots on the owlbear stages; scene shows 🦉 fallback until then. Local `_min`
+  files for buddy/rose/mini also not downloaded (container network blocks the CDN) —
+  CDN fallbacks are live, pull local copies whenever network allows.
+
+## v6 program — see `PLAN-v6.md` — owner feedback pass, July 9
 1 ✅ Interview 3.0 (13 goals, 18 extracurricular activities, per-sport gear w/ auto-add,
 eqpref/life/windows/tech steps REMOVED, booster definition card, SKILL 🎯 gated on
 picking soccer, v4/v5→v6 migrations) · 2 ✅ Conditioning engine (MOT builds gear-adaptive

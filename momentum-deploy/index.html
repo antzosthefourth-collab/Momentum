@@ -58,6 +58,32 @@
   --text:#151924; --dim:#4F5668; --faint:#788094; --accent:#E4552C; --accent2:#A87A0A; --onaccent:#fff;
   --c-strength:#A87A0A; --c-motor:#E4552C; --c-armor:#2E6DA4; --c-skill:#1F9D5B; --c-fuel:#C2447E; --c-recharge:#6B4FBB;
 }
+/* glass — the default: light lavender, iOS liquid-glass, monochromatic + minimalist */
+[data-theme="glass"]{
+  --bg:#EFEBF8; --panel:rgba(255,255,255,.6); --panel2:rgba(255,255,255,.78); --line:rgba(96,74,158,.14);
+  --bgart:radial-gradient(120% 70% at 80% 110%, rgba(167,139,250,.35), transparent 62%),
+          radial-gradient(90% 60% at 5% -5%, rgba(196,181,253,.4), transparent 55%),
+          radial-gradient(60% 40% at 20% 70%, rgba(221,214,254,.5), transparent 60%),
+          linear-gradient(180deg,#F4F1FB,#EAE5F6);
+  --text:#251D3E; --dim:#5D5480; --faint:#8B84A6; --accent:#8B5CF6; --accent2:#A78BFA; --onaccent:#fff;
+  --c-strength:#7C5CE8; --c-motor:#9B7BFF; --c-armor:#7C90E0; --c-skill:#A263D9; --c-fuel:#C46BC0; --c-recharge:#8F86D9;
+}
+/* paper + ink — the ultra-minimalist pair: one accent, quiet greys, zero noise */
+[data-theme="paper"]{
+  --bg:#FAFAF7; --panel:rgba(255,255,255,.92); --panel2:rgba(244,244,241,.95); --line:rgba(20,20,20,.11);
+  --bgart:linear-gradient(180deg,#FCFCFA,#F4F4F1);
+  --text:#191919; --dim:#5C5C5C; --faint:#8A8A8A; --accent:#191919; --accent2:#6B6B6B; --onaccent:#fff;
+  --c-strength:#3D3D3D; --c-motor:#191919; --c-armor:#6E7480; --c-skill:#55605A; --c-fuel:#7A6A70; --c-recharge:#6A6A7E;
+}
+[data-theme="ink"]{
+  --bg:#101013; --panel:rgba(26,26,31,.82); --panel2:rgba(35,35,41,.88); --line:rgba(255,255,255,.11);
+  --bgart:linear-gradient(180deg,#131316,#0D0D10);
+  --text:#EDEDEF; --dim:#A6A6AE; --faint:#77777F; --accent:#E8E8EC; --accent2:#9A9AA4; --onaccent:#141416;
+  --c-strength:#C9C9D2; --c-motor:#E8E8EC; --c-armor:#8F98A8; --c-skill:#9AA89E; --c-fuel:#B09AA4; --c-recharge:#9A9AB4;
+}
+/* minimalist themes skip the grain overlay entirely */
+body[data-theme="paper"]::after, body[data-theme="ink"]::after{display:none}
+body[data-theme="glass"]::after{opacity:.22}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; font-size:15.5px; line-height:1.5; overscroll-behavior-y:none; transition:background .3s}
@@ -66,6 +92,9 @@ body::after{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E")}
 body.hasphoto::before{background-image:var(--bgphoto); background-position:center; background-size:cover; background-repeat:no-repeat}
 body.hasphoto{--panel:rgba(26,26,33,.7); --panel2:rgba(37,38,48,.76)}
+/* light themes keep light glass over a photo — the dark override above is for dark themes only */
+body[data-theme="glass"].hasphoto{--panel:rgba(255,255,255,.62); --panel2:rgba(250,248,255,.78)}
+body[data-theme="daylight"].hasphoto{--panel:rgba(255,255,255,.74); --panel2:rgba(245,244,248,.82)}
 /* real blur only on LARGE glass surfaces — blurring every chip/input multiplied
    compositor cost ~5x for near-zero visual gain (small elements sit on panels) */
 .card,.stat,.sys,.ex,.pday,.habit,.lib-item,.media-card,.today-card,.hero-card,.opt{backdrop-filter:blur(14px) saturate(1.25); -webkit-backdrop-filter:blur(14px) saturate(1.25)}
@@ -83,6 +112,7 @@ a{color:var(--accent)}
 .sec-label::after{content:""; flex:1; height:1px; background:var(--line)}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
 .mut{color:var(--dim); font-size:13.5px}
+.chip.wk-now::after{content:"•"; color:var(--accent); margin-left:5px}
 
 /* ---------- HERO ---------- */
 .banner{position:relative; height:140px; overflow:hidden; background:linear-gradient(160deg,var(--panel2),var(--bg))}
@@ -432,7 +462,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 </style>
 </head>
-<body data-theme="ember">
+<body data-theme="glass">
 <div class="shell">
 
   <!-- ============ TODAY ============ -->
@@ -443,8 +473,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <p class="mut" id="tdSub"></p>
       <div id="tdBrief"></div>
       <div id="tdActs" style="margin-top:14px"></div>
-      <div class="sec-label">Add something unscheduled</div>
-      <div class="chips" id="tdQuick"></div>
+      <button class="btn sm ghost" id="tdQuickBtn" style="margin-top:14px">＋ Add something unscheduled</button>
+      <div class="chips" id="tdQuick" style="display:none; margin-top:10px"></div>
       <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
       <div class="rings4" id="rings4"></div></div>
       <div id="streakCard"></div>
@@ -535,6 +565,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
         <span><button class="btn sm ghost" id="arrangeBtn">🖐 Arrange</button>
         <button class="btn sm ghost" id="replanBtn">Regenerate</button></span></div>
       <p class="mut" id="planMeta"></p>
+      <div id="splitRow"></div>
       <div class="week-tabs" id="weekTabs" style="margin-top:14px"></div>
       <div id="planDays"></div>
       <div style="display:flex; gap:10px; margin-top:14px">
@@ -1573,6 +1604,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
    The loader probes each and uses the first that actually loads.
    v6: banner/avatar art retired — the Viking hero scene replaced them. */
 const BG_ART = {
+  glass:["bg-glass.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260710_035414_1a026688-25c2-42cd-9f7d-0cb306c016ce_min.webp"],
   ember:["bg-ember.png","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260708_032139_d83fc44a-3f24-4453-9fe1-8bd975b9b77b.png"],
   steel:["bg-steel.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013635_2d2da825-d798-4370-a861-6fad32af68ae_min.webp"],
   turf:["bg-turf.webp","https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/hf_20260709_013705_7391005a-a7b5-4264-a0e9-7a30895da292_min.webp"],
@@ -1606,8 +1638,10 @@ function probeVid(candidates, ok){
 }
 /* ---- ambient music: local generated loops, zero streaming ---- */
 const AMBIENCE = [
-  { id:"fire",  n:"🔥 Fire & Frost", file:"amb-viking-1.mp3" },
-  { id:"night", n:"🌙 Long Night",   file:"amb-viking-2.mp3" }
+  { id:"lofi",  n:"🎧 Lofi Flow",     file:"amb-lofi-1.mp3" },
+  { id:"tape",  n:"📼 Midnight Tape", file:"amb-lofi-2.mp3" },
+  { id:"fire",  n:"🔥 Fire & Frost",  file:"amb-viking-1.mp3" },
+  { id:"night", n:"🌙 Long Night",    file:"amb-viking-2.mp3" }
 ];
 let _amb = null;
 function playAmbience(id){
@@ -1657,6 +1691,29 @@ const HERO_STAGES = [
   { lvl:15, n:"Jarl",           img:"hero-5_min.png" },
   { lvl:21, n:"Saga-Born",      img:"hero-6_min.png" }
 ];
+/* v7: five avatar identities — picked at onboarding, switchable any time on Levels.
+   Each carries its own growth stages and its own spoken-brief voice character.
+   Art: local _min files first, generated-art CDN fallback (same pattern as BG_ART). */
+const HFCDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/";
+const AVATAR_STYLES = [
+  { id:"viking",  n:"Viking",    icon:"⚔️", d:"The classic saga — grim and glorious", voice:{pitch:.75, rate:.96, pref:"male"}, stages:HERO_STAGES },
+  { id:"buddy",   n:"Lil Buddy", icon:"🐣", d:"Cute, silly, surprisingly jacked",     voice:{pitch:1.45, rate:1.06, pref:"female"},
+    stages:[ { lvl:1, n:"Squishling",     img:"hero-buddy-1_min.png", cdn:HFCDN+"hf_20260710_041607_cefca1e2-7994-4870-8ca2-44baa4b552e2_min.png", roast:"90% snack, 10% athlete." },
+             { lvl:8, n:"Absolute Unit",  img:"hero-buddy-2_min.png", cdn:HFCDN+"hf_20260710_041609_fa4332c8-7a11-4109-9fea-81a524965f83_min.png" } ] },
+  { id:"rose",    n:"Rose",      icon:"🎀", d:"Girly, radiant, seriously strong",     voice:{pitch:1.15, rate:1.03, pref:"female"},
+    stages:[ { lvl:1, n:"Rookie Rose",    img:"hero-rose-1_min.png", cdn:HFCDN+"hf_20260710_041729_1eacdeb8-816a-465d-a9dc-a17ed9d2807d_min.png", roast:"So far the sparkles are doing the reps." },
+             { lvl:8, n:"Star Champion",  img:"hero-rose-2_min.png", cdn:HFCDN+"hf_20260710_042153_9a37b983-e18c-4c03-bb93-957d58cdc104_min.png" } ] },
+  { id:"mini",    n:"Mini",      icon:"⚪", d:"Simple. Clean. Focused.",               voice:{pitch:1, rate:1, pref:null},
+    stages:[ { lvl:1, n:"Mini",           img:"hero-mini-1_min.png", cdn:HFCDN+"hf_20260710_042156_1b7a151f-1651-4a41-a326-62fae8b8110d_min.png", roast:"A bean with a dream." },
+             { lvl:8, n:"Mega Mini",      img:"hero-mini-2_min.png", cdn:HFCDN+"hf_20260710_042159_fa785d65-e6f3-4505-b326-c9462ed38a1d_min.png" } ] },
+  /* owlbear cutouts pending (credits ran out at the bg-removal step) — the scene
+     shows the 🦉 fallback until hero-owl art ships; raw gens are linked in HANDOFF */
+  { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",  voice:{pitch:.82, rate:.94, pref:"male"},
+    stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1_min.png", roast:"Hoots first. Lifts eventually." },
+             { lvl:8, n:"Elder Owlbear",  img:"hero-owl-2_min.png" } ] }
+];
+function avatarStyle(){ const id = (S.avatar && S.avatar.style) || "viking";
+  return AVATAR_STYLES.find(a=>a.id===id) || AVATAR_STYLES[0]; }
 const HABITATS = [
   { id:"yard",      n:"Muddy Yard",     lvl:1,  img:"hab-1_min.webp", roast:"A puddle with ambitions." },
   { id:"longhouse", n:"Longhouse Gym",  lvl:5,  img:"hab-2_min.webp" },
@@ -1664,7 +1721,7 @@ const HABITATS = [
   { id:"arena",     n:"Mountain Arena", lvl:18, img:"hab-4_min.webp" }
 ];
 const COMPANIONS = [
-  { id:"slime",  n:"Bjorn the Slime",  streak:7,  evolve:30,  imgs:["pet-slime-1_min.png","pet-slime-2_min.png"] },
+  { id:"slime",  n:"Bjorn the Slime",  streak:3,  evolve:30,  imgs:["pet-slime-1_min.png","pet-slime-2_min.png"] },
   { id:"dragon", n:"Ember the Dragon", streak:14, evolve:50,  imgs:["pet-dragon-1_min.png","pet-dragon-2_min.png"] },
   { id:"wolf",   n:"Fenrir the Pup",   streak:30, evolve:100, imgs:["pet-wolf-1_min.png","pet-wolf-2_min.png"] }
 ];
@@ -1682,14 +1739,14 @@ const GEAR_REWARDS = [
   { n:"Mead-Hall Feast",      sys:"fuel",     lvl:4 },
   { n:"Bearskin Bedroll",     sys:"recharge", lvl:4 }
 ];
-function heroStage(lvl){ let s = HERO_STAGES[0]; for(const st of HERO_STAGES) if(lvl>=st.lvl) s = st; return s; }
+function heroStage(lvl){ const stages = avatarStyle().stages; let s = stages[0]; for(const st of stages) if(lvl>=st.lvl) s = st; return s; }
 function bestStreak(){ return Math.max(S.streak||0, (S.streak2&&S.streak2.best)||0); }
 function unlockedHabitats(lvl){ return HABITATS.filter(h=>lvl>=h.lvl); }
 function unlockedCompanions(){ return COMPANIONS.filter(c=>bestStreak()>=c.streak); }
 function unlockedGear(){ return GEAR_REWARDS.filter(g=>levelFromXp(S.sys[g.sys]||0).lvl>=g.lvl); }
 function nextRewards(){
   const L = levelFromXp(S.xp), out = [];
-  const ns = HERO_STAGES.find(s=>s.lvl>L.lvl);
+  const ns = avatarStyle().stages.find(s=>s.lvl>L.lvl);
   if(ns) out.push({ n:`${ns.n} form`, need:`hero level ${ns.lvl}`, pct:L.lvl/ns.lvl });
   const nh = HABITATS.find(h=>h.lvl>L.lvl);
   if(nh) out.push({ n:nh.n, need:`hero level ${nh.lvl}`, pct:L.lvl/nh.lvl });
@@ -1706,7 +1763,7 @@ function nextRewards(){
    "Bodyweight" is NOT a pickable option — everyone ships with it. The session
    builder always allows Bodyweight moves regardless of selected gear. */
 const EQ_GROUPS = {
-  "Free weights":["Barbell","Squat Rack","Bench","Dumbbells","Adjustable Dumbbells","Kettlebells","EZ Bar","Landmine","Plates"],
+  "Free weights":["Barbell","Squat Rack","Bench","Dumbbells","Kettlebells","EZ Bar","Landmine","Plates"],
   "Simple gear":["Bands","Medicine Ball","Pull-up Bar","Jump Rope","TRX / Suspension","Yoga Mat","Foam Roller"],
   "Gym machines":["Bench Press Machine","Lat Pulldown","Cable Machine","Leg Press","Row Machine","Smith Machine"],
   "Cardio machines":["Treadmill","Stationary Bike","Elliptical","Rowing Machine","Stair Climber"],
@@ -1728,15 +1785,16 @@ const LIB = [
  {n:"Empty bar practice", eq:"Barbell", p:"strength", d:"2×8", how:"Groove today's first barbell lift with just the bar. Free technique work.", b:"warmup", xp:8},
  {n:"Toe taps on ball", eq:"Soccer Ball", p:"skill", d:"2×30s", dur:30, how:"Light alternating taps on top of the ball. Quick feet, stay tall.", b:"warmup", xp:8},
 
- // BARBELL / RACK
- {n:"Back squat", eq:"Squat Rack", p:"strength", d:"3×5", rest:120, lift:"squat", how:"Bar on upper back, brace, sit down between your heels, drive up. Depth you can control beats depth you can't.", b:"main", xp:22},
- {n:"Bench press", eq:"Bench", p:"strength", d:"3×5", rest:120, lift:"bench", how:"Feet planted, slight arch, bar to mid-chest, press to lockout. Use safeties or a spotter.", b:"main", xp:22},
- {n:"Barbell deadlift", eq:"Barbell", p:"strength", d:"3×5", rest:150, lift:"deadlift", how:"Bar over mid-foot, flat back, push the floor away and stand tall.", b:"main", xp:22},
- {n:"Overhead (military) press", eq:"Barbell", p:"strength", d:"3×5", rest:120, lift:"press", how:"Bar at collarbone, squeeze glutes, press straight up and get your head through.", b:"main", xp:22},
- {n:"Barbell row", eq:"Barbell", p:"strength", d:"3×8", rest:90, how:"Hinge to ~45°, row the bar to your lower ribs, control the way down.", b:"main", xp:18},
- {n:"Romanian deadlift", eq:"Barbell", p:"strength", d:"3×8", rest:90, lift:"deadlift", how:"Soft knees, push hips back until hamstrings light up, stand by squeezing glutes.", b:"main", xp:18},
- {n:"EZ bar curl", eq:"EZ Bar", p:"strength", d:"3×10", rest:60, how:"Elbows pinned to your sides, curl without swinging. The EZ grip saves your wrists.", b:"main", xp:14},
- {n:"EZ bar skullcrusher", eq:"EZ Bar", p:"strength", d:"3×10", rest:60, how:"Lying down, lower the bar to your forehead with control, extend back up.", b:"main", xp:14},
+ // BARBELL / RACK — compounds run 4 sets in the 6–8 window (bro-science canon:
+ // heavy enough to matter, enough volume to grow), pulls from the floor stay 3–5
+ {n:"Back squat", eq:"Squat Rack", p:"strength", d:"4×6–8", rest:150, lift:"squat", how:"Bar on upper back, brace, sit down between your heels, drive up. Depth you can control beats depth you can't.", b:"main", xp:22},
+ {n:"Bench press", eq:"Bench", p:"strength", d:"4×6–8", rest:150, lift:"bench", how:"Feet planted, slight arch, bar to mid-chest, press to lockout. Use safeties or a spotter.", b:"main", xp:22},
+ {n:"Barbell deadlift", eq:"Barbell", p:"strength", d:"3×5", rest:180, lift:"deadlift", how:"Bar over mid-foot, flat back, push the floor away and stand tall.", b:"main", xp:22},
+ {n:"Overhead (military) press", eq:"Barbell", p:"strength", d:"4×6–8", rest:150, lift:"press", how:"Bar at collarbone, squeeze glutes, press straight up and get your head through.", b:"main", xp:22},
+ {n:"Barbell row", eq:"Barbell", p:"strength", d:"4×8–10", rest:120, how:"Hinge to ~45°, row the bar to your lower ribs, control the way down.", b:"main", xp:18},
+ {n:"Romanian deadlift", eq:"Barbell", p:"strength", d:"3×8–10", rest:120, lift:"deadlift", how:"Soft knees, push hips back until hamstrings light up, stand by squeezing glutes.", b:"main", xp:18},
+ {n:"EZ bar curl", eq:"EZ Bar", p:"strength", d:"4×8–10", rest:60, how:"Elbows pinned to your sides, curl without swinging. The EZ grip saves your wrists.", b:"main", xp:14},
+ {n:"EZ bar skullcrusher", eq:"EZ Bar", p:"strength", d:"4×8–10", rest:60, how:"Lying down, lower the bar to your forehead with control, extend back up.", b:"main", xp:14},
  {n:"Landmine press", eq:"Landmine", p:"strength", d:"3×8 each", rest:75, how:"Bar end in the landmine, press up and away at an angle. Shoulder-friendly pressing.", b:"main", xp:16},
  {n:"Landmine rotation", eq:"Landmine", p:"strength", d:"3×8 each", rest:60, how:"Arms long, sweep the bar side to side rotating through the hips. Core gold.", b:"main", xp:16},
  {n:"Landmine goblet squat", eq:"Landmine", p:"strength", d:"3×10", rest:75, how:"Hold the bar end at your chest, squat. The arc keeps you honest.", b:"main", xp:16},
@@ -1746,15 +1804,15 @@ const LIB = [
  {n:"Kettlebell deadlift", eq:"Kettlebells", p:"strength", d:"3×10", rest:75, cap:"kb", how:"Hinge at the hips, flat back, stand tall squeezing glutes.", b:"main", xp:18},
  {n:"Single-arm KB row", eq:"Kettlebells", p:"strength", d:"3×10 each", rest:60, cap:"kb", how:"Brace on a bench or knee, row to your hip pocket. No twisting.", b:"main", xp:18},
  {n:"KB overhead press", eq:"Kettlebells", p:"strength", d:"3×8 each", rest:75, cap:"kb", how:"Rack the bell, brace, press straight up. Lower with control.", b:"main", xp:18},
- {n:"DB bench / floor press", eq:"Dumbbells", p:"strength", d:"3×10", rest:90, cap:"db", how:"Press dumbbells from chest to lockout. Floor press is shoulder-friendly.", b:"main", xp:18},
- {n:"DB reverse lunge", eq:"Dumbbells", p:"strength", d:"3×8 each", rest:75, cap:"db", how:"Step back, lower the back knee, push through the front heel.", b:"main", xp:18},
- {n:"DB curl to press", eq:"Dumbbells", p:"strength", d:"3×10", rest:60, cap:"db", how:"Curl to shoulders, rotate, press overhead.", b:"main", xp:16},
- {n:"Push-ups", eq:"Bodyweight", p:"strength", d:"3×max−2", rest:60, how:"Body in one line. Stop two reps before failure each set.", b:"main", xp:16},
- {n:"Pull-ups / rows on bar", eq:"Pull-up Bar", p:"strength", d:"3×max−1", rest:90, how:"Full hang to chin over. Can't do full reps yet? Jump up and lower slowly.", b:"main", xp:20},
+ {n:"DB bench / floor press", eq:"Dumbbells", p:"strength", d:"4×8–10", rest:90, cap:"db", how:"Press dumbbells from chest to lockout. Floor press is shoulder-friendly.", b:"main", xp:18},
+ {n:"DB reverse lunge", eq:"Dumbbells", p:"strength", d:"3×10 each", rest:75, cap:"db", how:"Step back, lower the back knee, push through the front heel.", b:"main", xp:18},
+ {n:"DB curl to press", eq:"Dumbbells", p:"strength", d:"3×10–12", rest:60, cap:"db", how:"Curl to shoulders, rotate, press overhead.", b:"main", xp:16},
+ {n:"Push-ups", eq:"Bodyweight", p:"strength", d:"3×15–25 (AMRAP−2)", rest:60, how:"Body in one line. Big sets — stop two reps before failure. Under 15? Elevate your hands and build.", b:"main", xp:16},
+ {n:"Pull-ups / rows on bar", eq:"Pull-up Bar", p:"strength", d:"4×AMRAP−1", rest:90, how:"Full hang to chin over. Can't do full reps yet? Jump up and lower slowly.", b:"main", xp:20},
  {n:"Band rows", eq:"Bands", p:"strength", d:"3×15", rest:45, how:"Anchor at chest height, row to your ribs, pause squeezing the back.", b:"main", xp:14},
  {n:"Band overhead press", eq:"Bands", p:"strength", d:"3×12", rest:45, how:"Stand on the band, press overhead. Tension peaks at the top — own it.", b:"main", xp:14},
- {n:"Split squat", eq:"Bodyweight", p:"strength", d:"3×8 each", rest:60, how:"Staggered stance, drop straight down, front shin vertical.", b:"main", xp:16},
- {n:"Glute bridge", eq:"Bodyweight", p:"strength", d:"3×15", rest:45, how:"Drive hips to the ceiling, squeeze 2s at the top.", b:"main", xp:14},
+ {n:"Split squat", eq:"Bodyweight", p:"strength", d:"3×10–12 each", rest:60, how:"Staggered stance, drop straight down, front shin vertical.", b:"main", xp:16},
+ {n:"Glute bridge", eq:"Bodyweight", p:"strength", d:"3×15–20", rest:45, how:"Drive hips to the ceiling, squeeze 2s at the top.", b:"main", xp:14},
 
  // MOTOR — free
  {n:"KB swings", eq:"Kettlebells", p:"motor", d:"5×15", rest:60, cap:"kb", how:"Hinge, hike, snap the hips. Arms are just ropes.", b:"main", xp:20},
@@ -1887,6 +1945,37 @@ LIB.push(
  {n:"Sprawls", eq:"Bodyweight", p:"motor", d:"4×20s", dur:20, rest:40, sport:"martial", how:"Burpee's combat cousin — shoot hips back and down, pop back up.", b:"main", xp:16},
  {n:"Wall sit", eq:"Bodyweight", p:"strength", d:"3×40s", dur:40, rest:40, how:"Back flat on the wall, thighs parallel. Quiet suffering builds quads.", b:"finisher", xp:12, mg:["legs"]},
  {n:"Dead hang", eq:"Pull-up Bar", p:"armor", d:"2×30s", dur:30, rest:45, how:"Just hang. Shoulders decompress, grip toughens, spine says thanks.", b:"main", xp:12, area:["shoulder","back"]}
+);
+
+/* v7: bodybuilding staples the 5-day splits lean on (Arnold/bro-split/PPL canon)
+   + extra circuit fuel for true HIIT. Prescriptions follow the gym-culture rules:
+   compounds 4×6–10, secondary 3–4×8–12, isolation 3×10–15, delts/abs 3–4×12–20. */
+LIB.push(
+ {n:"Incline DB press", eq:"Dumbbells", p:"strength", d:"4×8–12", rest:90, cap:"db", how:"Bench at ~30°, press up and slightly back. Upper chest is the aesthetic difference-maker.", b:"main", xp:18, mg:["chest","shoulders","arms"]},
+ {n:"DB shoulder press", eq:"Dumbbells", p:"strength", d:"3×8–10", rest:90, cap:"db", how:"Seated or standing, press from ear height to lockout without flaring your ribs.", b:"main", xp:18, mg:["shoulders","arms"]},
+ {n:"DB lateral raise", eq:"Dumbbells", p:"strength", d:"4×12–15", rest:60, cap:"db", how:"Soft elbows, raise to shoulder height like pouring water, lower slow. Light weight, honest reps.", b:"main", xp:14, mg:["shoulders"]},
+ {n:"DB rear-delt fly", eq:"Dumbbells", p:"strength", d:"3×12–15", rest:60, cap:"db", how:"Hinge over, arms wide like opening curtains, squeeze the back of your shoulders.", b:"main", xp:14, mg:["shoulders","back"]},
+ {n:"DB hammer curl", eq:"Dumbbells", p:"strength", d:"3×10–12", rest:60, cap:"db", how:"Palms facing in, curl without swinging. Builds the forearm-biceps line.", b:"main", xp:14, mg:["arms"]},
+ {n:"DB biceps curl", eq:"Dumbbells", p:"strength", d:"3×10–12", rest:60, cap:"db", how:"Elbows pinned, full stretch at the bottom, squeeze at the top.", b:"main", xp:14, mg:["arms"]},
+ {n:"DB overhead triceps extension", eq:"Dumbbells", p:"strength", d:"3×12–15", rest:60, cap:"db", how:"One bell in both hands overhead, lower behind your head, extend. Deep stretch = growth.", b:"main", xp:14, mg:["arms"]},
+ {n:"DB shrug", eq:"Dumbbells", p:"strength", d:"3×12–15", rest:60, cap:"db", how:"Straight up, hold a second at the top, straight down. No rolling.", b:"main", xp:12, mg:["shoulders","back"]},
+ {n:"Bulgarian split squat", eq:"Dumbbells", p:"strength", d:"3×8–10 each", rest:90, cap:"db", how:"Rear foot on a bench or chair, drop straight down. The most honest leg builder there is.", b:"main", xp:20, mg:["legs","glutes"]},
+ {n:"DB Romanian deadlift", eq:"Dumbbells", p:"strength", d:"3×10–12", rest:90, cap:"db", how:"Bells slide down your thighs, hips back, stand tall squeezing glutes.", b:"main", xp:18, mg:["glutes","legs"]},
+ {n:"Barbell hip thrust", eq:"Barbell", p:"strength", d:"3×8–12", rest:90, how:"Upper back on a bench, bar over hips, drive to a full squeeze at the top.", b:"main", xp:18, mg:["glutes","legs"]},
+ {n:"Barbell curl", eq:"Barbell", p:"strength", d:"4×8–10", rest:75, how:"Shoulder-width grip, elbows pinned, no body english. The Arnold classic.", b:"main", xp:14, mg:["arms"]},
+ {n:"Close-grip bench press", eq:"Bench", p:"strength", d:"4×8–10", rest:90, lift:"bench", how:"Hands just inside shoulder width, elbows tucked, press. Triceps mass 101.", b:"main", xp:18, mg:["arms","chest"]},
+ {n:"Dips (bench or bars)", eq:"Bodyweight", p:"strength", d:"3×8–15", rest:75, how:"Chest lean hits pecs, upright hits triceps. Bench dips if bars aren't around.", b:"main", xp:16, mg:["chest","arms"]},
+ {n:"Hanging leg raise", eq:"Pull-up Bar", p:"strength", d:"3×10–20", rest:60, how:"Hang, ribs down, lift knees (or straight legs) with control — no swinging.", b:"main", xp:16, mg:["core"]},
+ {n:"Bicycle crunch", eq:"Bodyweight", p:"strength", d:"3×15–25", rest:45, how:"Slow opposite elbow to knee, shoulder blades off the floor the whole set.", b:"main", xp:12, mg:["core"]},
+ {n:"Cable lateral raise", eq:"Cable Machine", p:"strength", d:"3×12–15", rest:60, how:"Cable low, raise across your body to shoulder height. Constant tension the whole rep.", b:"main", xp:14, mg:["shoulders"]},
+ {n:"Cable biceps curl", eq:"Cable Machine", p:"strength", d:"3×12–15", rest:60, how:"Bar or rope, elbows pinned, squeeze — the stack never lets you rest at the bottom.", b:"main", xp:14, mg:["arms"]},
+ /* HIIT & KB circuit fuel (Samuel Jordan / Juice&Toya canon moves) */
+ {n:"KB snatch", eq:"Kettlebells", p:"motor", d:"4×8 each", rest:60, cap:"kb", lvl:3, how:"One motion floor-to-overhead: hike, snap hips, punch through at the top. Earn it after swings feel easy.", b:"main", xp:22, mg:["glutes","back","shoulders"]},
+ {n:"KB deadlift high-pull", eq:"Kettlebells", p:"motor", d:"3×10", rest:45, cap:"kb", how:"Deadlift the bell, then pull elbows high on the way up. Smooth power, no yanking.", b:"main", xp:16, mg:["glutes","back","shoulders"]},
+ {n:"Alternating reverse lunges", eq:"Bodyweight", p:"motor", d:"3×10 each", rest:30, how:"Step back, knee kisses the floor, drive up and switch. Quick but controlled.", b:"main", xp:14, mg:["legs","glutes"]},
+ {n:"Squat to press (bodyweight)", eq:"Bodyweight", p:"motor", d:"4×30s", dur:30, rest:15, how:"Squat down, drive up and punch both hands to the sky. Add weight when it's easy.", b:"main", xp:14, mg:["legs","shoulders"]},
+ {n:"Inchworm walkout", eq:"Bodyweight", p:"motor", d:"3×8", rest:30, how:"Fold, walk hands to a plank, push-up optional, walk back and stand.", b:"main", xp:14, mg:["core","shoulders"]},
+ {n:"Standing mountain sprint", eq:"Bodyweight", p:"motor", d:"4×20s", dur:20, rest:40, how:"Sprint in place, arms driving, knees high — max effort for the window.", b:"finisher", xp:14}
 );
 
 /* ---- v5 metadata: fine muscle groups, movement patterns, difficulty, mods ---- */
@@ -2026,7 +2115,7 @@ const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
-  session:null, plan:null, habitLog:{}, settings:{theme:"ember", spotify:"", yt:"", sound:"low", amb:"off"} };
+  session:null, plan:null, habitLog:{}, settings:{theme:"glass", spotify:"", yt:"", sound:"low", amb:"off"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
 S.avatar = Object.assign({}, DEF.avatar, S.avatar||{});
@@ -2145,7 +2234,7 @@ function grantXp(sysKey, amount){
   if(after > before){
     /* level-ups reveal what they unlocked — forms, habitats, weapons, armor */
     const unlocked = [];
-    const st = HERO_STAGES.find(s=>s.lvl===after); if(st) unlocked.push("new form: "+st.n);
+    const st = avatarStyle().stages.find(s=>s.lvl===after); if(st) unlocked.push("new form: "+st.n);
     const hb = HABITATS.find(h=>h.lvl===after); if(hb) unlocked.push("habitat: "+hb.n);
     const sl = levelFromXp(S.sys[sysKey]||0).lvl;
     GEAR_REWARDS.filter(g=>g.sys===sysKey && g.lvl===sl).forEach(g=>unlocked.push(g.n));
@@ -2289,11 +2378,11 @@ function onbSteps(){
   const steps = ["intro","about","goals","activities"];
   if(missingTracks(onb.a).length) steps.push("exp");
   if(onb.a.goals.includes("mobility")||onb.a.goals.includes("return")) steps.push("areas");
-  steps.push("equip","schedule","mode");
+  steps.push("equip","schedule","mode","avatar");
   return steps;
 }
 const STEP_TITLES = { intro:"Welcome", about:"You", goals:"Goals", activities:"Activities", exp:"Experience",
-  areas:"Your body", equip:"Gear", schedule:"Commitment", mode:"Coaching" };
+  areas:"Your body", equip:"Gear", schedule:"Commitment", mode:"Coaching", avatar:"Your avatar" };
 const pipOpt = (on, data, ic, label) => `<div class="opt ${on?'on':''}" ${data}><span class="oi">${ic}</span><span>${label}</span><span class="pip"></span></div>`;
 function injPanel(k){
   const info = onb.a.areaInfo[k]||{};
@@ -2363,6 +2452,7 @@ function onbRender(){
       items.map(e=>`<button class="chip ${a.eq.includes(e)?'on':''}" data-oeq="${e}">${e}</button>`).join("") + `</div></div>`).join("");
   if(step==="schedule") h = `<h1>How much life can you <em>give this</em>?</h1><p class="lead">Honest beats ambitious. You can always add days later.</p>
     <div class="sec-label">Training days per week</div><div class="chips">${[2,3,4,5,6].map(d=>`<button class="chip ${a.days===d?'on':''}" data-odays="${d}">${d}</button>`).join("")}</div>
+    ${a.days>=5 && ["muscle","stronger","power","aesthetic","functional","athletic","fat"].some(k=>a.goals.includes(k)) ? `<p class="mut" style="margin-top:6px">💪 5+ lifting days unlocks the real splits — bro split, Arnold split, push/pull/legs. Pick yours on the Plan tab.</p>` : ""}
     <div class="sec-label">Session length</div><div class="chips">${[15,30,45,60].map(t=>`<button class="chip alt ${a.len===t?'on':''}" data-olen="${t}">${t} min</button>`).join("")}</div>
     <div class="sec-label">Plan length</div><div class="chips">${[4,6,8].map(w=>`<button class="chip ${a.weeks===w?'on':''}" data-oweeks="${w}">${w} weeks</button>`).join("")}</div>
     <div class="sec-label">Weekly consistency target</div>
@@ -2371,6 +2461,8 @@ function onbRender(){
     <div class="sec-label">Daily boosters</div>
     <div class="tour-card" style="--tc:var(--c-armor); margin-bottom:10px"><div class="tour-ico">✨</div><span><b>What's a booster?</b><small>A tiny 10–15 minute bonus session — stretching, mobility or rehab — that lands on EVERY day of your plan, even rest days. Example: a "12-min desk reset" after lunch. Boosters stack XP and close rings, but never count (or guilt you) as full workouts.</small></span></div>
     <div class="chips">${[[0,"None"],[1,"✨ +1 a day"],[2,"✨✨ +2 a day"]].map(([n,l])=>`<button class="chip alt ${a.boost===n?'on':''}" data-oboost="${n}">${l}</button>`).join("")}</div>`;
+  if(step==="avatar") h = `<h1>Pick your <em>champion</em>.</h1><p class="lead">Your avatar levels up as you train — new forms, weapons, habitats and companions. Its voice reads your daily brief. Switch any time on the Levels tab.</p>` +
+    AVATAR_STYLES.map(s=>`<div class="opt ${(a.avatarStyle||"viking")===s.id?'on':''}" data-oavatar="${s.id}"><span class="oi">${s.icon}</span><span>${s.n}<br><small style="color:var(--dim); font-weight:500">${s.d}</small></span><span class="pip"></span></div>`).join("");
   if(step==="mode") h = `<h1>How do you want to be <em>coached</em>?</h1>` +
     [["coach","🗓️","Full Coach","Workouts, activities, mobility and habits — all planned, all editable."],
      ["hybrid","🎛️","Guided Hybrid","Structured workouts planned for you; sports & activities stay on your terms."],
@@ -2437,7 +2529,7 @@ const TOUR_STEPS = [
   { page:"today", sel:"#checkinCard", t:"Three taps, honest plan",   s:"Energy · sleep · soreness. Feel rough and the plan offers an easier day — never guilt." },
   { page:"plan",  sel:"#planDays",    t:"Your whole block",          s:"Every session is pre-built. Drag days around with 🖐 Arrange, tune any slot with ✎ — swaps stick." },
   { page:"train", sel:"#recipeChips", t:"One-tap quick starts",      s:"Sessions filtered to your gear. Conditioning always builds circuits — KB HIIT scales to 40–60s work windows." },
-  { page:"home",  sel:"#heroScene",   t:"Your Viking grows",         s:"Everything you finish levels a system. Levels unlock forms, habitats, weapons and companions. Consistency writes the saga." }
+  { page:"home",  sel:"#heroScene",   t:"Your champion grows",       s:"Everything you finish levels a system. Levels unlock forms, habitats, weapons and companions — and your first companion lands at a 3-day streak. Consistency writes the saga." }
 ];
 let TOUR = null;
 function runTour(){ TOUR = { i:0 }; tourStep(); }
@@ -2486,6 +2578,7 @@ function applyOnboarding(skip){
     runFocus:a.runFocus, eq:a.eq.slice(), lifts:a.lifts||{}, caps:a.caps||{},
     days:a.days, len:a.len, weeks:a.weeks, boost:a.boost||0,
     mode:a.mode, style:(a.mode==="companion") ? "flex" : "coach" };
+  S.avatar = Object.assign({}, S.avatar||{}, { style:a.avatarStyle||"viking" });
   S.sel.eq = a.eq.slice(); S.sel.time = [15,30,45,60].includes(a.len)?a.len:45;
   S.plan = (!skip && S.profile.style==="coach") ? makePlan(S.profile) : null;
   save();
@@ -2526,13 +2619,50 @@ const SPORT_DAYS = { cycling:{t:"Ride", icon:"🚴"}, swimming:{t:"Swim", icon:"
 Object.entries(SPORT_DAYS).forEach(([k,v])=>{ DTYPES["SP_"+k] = { t:v.t, icon:v.icon, focus:"__sport:"+k, sport:k }; });
 /* legacy shim: v5 plans may hold SP_family acts — render them, never offer them */
 DTYPES.SP_family = { t:"Family activity", icon:"👨‍👩‍👧", focus:null, legacy:true };
+/* ---- v7: real 5-day lifting splits (the tried-and-true gym-culture programs) ----
+   Each split day targets specific muscle groups; the builder fills it with
+   gear-matched movements at bodybuilding volume. Muscle frequency per week:
+   bro = 1× deep, arnold = 2× (Arnold's classic pairing), pplul = 2× (the
+   most-recommended 5-day online). */
+const SPLITS = {
+  bro:   { n:"Bro split",   d:"Chest / back / shoulders / arms / legs — one muscle a day, hit deep", days:[
+    { label:"Chest day",           mg:["chest"] },
+    { label:"Back day",            mg:["back"] },
+    { label:"Shoulder day",        mg:["shoulders"] },
+    { label:"Arm day",             mg:["arms"] },
+    { label:"Leg day",             mg:["legs","glutes"] } ]},
+  arnold:{ n:"Arnold split", d:"Chest+back / shoulders+arms / legs, twice through — Arnold's pairing", days:[
+    { label:"Chest & back",        mg:["chest","back"] },
+    { label:"Shoulders & arms",    mg:["shoulders","arms"] },
+    { label:"Leg day",             mg:["legs","glutes"] },
+    { label:"Chest & back II",     mg:["chest","back"] },
+    { label:"Shoulders & arms II", mg:["shoulders","arms"] } ]},
+  pplul: { n:"PPL + upper/lower", d:"Push / pull / legs / upper / lower — every muscle twice a week", days:[
+    { label:"Push day",            mg:["chest","shoulders","arms"] },
+    { label:"Pull day",            mg:["back","arms"] },
+    { label:"Leg day",             mg:["legs","glutes"] },
+    { label:"Upper day",           mg:["chest","back","shoulders","arms"] },
+    { label:"Lower day",           mg:["legs","glutes","core"] } ]}
+};
+function liftSplit(p){
+  if(!p || (p.days||0) < 5) return null;   // splits are 5-day programs
+  const liftGoal = ["muscle","stronger","power","aesthetic","functional","athletic","fat","strength"].some(g=>(p.goals||[]).includes(g));
+  if(!liftGoal) return null;
+  const pick = p.split || "auto";
+  if(pick === "none") return null;         // "classic" keeps the old A/B upper-lower week
+  if(SPLITS[pick]) return SPLITS[pick];
+  /* auto: physique chasers get the bro split, everyone else 2×-frequency PPLUL */
+  return (p.goals.includes("muscle")||p.goals.includes("aesthetic")) ? SPLITS.bro : SPLITS.pplul;
+}
 function weekTypes(p){
   const g = p.goals, acts = p.activities||{}, out = [];
   const has = k => g.includes(k);
   /* legacy keys (strength/move) still honored for un-migrated profiles */
   const liftGoal = ["muscle","stronger","power","aesthetic","functional","athletic","fat","strength"].some(has);
   const wantsRun = has("run") || !!acts.running;
-  if(liftGoal) out.push("STR");
+  const split = liftSplit(p);
+  if(split){ for(let i=0; i<Math.min(p.days, split.days.length); i++) out.push("STR"); }
+  else if(liftGoal) out.push("STR");
   if(wantsRun) out.push(p.runFocus==="long" ? "RUNL" : "RUNF");
   /* day types earned by activities — soccer (SKILL system) first */
   const dayset = new Set();
@@ -2543,7 +2673,7 @@ function weekTypes(p){
   if(has("mobility")||has("return")||has("move")) out.push("ARM");
   else if(acts.yoga || acts.mobilityw) out.push("SP_yoga");
   if((has("heart")||has("athletic")||acts.hiit) && !out.includes("MOT")) out.push("MOT");
-  if(["muscle","stronger","power","strength"].some(has) && p.days>=4) out.push("STR");
+  if(!split && ["muscle","stronger","power","strength"].some(has) && p.days>=4) out.push("STR");
   if(wantsRun && (p.days>=4 || p.runFocus==="both")) out.push(p.runFocus==="fast" ? "RUNF" : "RUNL");
   while(out.length < p.days) out.push(out.includes("STR") ? "MOT" : "STR");
   return out.slice(0, p.days*2);   // activities can stack: up to 2 per training day
@@ -2574,12 +2704,21 @@ function makePlan(p){
     const key = si+":"+t; if(templates[key]) return;
     const D = DTYPES[t]; let label = D.t, opts = { focus:D.focus, time:p.len };
     if(t==="STR"){ strCount++;
-      const totalStr = [].concat(...perSlot).filter(x=>x==="STR").length;
-      if(totalStr>1){ opts.bias = strCount%2 ? "upper" : "lower"; label = "Strength " + (strCount%2 ? "A · upper focus" : "B · lower focus"); }
-      /* training style follows the goal family */
-      opts.style = p.goals.includes("power") ? "power" : p.goals.includes("stronger") ? "strength"
+      const goalStyle = p.goals.includes("power") ? "power" : p.goals.includes("stronger") ? "strength"
         : (p.goals.includes("muscle")||p.goals.includes("aesthetic")) ? "hypertrophy"
         : (p.goals.includes("functional")||p.goals.includes("athletic")) ? "functional" : null;
+      const split = liftSplit(p);
+      if(split){
+        /* real split day: targeted muscles, bodybuilding volume */
+        const sd = split.days[(strCount-1) % split.days.length];
+        opts.mg = sd.mg.slice(); opts.mgStrict = true; label = sd.label;
+        opts.style = (goalStyle==="strength"||goalStyle==="power") ? goalStyle : "hypertrophy";
+      } else {
+        const totalStr = [].concat(...perSlot).filter(x=>x==="STR").length;
+        if(totalStr>1){ opts.bias = strCount%2 ? "upper" : "lower"; label = "Strength " + (strCount%2 ? "A · upper focus" : "B · lower focus"); }
+        /* training style follows the goal family */
+        opts.style = goalStyle;
+      }
       if(opts.style) label += ` · ${STYLES[opts.style].n.toLowerCase()}`; }
     if(t==="ARM" && okAreas.length) opts.areas = okAreas.slice();
     const ok = buildSession(opts);
@@ -2621,6 +2760,10 @@ function makePlan(p){
 }
 /* migrate pre-sports/pre-exps profiles: soccer goal → soccer sport, single exp → per-track */
 function migrateProfile(){
+  /* v7: "Adjustable Dumbbells" retired as separate gear — they ARE dumbbells */
+  const fixAdj = arr => { if(!arr) return; const i = arr.indexOf("Adjustable Dumbbells");
+    if(i>=0){ arr.splice(i,1); if(!arr.includes("Dumbbells")) arr.push("Dumbbells"); } };
+  fixAdj(S.sel && S.sel.eq); fixAdj(S.profile && S.profile.eq);
   const p = S.profile; if(!p) return;
   p.sports = p.sports||[];
   if((p.goals||[]).includes("soccer")){
@@ -2673,6 +2816,10 @@ function planToday(){
   const idx = Math.floor((new Date() - new Date(S.plan.start)) / 86400000);
   return (idx>=0 && idx < S.plan.days.length) ? { idx, day:S.plan.days[idx] } : null;
 }
+/* real calendar date behind any plan index — the plan starts the day it's forged,
+   so day labels must come from actual dates, never from an assumed Monday */
+const WDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function planDate(idx){ return new Date(new Date(S.plan.start).getTime() + idx*86400000); }
 
 /* ================= SESSION BUILDER ================= */
 const FOCI = ["Full Body","Strength","Conditioning","Cardio","Mobility","Soccer"];
@@ -2681,8 +2828,8 @@ const FOCUS_SYS = { "Strength":["strength"], "Conditioning":["motor"], "Cardio":
 /* training styles change set/rep/rest prescriptions; hiit/kbflow build timed circuits */
 const STYLES = {
   hypertrophy:{ n:"Hypertrophy", d:"3×10–12", rest:75 },
-  strength:  { n:"Strength",    d:"4×5",     rest:150 },
-  power:     { n:"Power",       d:"5×3",     rest:180 },
+  strength:  { n:"Strength",    d:"4×5",     rest:150, loaded:true },
+  power:     { n:"Power",       d:"5×3",     rest:180, loaded:true },
   functional:{ n:"Functional",  d:"3×8",     rest:90 },
   hiit:      { n:"HIIT circuit", circuit:true, work:40, rest:20 },
   kbflow:    { n:"KB circuit",   circuit:true, work:40, rest:20 }
@@ -2691,6 +2838,9 @@ function applyStyle(items, style){
   const st = STYLES[style]; if(!st || st.circuit) return items;
   return items.map(m=>{
     if(m.p!=="strength" || m.b!=="main" || m.dur) return m;
+    /* low-rep strength/power schemes only make sense with a load in hand —
+       "4×5 push-ups" is nonsense, so bodyweight moves keep their high-rep dose */
+    if(st.loaded && m.eq==="Bodyweight") return m;
     return {...m, d: st.d + (/each/.test(m.d)?" each":""), rest: st.rest};
   });
 }
@@ -2718,6 +2868,8 @@ const RECIPES = [
  {id:"kbfun",  n:"🧰 Functional KB strength", o:{ focus:"Strength", style:"functional", time:30, eqOnly:"Kettlebells", focusLabel:"Functional KB strength" }},
  {id:"kb30",   n:"🔥 30-min KB HIIT",        o:{ focus:"Conditioning", style:"kbflow", time:30, eqOnly:"Kettlebells", focusLabel:"30-min KB HIIT" }},
  {id:"kb40",   n:"🔥 40-min KB HIIT",        o:{ focus:"Conditioning", style:"kbflow", time:40, eqOnly:"Kettlebells", focusLabel:"40-min KB HIIT" }},
+ {id:"hiit20", n:"⚡ 20-min HIIT (no gear)", o:{ focus:"Conditioning", style:"hiit", time:20, eqOnly:"Bodyweight", focusLabel:"20-min bodyweight HIIT" }},
+ {id:"hiitnr", n:"🔁 30-min no-repeat HIIT", o:{ focus:"Conditioning", style:"hiit", time:30, noRepeat:true, focusLabel:"No-repeat HIIT · every move once" }},
  {id:"desk",   n:"🧑‍💻 Desk posture reset",   o:{ focus:"Mobility", time:15, areas:["neck","back","shoulder"], focusLabel:"Desk posture reset" }},
  {id:"heart",  n:"❤️ Heart health starter",  o:{ focus:"Cardio", time:30, maxLvl:1, focusLabel:"Zone-2 starter" }},
  {id:"mob",    n:"🛡️ Your problem areas",    o:{ focus:"Mobility", time:20, focusLabel:"Mobility for your areas" }},
@@ -2755,8 +2907,7 @@ function buildSession(opts={}){
     if(!opts.focusLabel) opts.focusLabel = kbIn ? "Conditioning · KB circuit" : "Conditioning · HIIT";
   }
   /* bodyweight is always available — it's not selectable gear */
-  const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) ||
-    (m.eq==="Dumbbells" && S.sel.eq.includes("Adjustable Dumbbells"));
+  const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq);
   const info = (S.profile && S.profile.areaInfo)||{};
   const avoid = Object.keys(info).filter(k=>info[k].mode==="avoid");
   const noAvoid = m => !m.area || !m.area.some(a=>avoid.includes(a));
@@ -2845,7 +2996,10 @@ function buildSession(opts={}){
   const mgSel = opts.mg || (focus==="Strength" ? S.sel.mg : []);
   if(mgSel && mgSel.length){
     const hit = mainPool.filter(m => !m.mg || m.mg.some(g=>mgSel.includes(g)));
-    if(hit.filter(m=>m.mg).length >= 2) mainPool = hit;
+    const tagged = hit.filter(m => m.mg && m.mg.some(g=>mgSel.includes(g)));
+    /* split days are strict — a chest day full of squats isn't a chest day */
+    if(opts.mgStrict && tagged.length >= 3) mainPool = tagged;
+    else if(hit.filter(m=>m.mg).length >= 2) mainPool = hit;
   }
   const arSel = (opts.areas || (focus==="Mobility" ? S.sel.areas : [])).filter(a=>!avoid.includes(a));
   if(arSel && arSel.length){
@@ -3111,7 +3265,15 @@ function renderHeroScene(){
   $("#hsName").textContent = (S.profile && S.profile.name) || "You";
   $("#hsStage").textContent = "· " + stage.n;
   probeImg([hab.img], u=>{ $("#hsBg").src = u; });
-  probeImg([stage.img], u=>{ $("#hsChar").src = u; const f=$("#hsFallback"); if(f) f.style.display="none"; });
+  /* switching identities: clear the old character until the new art lands */
+  const ch = $("#hsChar"), fb = $("#hsFallback");
+  if(ch) ch.style.display = "none";
+  if(fb){ fb.textContent = avatarStyle().icon || "🛡️"; fb.style.display = ""; }
+  probeImg([stage.img, stage.cdn], u=>{
+    if(ch.getAttribute("src")===u) ch.style.display = "block";   // same art re-render: onload won't re-fire
+    else ch.src = u;
+    if(fb) fb.style.display = "none";
+  });
   if(!$("#hsBgVid")) probeVid(["hero-loop.webm","hero-loop.mp4"], src=>{
     if($("#hsBgVid")) return;
     try{
@@ -3121,24 +3283,34 @@ function renderHeroScene(){
       if($("#page-home").classList.contains("on")){ const p = v.play(); if(p && p.catch) p.catch(()=>{}); }
     }catch(e){}
   });
+  /* a pet you earned should never be invisible — auto-equip the first unlock
+     unless the user explicitly chose to walk alone */
+  if(A.companion==null && !A.petOff){
+    const un = unlockedCompanions(); if(un.length) A.companion = un[0].id;
+  }
   const comp = COMPANIONS.find(c=>c.id===A.companion);
   const pet = $("#hsPet");
   if(comp && unlockedCompanions().includes(comp)){
-    probeImg([comp.imgs[bestStreak()>=comp.evolve ? 1 : 0]], u=>{ pet.src = u; });
+    probeImg([comp.imgs[bestStreak()>=comp.evolve ? 1 : 0]], u=>{ pet.src = u; pet.style.display = "block"; });
   } else if(pet){ pet.style.display = "none"; }
 }
 function renderLook(){
   const L = levelFromXp(S.xp);
   const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const cur = avatarStyle();
+  const styles = AVATAR_STYLES.map(s=>
+    `<button class="chip ${cur.id===s.id?'on':''}" data-avstyle="${s.id}" title="${esc(s.d)}">${s.icon} ${s.n}</button>`).join("");
   const habs = HABITATS.map(h=>{ const un = L.lvl>=h.lvl;
     return `<button class="chip ${A.habitat===h.id?'on':''}" data-avhab="${h.id}" ${un?"":"disabled"}>${un?"":"🔒 "}${h.n}</button>`; }).join("");
+  const st = bestStreak();
   const pets = [`<button class="chip ${!A.companion?'on':''}" data-avpet="">Lone wolf</button>`].concat(
-    COMPANIONS.map(c=>{ const un = bestStreak()>=c.streak;
-      return `<button class="chip ${A.companion===c.id?'on':''}" data-avpet="${c.id}" ${un?"":"disabled"}>${un?"":"🔒 "}${c.n}</button>`; })).join("");
+    COMPANIONS.map(c=>{ const un = st>=c.streak;
+      return `<button class="chip ${A.companion===c.id?'on':''}" data-avpet="${c.id}" ${un?"":"disabled"}>${un?c.n:`🔒 ${c.n} · ${st}/${c.streak}d`}</button>`; })).join("");
   $("#lookCard").innerHTML = `<div class="card">
-    <div class="chips">${habs}</div>
-    <div class="chips" style="margin-top:8px">${pets}</div>
-    <p class="mut" style="margin-top:8px; font-size:11.5px">Locked looks open as you level — the rail below shows what's next. Companions evolve as streaks grow.</p></div>`;
+    <div class="sec-label" style="margin-top:0">Avatar</div><div class="chips">${styles}</div>
+    <div class="sec-label">Habitat</div><div class="chips">${habs}</div>
+    <div class="sec-label">Companion</div><div class="chips">${pets}</div>
+    <p class="mut" style="margin-top:8px; font-size:11.5px">Avatars are yours from day one — habitats open as you level, companions arrive on streaks (first one at just ${COMPANIONS[0].streak} days) and evolve as streaks grow.</p></div>`;
 }
 function renderRewards(){
   const rws = nextRewards();
@@ -3211,26 +3383,47 @@ function todayBrief(){
   if(!S.plan || !pt) return `Today is ${dateStr}. No plan is running — build a session on the Train tab, or take the interview and get a full block.`;
   const acts = pt.day.acts, full = acts.filter(a=>!a.micro);
   const boosters = acts.length - full.length;
-  const bits = full.map(a=>{
-    const D = DTYPES[a.type];
-    if(D.life) return `${a.label||D.t} (one tap when it's done)`;
-    const names = actNames(a);
-    const mins = (a.o&&a.o.time)||(S.profile&&S.profile.len)||30;
-    return `${a.label||D.t} — ${names.length?names.length+" movements, ":""}about ${mins} minutes${a.done?", done ✓":""}`;
-  });
-  let text = `Today is ${dateStr} — week ${pt.day.w+1} of your block. `;
-  text += full.length ? `On the plan: ${bits.join("; ")}.` : `Rest day — recovery is training too.`;
-  if(boosters>0) text += ` Plus ${boosters>1?boosters+" boosters":"a booster"}, about 12 minutes each.`;
+  /* order matters: the date, then your workouts BY NAME, then everything else briefly */
+  let text = `Today is ${dateStr}. `;
+  if(full.length){
+    const names = full.map(a=>(a.label||DTYPES[a.type].t) + (a.done?" — done":""));
+    text += `On the plan: ${names.join("; ")}. `;
+    const mins = full.filter(a=>!DTYPES[a.type].life && !a.done)
+      .reduce((s,a)=>s+((a.o&&a.o.time)||(S.profile&&S.profile.len)||30),0);
+    if(mins) text += `About ${mins} minutes of work. `;
+  } else text += `Rest day — recovery is training too. `;
+  if(boosters>0) text += `Plus ${boosters>1?boosters+" boosters":"a booster"}, about 12 minutes each. `;
+  text += `Week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}.`;
   const note = (pt.day.note||"").trim();
   if(note && full.length) text += " " + note;
   return text;
+}
+/* the spoken brief speaks in your avatar's voice — pitch/rate per identity plus
+   a best-effort voice match (voice lists load async on iOS/macOS) */
+let _voices = [];
+function refreshVoices(){ try{ _voices = speechSynthesis.getVoices()||[]; }catch(e){} }
+if(typeof speechSynthesis!=="undefined"){ refreshVoices(); try{ speechSynthesis.onvoiceschanged = refreshVoices; }catch(e){} }
+function briefVoice(){
+  const pref = (avatarStyle().voice||{}).pref;
+  if(!_voices.length) refreshVoices();
+  const en = _voices.filter(v=>/^en/i.test(v.lang||""));
+  const pool = en.length ? en : _voices;
+  if(!pool.length) return null;
+  if(!pref) return null;   // "mini" keeps the system default — simple all the way down
+  const fem = /female|samantha|victoria|karen|moira|tessa|zira|jenny|aria|ava|allison|susan|serena|kate|martha|nicky/i;
+  const male = /\bmale\b|daniel|alex|fred|george|guy|davis|aaron|arthur|gordon|oliver|rishi|james|tom/i;
+  const re = pref==="female" ? fem : male;
+  return pool.find(v=>re.test(v.name)) || null;
 }
 function speakBrief(){
   try{
     if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
     if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
     const u = new SpeechSynthesisUtterance(todayBrief().replace(/[·✓]/g,""));
-    u.rate = 1.02; speechSynthesis.speak(u);
+    const vc = avatarStyle().voice||{};
+    u.rate = vc.rate||1.02; u.pitch = vc.pitch||1;
+    const v = briefVoice(); if(v) u.voice = v;
+    speechSynthesis.speak(u);
   }catch(e){}
 }
 /* build (or reuse) the session behind a plan act — Today check-offs and Start share this */
@@ -3339,6 +3532,16 @@ function renderTodayPage(){
         : `<button class="btn sm ghost" data-startact="${pt.idx}:${ai}">Again</button>`}</div>
       ${list?`<div class="td-body" style="display:${open?'block':'none'}">${list}</div>`:""}</div>`;
   }).join("") : (S.plan && pt ? "" : "");
+  /* day fully banked → seed tomorrow: knowing what's next is what brings you back */
+  if(pt && acts && acts.length && acts.every(a=>a.done)){
+    const nx = S.plan.days[pt.idx+1];
+    if(nx){
+      const tTitle = nx.acts.length ? nx.acts.filter(a=>!a.micro).map(a=>a.label||DTYPES[a.type].t).join(" + ") || "Boosters only" : "Rest & recharge";
+      $("#tdActs").innerHTML += `<div class="pday" style="cursor:default; opacity:.75"><div class="dico">⏭</div>
+        <div class="ex-meta"><div class="ex-name" style="font-size:13.5px">Tomorrow: ${esc(tTitle)}</div>
+        <div class="ex-sub">Come back and keep the streak breathing.</div></div></div>`;
+    }
+  }
   const mySports = (S.profile && S.profile.sports)||[];
   $("#tdQuick").innerHTML = Object.entries(DTYPES).filter(([k])=>k!=="REST")
     .filter(([k])=>k!=="SKL" || (soccerPicked() && (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball")))
@@ -3533,7 +3736,6 @@ function exCard(m,i){
    Plan-launched sessions write every edit back to the act (act.names) — your plan is yours. */
 function editPool(block){
   const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) ||
-    (m.eq==="Dumbbells" && S.sel.eq.includes("Adjustable Dumbbells")) ||
     (S.profile && S.profile.eq.includes(m.eq));
   const info = (S.profile && S.profile.areaInfo)||{};
   const avoid = Object.keys(info).filter(k=>info[k].mode==="avoid");
@@ -3643,7 +3845,7 @@ function renderSession(){
 }
 
 /* ================= RENDER: PLAN ================= */
-let planWeek = 0, planArrange = false, sortables = [];
+let planWeek = -1, planArrange = false, sortables = [];   // -1 → resolve to the current week on first render
 /* drag-and-drop core — also called directly by the harness */
 function movePlanAct(fromIdx, ai, toIdx, pos){
   const act = S.plan.days[fromIdx].acts.splice(ai,1)[0];
@@ -3653,16 +3855,17 @@ function movePlanAct(fromIdx, ai, toIdx, pos){
   save();
 }
 function renderArrange(list){
-  const names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const todayIdx = planToday() ? planToday().idx : -1;
   list.innerHTML = `<p class="mut" style="margin-bottom:10px">Drag activities between days — long-press to grab on touch. Completed ✓ and locked 🔒 sessions move with you; they're never rebuilt.</p>` +
-    S.plan.days.map((day,idx)=>({day,idx})).filter(x=>x.day.w===planWeek).map(({day,idx})=>`
+    S.plan.days.map((day,idx)=>({day,idx})).filter(x=>x.day.w===planWeek).map(({day,idx})=>{
+    const dt = planDate(idx);
+    return `
     <div class="arr-day ${idx===todayIdx?'today-hl':''}">
-      <div class="arr-head"><span>${names[day.d]} · Day ${day.d+1}</span><span class="w">${day.acts.length?"":"rest day"}</span></div>
+      <div class="arr-head"><span>${idx===todayIdx?"Today":WDAYS[dt.getDay()]} · ${dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span><span class="w">${day.acts.length?"":"rest day"}</span></div>
       <div class="arr-acts" data-didx="${idx}">` +
       day.acts.map((a,ai)=>`<div class="arr-act ${a.done?'done-a':''}" data-ai="${ai}">
         <span class="drag-h">⠿</span><span>${DTYPES[a.type].icon} ${esc(a.label||DTYPES[a.type].t)}${a.done?" ✓":""}</span>
-        <span class="lk">${a.lock?"🔒":""}</span></div>`).join("") + `</div></div>`).join("");
+        <span class="lk">${a.lock?"🔒":""}</span></div>`).join("") + `</div></div>`; }).join("");
   sortables.forEach(s=>{ try{ s.destroy(); }catch(e){} }); sortables = [];
   if(typeof Sortable === "function"){
     $$("#planDays .arr-acts").forEach(el=>{
@@ -3680,19 +3883,31 @@ function renderPlan(){
   if(!S.plan){ meta.textContent = "No plan yet — take the interview or build sessions freestyle.";
     tabs.innerHTML=""; list.innerHTML = `<div class="empty">Coach mode builds a week-by-week plan from your interview answers.</div>`; return; }
   const p = S.profile || {};
-  meta.textContent = `${S.plan.weeks} weeks · ${p.days||"?"} training days/wk · ${p.len||"?"} min sessions`;
+  const startD = new Date(S.plan.start);
+  meta.textContent = `${S.plan.weeks} weeks · ${p.days||"?"} training days/wk · started ${startD.toLocaleDateString(undefined,{month:"short",day:"numeric"})}`;
+  /* lifting split picker — only shows when a 5-day split is possible */
+  const sr = $("#splitRow");
+  if(sr){
+    const eligible = liftSplit(Object.assign({}, p, {split:null}));
+    sr.innerHTML = eligible ? `<div class="sec-label" style="margin:12px 0 8px">Lifting split</div><div class="chips">` +
+      [["auto","✨ Auto"],["bro","💪 Bro split"],["arnold","🏛️ Arnold"],["pplul","🔁 PPL+UL"],["none","🅰️🅱️ Classic A/B"]]
+        .map(([k,l])=>`<button class="chip ${(p.split||"auto")===k?'on':''}" data-split="${k}" title="${SPLITS[k]?esc(SPLITS[k].d):""}">${l}</button>`).join("") +
+      `</div><p class="mut" style="margin-top:6px; font-size:11.5px">${esc((liftSplit(p)||{d:"Two full-body strength days, upper/lower biased."}).d)}</p>` : "";
+  }
+  const pt0 = planToday();
+  if(planWeek < 0) planWeek = pt0 ? pt0.day.w : 0;   // land on the real current week, not week 1
   planWeek = Math.min(planWeek, S.plan.weeks-1);
-  tabs.innerHTML = Array.from({length:S.plan.weeks},(_,w)=>`<button class="chip ${w===planWeek?'on':''}" data-week="${w}">Wk ${w+1}</button>`).join("");
+  tabs.innerHTML = Array.from({length:S.plan.weeks},(_,w)=>`<button class="chip ${w===planWeek?'on':''} ${pt0&&pt0.day.w===w?'wk-now':''}" data-week="${w}">Wk ${w+1}</button>`).join("");
   const ab = $("#arrangeBtn"); if(ab) ab.textContent = planArrange ? "✓ Done arranging" : "🖐 Arrange";
   if(planArrange){ renderArrange(list); return; }
-  const todayIdx = planToday() ? planToday().idx : -1;
-  const names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const todayIdx = pt0 ? pt0.idx : -1;
   list.innerHTML = S.plan.days.map((day,idx)=>({day,idx})).filter(x=>x.day.w===planWeek).map(({day,idx})=>{
     const icons = day.acts.length ? day.acts.map(a=>DTYPES[a.type].icon).join("") : "🌙";
     const title = day.acts.length ? day.acts.map(a=>(a.label||DTYPES[a.type].t) + (a.done?" ✓":"")).join(" + ") : "Rest & recharge";
     const allDone = day.acts.length && day.acts.every(a=>a.done);
+    const dt = planDate(idx);
     return `<div class="pday-wrap"><div class="pday ${idx===todayIdx?'today-hl':''} ${allDone?'done-hl':''}" data-pday="${idx}">
-      <div class="dnum"><b>${day.d+1}</b><span>${names[day.d]}</span></div>
+      <div class="dnum"><b>${dt.getDate()}</b><span>${idx===todayIdx?"today":WDAYS[dt.getDay()]}</span></div>
       <div class="dico">${icons}</div>
       <div class="ex-meta"><div class="ex-name">${title}</div><div class="ex-sub">${esc(day.note)}</div></div></div>
       <div class="pday-detail">
@@ -3733,7 +3948,7 @@ function swapMoveInAct(act, ni){
   const names = actNames(act);
   const cur = allMoves().find(m=>m.n===names[ni]); if(!cur){ toast("Move not found"); return; }
   const eq = (S.profile&&S.profile.eq)||S.sel.eq;
-  const gearOk = m => m.eq==="Bodyweight"||eq.includes(m.eq)||(m.eq==="Dumbbells"&&eq.includes("Adjustable Dumbbells"));
+  const gearOk = m => m.eq==="Bodyweight"||eq.includes(m.eq);
   let pool = allMoves().filter(m=>gearOk(m) && m.p===cur.p && m.b===cur.b && !names.includes(m.n));
   if(!pool.length) pool = allMoves().filter(m=>gearOk(m) && m.b===cur.b && !names.includes(m.n));   // rare systems (e.g. skill warmups) relax to the block
   const pick = wPick(pool,1)[0];
@@ -3880,7 +4095,7 @@ function renderMedia(){
 }
 
 /* ================= RENDER: MORE ================= */
-const THEMES = { ember:"#FF6B35", steel:"#4C9AFF", turf:"#3DDC84", night:"#9B7BFF", retro:"#FF4D9D", daylight:"#E4552C" };
+const THEMES = { glass:"#A78BFA", paper:"#B9B9B2", ink:"#3A3A42", ember:"#FF6B35", steel:"#4C9AFF", turf:"#3DDC84", night:"#9B7BFF", retro:"#FF4D9D", daylight:"#E4552C" };
 function renderMore(){
   $("#themeGrid").innerHTML = Object.entries(THEMES).map(([k,c])=>`
     <div class="theme-sw ${S.settings.theme===k?'on':''}" data-theme-pick="${k}">
@@ -3958,7 +4173,7 @@ function openOnb(){ const P = S.profile;
   goals:[], areas:["ankle"], areaInfo:{}, runFocus:"both",
   eq:(P&&P.eq.slice())||[],
   lifts:(P&&P.lifts)||{}, caps:(P&&P.caps)||{},
-  days:3, len:30, weeks:6, boost:0, mode:"coach" }, P ? { name:P.name, age:P.age, gender:P.gender,
+  days:3, len:30, weeks:6, boost:0, mode:"coach", avatarStyle:(S.avatar&&S.avatar.style)||"viking" }, P ? { name:P.name, age:P.age, gender:P.gender,
   exps:Object.assign({}, P.exps||{}),
   activities:Object.assign({}, P.activities||{}),
   streakTol:P.streakTol||4,
@@ -4006,6 +4221,7 @@ document.addEventListener("click", ev=>{
   const ow = t.closest("[data-oweeks]"); if(ow){ onb.a.weeks=+ow.dataset.oweeks; buzz(); onbRender(); return; }
   const ob = t.closest("[data-oboost]"); if(ob){ onb.a.boost=+ob.dataset.oboost; buzz(); onbRender(); return; }
   const os = t.closest("[data-mode]"); if(os && $("#onb").classList.contains("show")){ onb.a.mode=os.dataset.mode; buzz(); onbRender(); return; }
+  const oav = t.closest("[data-oavatar]"); if(oav){ onb.a.avatarStyle=oav.dataset.oavatar; buzz(); onbRender(); return; }
 
   const chip = t.closest(".chip");
   if(chip && chip.dataset.recipe){ buzz(); applyRecipe(chip.dataset.recipe); return; }
@@ -4027,6 +4243,14 @@ document.addEventListener("click", ev=>{
   if(chip && chip.dataset.llvl!==undefined){ libF.lvl=+chip.dataset.llvl; renderLib(); return; }
   if(chip && chip.dataset.lf!==undefined){ libFilter=chip.dataset.lf; renderLib(); return; }
   if(chip && chip.dataset.week!==undefined){ planWeek=+chip.dataset.week; renderPlan(); return; }
+  if(chip && chip.dataset.split){ if(!S.profile) return;
+    if(S.profile.split === chip.dataset.split) return;
+    S.profile.split = chip.dataset.split; save(); SFX.play("select");
+    if(planHasWork()) askConfirm("Rebuild with this split?",
+      "Completed and locked sessions stay exactly where they are — the rest of the block is rebuilt around the new split.","Rebuild",
+      ()=>{ regeneratePlan(false); toast("Split applied — plan rebuilt"); });
+    else { regeneratePlan(false); toast("Split applied — plan rebuilt"); }
+    renderPlan(); return; }
 
   /* library: favorite + rank (names can contain ":", so split on the LAST one) */
   const fv = t.closest("[data-fav]");
@@ -4168,8 +4392,14 @@ document.addEventListener("click", ev=>{
   }
   const tplFor = typ => { const k = S.plan && S.plan.templates && Object.keys(S.plan.templates).find(k=>k.split(":")[1]===typ);
     return k ? {tpl:k, label:S.plan.templates[k].label} : {}; };
+  if(t.id==="tdQuickBtn"){ const q=$("#tdQuick"); const openq = q.style.display==="none";
+    q.style.display = openq ? "" : "none";
+    t.textContent = openq ? "✕ Never mind" : "＋ Add something unscheduled"; return; }
   const qa = t.closest("[data-qadd]");
   if(qa){ const typ = qa.dataset.qadd; const isMicro = !!DTYPES[typ].micro;
+    const qbox = $("#tdQuick"), qbtn = $("#tdQuickBtn");   // picking one folds the drawer back down
+    if(qbox) qbox.style.display = "none";
+    if(qbtn) qbtn.textContent = "＋ Add something unscheduled";
     if(!S.plan){ // no plan: just build the session freestyle
       if(buildSession({focus:DTYPES[typ].focus, time:isMicro?12:S.sel.time, micro:isMicro})){ go("train"); renderSession(); renderMusic(); } return; }
     const pt = planToday();
@@ -4202,10 +4432,14 @@ document.addEventListener("click", ev=>{
   /* ---- feature tour + avatar look ---- */
   if(t.id==="tourNext" && TOUR){ TOUR.i++; tourStep(); return; }
   if(t.id==="tourSkip" && TOUR){ TOUR.i = TOUR_STEPS.length; tourStep(); return; }
+  const avs = t.closest("[data-avstyle]");
+  if(avs){ S.avatar = S.avatar||{}; S.avatar.style = avs.dataset.avstyle; save(); renderHero(); SFX.play("select"); return; }
   const avh = t.closest("[data-avhab]");
   if(avh && !avh.disabled){ S.avatar = S.avatar||{}; S.avatar.habitat = avh.dataset.avhab; save(); renderHero(); SFX.play("select"); return; }
   const avp = t.closest("[data-avpet]");
-  if(avp && !avp.disabled){ S.avatar = S.avatar||{}; S.avatar.companion = avp.dataset.avpet || null; save(); renderHero(); SFX.play("select"); return; }
+  if(avp && !avp.disabled){ S.avatar = S.avatar||{}; S.avatar.companion = avp.dataset.avpet || null;
+    S.avatar.petOff = !S.avatar.companion;   // "Lone wolf" is a real choice — don't re-equip behind their back
+    save(); renderHero(); SFX.play("select"); return; }
 
   const th = t.closest("[data-theme-pick]");
   if(th){ S.settings.theme=th.dataset.themePick; document.body.dataset.theme=S.settings.theme; applyBg(); SFX.play("select"); save(); renderMore(); return; }
@@ -4271,7 +4505,7 @@ function regeneratePlan(blank){
     /* kept acts may reference old templates — carry them over so Start still works */
     Object.entries(old.templates||{}).forEach(([k,v])=>{ if(!S.plan.templates[k]) S.plan.templates[k]=v; });
   }
-  planWeek=0; save(); renderPlan(); renderTodayPage();
+  planWeek=-1; save(); renderPlan(); renderTodayPage();
 }
 $("#replanBtn").addEventListener("click", ()=>{ if(!S.profile) return;
   if(planHasWork()){
@@ -4313,11 +4547,17 @@ function applyBg(){
     document.body.style.setProperty("--bgphoto", `url("${url}")`);
     document.body.classList.add("hasphoto");
   });
+  /* iOS status bar / browser chrome follows the theme */
+  try{ const mc = document.querySelector('meta[name="theme-color"]');
+    if(mc) mc.content = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#121014"; }catch(e){}
   /* NOTE (v6.1): full-screen backdrop VIDEO was cut — a moving layer under a
      stack of backdrop-filter panels stalls the compositor (froze desktop Chrome,
      would drain iPhone batteries). Static theme art is the design. */
 }
-document.body.dataset.theme = S.settings.theme || "ember";
+/* v7: liquid-glass lavender becomes the default look — one-time switch for
+   anyone still on the old default; an explicitly chosen theme is respected */
+if(!S.settings.tv7){ if(S.settings.theme==="ember" || !S.settings.theme) S.settings.theme = "glass"; S.settings.tv7 = 1; save(); }
+document.body.dataset.theme = S.settings.theme || "glass";
 applyBg();
 renderAll(); pushWidgets();
 if(!S.profile){ openOnb(); }
