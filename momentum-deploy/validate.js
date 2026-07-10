@@ -79,11 +79,12 @@ setTimeout(()=>{ try {
   T("Bodyweight removed from gear options", !$('[data-oeq="Bodyweight"]'));
   T("gym machines offered", !!$('[data-oeq="Lat Pulldown"]') && !!$('[data-oeq="Leg Press"]') && !!$('[data-oeq="Smith Machine"]') && !!$('[data-oeq="Cable Machine"]'));
   T("cardio machines offered", !!$('[data-oeq="Treadmill"]') && !!$('[data-oeq="Stationary Bike"]') && !!$('[data-oeq="Elliptical"]') && !!$('[data-oeq="Stair Climber"]'));
-  T("new gear catalog offered", !!$('[data-oeq="Adjustable Dumbbells"]') && !!$('[data-oeq="TRX / Suspension"]') && !!$('[data-oeq="Yoga Mat"]') && !!$('[data-oeq="Foam Roller"]'));
+  T("new gear catalog offered", !!$('[data-oeq="TRX / Suspension"]') && !!$('[data-oeq="Yoga Mat"]') && !!$('[data-oeq="Foam Roller"]'));
+  T("adjustable dumbbells retired from gear catalog", !$('[data-oeq="Adjustable Dumbbells"]'));
   const oeqSet = new Set($$("[data-oeq]").map(e=>e.dataset.oeq));   // jsdom selectors dislike "&" in values
   T("per-sport gear replaces Sports Gear", oeqSet.has("Pool Access") && oeqSet.has("Racquet & Paddle")
     && oeqSet.has("Bat & Glove") && oeqSet.has("Bike") && !oeqSet.has("Sports Gear"));
-  for(const e of ["Barbell","Squat Rack","Bench","Kettlebells","Lat Pulldown","Cable Machine","Adjustable Dumbbells"]) click($(`[data-oeq="${e}"]`));
+  for(const e of ["Barbell","Squat Rack","Bench","Kettlebells","Lat Pulldown","Cable Machine","Dumbbells"]) click($(`[data-oeq="${e}"]`));
   click($("#onbNext"));                               // equip -> schedule (pref/life/windows steps retired)
 
   /* ---- v6: dead-weight steps removed ---- */
@@ -105,8 +106,16 @@ setTimeout(()=>{ try {
   T("four coach modes offered", $$("[data-mode]").length===4);
   T("recovery-first mode exists", !!$('[data-mode="recovery"]'));
   T("tech-comfort question removed", !$("[data-tech]"));
-  click($('[data-mode="coach"]')); click($("#onbNext"));
+  click($('[data-mode="coach"]')); click($("#onbNext"));   // mode -> avatar
+
+  /* ---- v7: avatar identity step ---- */
+  T("five avatar identities offered", $$("[data-oavatar]").length===5);
+  T("avatar lineup spans cute/girly/simple/fantasy", !!$('[data-oavatar="buddy"]') && !!$('[data-oavatar="rose"]')
+    && !!$('[data-oavatar="mini"]') && !!$('[data-oavatar="owlbear"]') && !!$('[data-oavatar="viking"]'));
+  click($('[data-oavatar="viking"]'));
+  click($("#onbNext"));
   T("onboarding closes", !$("#onb").classList.contains("show"));
+  T("avatar identity saved", state().avatar && state().avatar.style==="viking");
 
   /* ---- v6 Phase 4: forced (skippable) feature tour fires once, right after the forge ---- */
   T("feature tour fires after the forge", $("#tourOv").classList.contains("show"));
@@ -140,10 +149,9 @@ setTimeout(()=>{ try {
   T("cycling activity → ride day in plan", wk1.some(x=>x.acts.some(a=>a.type==="SP_cycling")));
   T("no family day type in new plans", !st.plan.days.some(x=>x.acts.some(a=>a.type==="SP_family")));
   T("booster micro-session on every day", st.plan.days.every(x=>x.acts.some(a=>a.type==="BST" && a.micro)));
-  T("adjustable dumbbells unlock dumbbell moves", w.eval(`
-    (function(){ const saved = S.sel.eq.slice(); S.sel.eq = ["Adjustable Dumbbells"];
-      buildSession({focus:"Strength", time:60, mg:["chest"]});
-      const ok = S.session.items.some(m=>m.eq==="Dumbbells");
+  T("adjustable dumbbells migrate to plain dumbbells", w.eval(`
+    (function(){ const saved = S.sel.eq.slice(); S.sel.eq = ["Adjustable Dumbbells"]; migrateProfile();
+      const ok = S.sel.eq.includes("Dumbbells") && !S.sel.eq.includes("Adjustable Dumbbells");
       S.sel.eq = saved; return ok; })()`));
 
   /* ---- Today page ---- */
@@ -157,7 +165,7 @@ setTimeout(()=>{ try {
   T("family activity fully retired from quick-add", !$('[data-qadd="SP_family"]'));
 
   /* ---- v6 Phase 3: Today's brief + inline movement checklists ---- */
-  T("Today shows a plain-english brief", $("#tdBrief").textContent.includes("Today is") && $("#tdBrief").textContent.includes("week 1"));
+  T("Today shows a plain-english brief", $("#tdBrief").textContent.includes("Today is") && /week 1/i.test($("#tdBrief").textContent));
   T("brief includes real minutes", /about \d+ minutes/.test($("#tdBrief").textContent));
   T("brief has a speak button", !!$("#briefSpeak"));
   T("today's workouts expand into inline checklists", $$("#tdActs [data-tcheck]").length>=3, `(${$$("#tdActs [data-tcheck]").length} moves)`);
@@ -319,10 +327,12 @@ setTimeout(()=>{ try {
   /* ---- Phase 3: training styles change prescriptions ---- */
   T("style axis changes set/rep/rest prescriptions", w.eval(`
     buildSession({focus:"Strength", time:30, style:"strength"});
-    const a = S.session.items.filter(m=>m.p==="strength"&&m.b==="main"&&!m.dur).every(m=>m.d.indexOf("4×5")===0 && m.rest===150);
+    const a = S.session.items.filter(m=>m.p==="strength"&&m.b==="main"&&!m.dur&&m.eq!=="Bodyweight").every(m=>m.d.indexOf("4×5")===0 && m.rest===150);
     buildSession({focus:"Strength", time:30, style:"hypertrophy"});
-    const b = S.session.items.filter(m=>m.p==="strength"&&m.b==="main"&&!m.dur).every(m=>m.d.indexOf("3×10")===0);
+    const b = S.session.items.filter(m=>m.p==="strength"&&m.b==="main"&&!m.dur&&m.eq!=="Bodyweight").every(m=>m.d.indexOf("3×10")===0);
     a && b`));
+  T("low-rep styles never crush bodyweight moves (no 4×5 push-ups)", w.eval(`
+    applyStyle([LIB.find(m=>m.n==="Push-ups")], "strength")[0].d.includes("15–25")`));
   T("plan strength template carries goal-driven style", w.eval(`
     Object.values(S.plan.templates).some(t=>t.style==="hypertrophy")`));
 
@@ -351,7 +361,13 @@ setTimeout(()=>{ try {
   T("heart-health recipe sticks to beginner moves", state().session.items.filter(m=>m.b==="main").every(m=>(m.lvl||1)<=1));
 
   /* ---- v6 Phase 2: conditioning engine ---- */
-  T("zero-gear HIIT + family quick starts removed", w.eval(`!RECIPES.some(r=>r.id==="hiit20"||r.id==="fam")`));
+  T("family quick start stays removed", w.eval(`!RECIPES.some(r=>r.id==="fam")`));
+  T("HIIT quick starts are true circuits", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(); S.sel.eq=[];
+      const ok1 = applyRecipe("hiit20") && S.session.flow && S.session.style==="hiit"
+        && S.session.items.filter(m=>m.b!=="warmup").every(m=>m.d.includes("s on / "));
+      const ok2 = applyRecipe("hiitnr") && S.session.flow && S.session.flow.rounds===1;
+      S.sel.eq=saved; return ok1 && ok2; })()`));
   T("30/40-min KB HIIT quick starts exist", w.eval(`RECIPES.some(r=>r.id==="kb30") && RECIPES.some(r=>r.id==="kb40")`));
   T("conditioning focus offered on Train", w.eval(`FOCI.includes("Conditioning")`));
   T("conditioning builds a KB circuit when KB on hand", w.eval(`
@@ -590,14 +606,14 @@ setTimeout(()=>{ try {
       S.streak2=s2; renderHero(); return ok; })()`));
   /* ---- v6 Phase 5: ambience player + animated backdrops (jsdom-safe wiring) ---- */
   d.querySelectorAll(".nav button")[5].dispatchEvent(new w.Event("click",{bubbles:true}));
-  T("ambience chips render in More", $$("#ambChips [data-amb]").length===3);
+  T("ambience chips render in More", $$("#ambChips [data-amb]").length===5);
   T("backdrop video feature fully removed", !$("#bgvChips") && !$("#bgVid") && state().settings.bgv===undefined);
   click($('[data-amb="fire"]'));
   T("ambience choice persists", state().settings.amb==="fire");
   click($('[data-amb="off"]'));
   T("ambience off persists", state().settings.amb==="off");
   d.querySelectorAll(".nav button")[2].dispatchEvent(new w.Event("click",{bubbles:true}));
-  T("Train music drawer includes ambience", !!$("#musicToggle") && (click($("#musicToggle")), $$("#musicDrawer [data-amb]").length===3));
+  T("Train music drawer includes ambience", !!$("#musicToggle") && (click($("#musicToggle")), $$("#musicDrawer [data-amb]").length===5));
   T("probeVid is defined and silent in jsdom", w.eval(`typeof probeVid==="function" && (probeVid(["x.webm"], ()=>{}), true)`));
   d.querySelectorAll(".nav button")[1].dispatchEvent(new w.Event("click",{bubbles:true}));
   T("level-up card reveals unlocks", w.eval(`
@@ -648,6 +664,99 @@ setTimeout(()=>{ try {
         && p.work===undefined && p.eve===undefined && p.motiv===undefined && p.tech===undefined
         && p.windows===undefined && p.eqPref===undefined;
     })()`));
+
+  /* ================= v7: splits · calendar plan · avatars · themes · quick-add ================= */
+  /* real 5-day lifting splits */
+  T("three real splits defined (bro/arnold/pplul)", w.eval(`SPLITS.bro.days.length===5 && SPLITS.arnold.days.length===5 && SPLITS.pplul.days.length===5`));
+  T("5-day lift profile auto-activates a split", w.eval(`
+    !!liftSplit({days:5, goals:["muscle"]}) && liftSplit({days:5, goals:["muscle"]}).n==="Bro split"
+    && liftSplit({days:5, goals:["stronger"]}).n.indexOf("PPL")===0`));
+  T("splits need 5 days — 4-day keeps classic A/B", w.eval(`!liftSplit({days:4, goals:["muscle"]})`));
+  T("split plan builds 5 named lift days", w.eval(`
+    (function(){ const saved=S.profile, sp=S.plan;
+      S.profile = Object.assign({}, saved, {days:5, goals:["muscle"], split:"bro", activities:{}, sports:[], boost:0});
+      const plan = makePlan(S.profile);
+      const wk = plan.days.slice(0,7).flatMap(d=>d.acts).filter(a=>a.type==="STR").map(a=>a.label);
+      S.profile=saved; S.plan=sp; save();
+      return wk.length===5 && ["Chest day","Back day","Shoulder day","Arm day","Leg day"].every(l=>wk.some(x=>x.indexOf(l)===0)); })()`));
+  T("split day targets its muscles (chest day is chest work)", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(); S.sel.eq=["Barbell","Bench","Squat Rack","Dumbbells","Cable Machine"];
+      buildSession({focus:"Strength", time:45, mg:["chest"], mgStrict:true, style:"hypertrophy"});
+      const mains = S.session.items.filter(m=>m.b==="main");
+      S.sel.eq=saved;
+      return mains.length>=3 && mains.every(m=>m.mg && m.mg.includes("chest")); })()`));
+  T("split picker renders on Plan for 5-day lifters", w.eval(`
+    (function(){ const saved=S.profile;
+      S.profile = Object.assign({}, saved, {days:5, goals:["muscle"]});
+      renderPlan();
+      const ok = [...document.querySelectorAll("[data-split]")].length===5;
+      S.profile=saved; renderPlan(); return ok; })()`));
+  /* bro-science volume audit */
+  T("big barbell lifts run 4×6–8", w.eval(`LIB.find(m=>m.n==="Back squat").d==="4×6–8" && LIB.find(m=>m.n==="Bench press").d==="4×6–8"`));
+  T("push-ups prescribe real reps (15–25)", w.eval(`LIB.find(m=>m.n==="Push-ups").d.includes("15–25")`));
+  T("bodybuilding staples exist (laterals, incline, curls, dips)", w.eval(`
+    ["DB lateral raise","Incline DB press","Barbell curl","Dips (bench or bars)","DB shoulder press","Bulgarian split squat"].every(n=>LIB.some(m=>m.n===n))`));
+  T("new KB circuit moves exist (snatch, high-pull)", w.eval(`["KB snatch","KB deadlift high-pull"].every(n=>LIB.some(m=>m.n===n))`));
+  /* calendar-true plan */
+  T("plan day labels come from real dates, not assumed Mondays", w.eval(`
+    (function(){ const dt = planDate(0);
+      return dayKey(dt)===S.plan.start && typeof WDAYS[dt.getDay()]==="string"; })()`));
+  T("plan cards show calendar dates", (function(){
+    w.eval(`planArrange=false; planWeek=0; renderPlan();`);
+    const dn = $$("#planDays .dnum b").map(e=>e.textContent);
+    const want = new Date(w.eval("S.plan.start") ? new w.Date(w.eval("S.plan.start")) : Date.now());
+    return dn.length===7 && dn[0]===String(new Date(w.eval(`new Date(S.plan.start).getTime()`)).getDate());
+  })());
+  T("plan opens on the current week", w.eval(`planWeek = -1; renderPlan(); planWeek === (planToday()?planToday().day.w:0)`));
+  /* quick-add drawer */
+  T("quick-add starts collapsed", (function(){ w.eval(`renderTodayPage()`); return $("#tdQuick").style.display==="none" && !!$("#tdQuickBtn"); })());
+  T("quick-add expands on tap and collapses after adding", (function(){
+    click($("#tdQuickBtn")); const open = $("#tdQuick").style.display!=="none";
+    const chip = $("#tdQuick [data-qadd]"); if(chip) click(chip);
+    return open && $("#tdQuick").style.display==="none";
+  })());
+  /* avatar identities */
+  T("five avatar identities defined", w.eval(`AVATAR_STYLES.length===5 && AVATAR_STYLES.every(a=>a.stages.length>=2 && a.voice)`));
+  T("avatar switch changes hero stages", w.eval(`
+    (function(){ const saved=S.avatar&&S.avatar.style;
+      S.avatar=Object.assign({},S.avatar,{style:"owlbear"});
+      const a = heroStage(1).n==="Owlbear Cub" && heroStage(20).n==="Elder Owlbear";
+      S.avatar.style="viking";
+      const b = heroStage(1).n==="Thrall";
+      S.avatar.style=saved||"viking"; return a && b; })()`));
+  T("avatar chips render in the look card", (function(){ w.eval("renderHero()"); return $$("[data-avstyle]").length===5; })());
+  T("earned pet auto-equips (never invisible)", w.eval(`
+    (function(){ const s2=S.streak2, av=JSON.parse(JSON.stringify(S.avatar||{}));
+      S.streak2={best:5,freezes:0,milestones:[],comeback:0};
+      S.avatar={habitat:"yard",companion:null}; renderHeroScene();
+      const ok = S.avatar.companion==="slime";
+      S.streak2=s2; S.avatar=av; renderHero(); return ok; })()`));
+  T("lone wolf choice is respected (petOff)", w.eval(`
+    (function(){ const s2=S.streak2, av=JSON.parse(JSON.stringify(S.avatar||{}));
+      S.streak2={best:5,freezes:0,milestones:[],comeback:0};
+      S.avatar={habitat:"yard",companion:null,petOff:true}; renderHeroScene();
+      const ok = S.avatar.companion===null;
+      S.streak2=s2; S.avatar=av; renderHero(); return ok; })()`));
+  T("first companion lands at a 3-day streak", w.eval(`COMPANIONS[0].streak===3`));
+  /* voice + brief */
+  T("brief speaks workouts by name right after the date", w.eval(`
+    (function(){ const b = todayBrief();
+      const di = b.indexOf("Today is"), pi = b.indexOf("On the plan:");
+      return di===0 && (pi>0 ? pi < b.indexOf("Week ") : true); })()`));
+  T("avatar voices carry distinct pitch characters", w.eval(`
+    AVATAR_STYLES.find(a=>a.id==="viking").voice.pitch < 1 && AVATAR_STYLES.find(a=>a.id==="buddy").voice.pitch > 1.2`));
+  /* themes */
+  T("glass is the boot default theme", html.includes('<body data-theme="glass">') && html.includes('settings:{theme:"glass"')
+    && w.eval(`S.settings.tv7===1`));
+  T("minimalist paper + ink themes exist", html.includes('[data-theme="paper"]') && html.includes('[data-theme="ink"]'));
+  T("nine themes offered in More", w.eval(`Object.keys(THEMES).length===9 && Object.keys(THEMES)[0]==="glass"`));
+  T("light themes keep light glass over photos", html.includes('body[data-theme="glass"].hasphoto'));
+  T("glass backdrop art wired (local + CDN)", w.eval(`BG_ART.glass && BG_ART.glass.length>=2`));
+  /* lofi ambience */
+  T("lofi ambience tracks lead the list", w.eval(`AMBIENCE.length===4 && AMBIENCE[0].id==="lofi" && AMBIENCE[1].file==="amb-lofi-2.mp3"`));
+  T("lofi files ship beside the app", require("fs").existsSync(__dirname+"/amb-lofi-1.mp3") && require("fs").existsSync(__dirname+"/amb-lofi-2.mp3"));
+  /* adjustable dumbbells fully retired */
+  T("no adjustable dumbbells anywhere in gear", w.eval(`!ALL_EQ.includes("Adjustable Dumbbells")`));
 
   console.log(`\n${pass} passed, ${fail} failed. Runtime errors: ${errs.length?errs.join("; "):"none"}`);
   if(fail || errs.length) process.exitCode = 1;
