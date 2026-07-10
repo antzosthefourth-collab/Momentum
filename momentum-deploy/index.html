@@ -280,6 +280,11 @@ a{color:var(--accent)}
 .nav button.on .ni{filter:none}
 
 .timerbar{position:fixed; left:50%; transform:translateX(-50%); bottom:84px; z-index:55; display:none; align-items:center; gap:14px; background:var(--panel2); border:1px solid var(--accent); border-radius:999px; padding:10px 18px; box-shadow:0 8px 30px rgba(0,0,0,.4)}
+/* floating ambience pill — lower/pause music from anywhere, no trip to More */
+.amb-pill{position:fixed; right:12px; bottom:96px; z-index:54; width:42px; height:42px; border-radius:50%;
+  display:none; align-items:center; justify-content:center; font-size:17px;
+  background:var(--panel2); border:1px solid var(--line); box-shadow:0 6px 18px rgba(0,0,0,.25);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
 .timerbar.show{display:flex}
 .timerbar .tlab{font-size:11px; letter-spacing:.18em; text-transform:uppercase; font-family:'Chakra Petch'; font-weight:600; color:var(--accent)}
 .timerbar .tnum{font-family:'Chakra Petch'; font-weight:700; font-size:24px; min-width:74px; text-align:center; font-variant-numeric:tabular-nums}
@@ -614,14 +619,19 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <p class="mut" style="margin-bottom:10px">Taps, transitions, completions and celebrations — all generated on-device.</p>
       <div class="chips" id="soundChips"></div>
       <div class="sec-label">Ambience</div>
-      <p class="mut" style="margin-bottom:10px">Lofi viking loops, generated once and bundled — they play offline, no streaming.</p>
+      <p class="mut" style="margin-bottom:10px">Bundled loops — lofi beats, rain, surf. They play offline, no streaming. The floating 🔊 pill lowers or pauses from anywhere.</p>
       <div class="chips" id="ambChips"></div>
       <div class="sec-label">Music</div>
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
       <button class="btn sm" id="saveMusic">Save music</button>
-      <div class="sec-label">Tour</div>
-      <button class="btn sm ghost" id="replayTour">↻ Replay the feature tour</button>
+      <div class="sec-label">Brief voice</div>
+      <p class="mut" style="margin-bottom:10px">Optional: paste an ElevenLabs API key and the daily brief speaks in a studio-grade voice matched to your avatar. Without it, the best voice on your device is used.</p>
+      <div class="field"><label>ElevenLabs API key</label><input id="elKey" placeholder="sk_…" autocomplete="off"></div>
+      <button class="btn sm" id="saveElKey">Save voice key</button>
+      <div class="sec-label">Tours</div>
+      <button class="btn sm ghost" id="replayTour">↻ Replay the intro tour</button>
+      <button class="btn sm ghost" id="advTour">🎓 Pro tour — tracking, custom sessions & best practices</button>
       <div class="sec-label">Your numbers</div>
       <p class="mut" style="margin-bottom:10px">Working weights power the load suggestions in your sessions.</p>
       <div class="row2">
@@ -641,6 +651,11 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       </div>
       <div class="field"><label>Sets × reps / time</label><input id="fDose" placeholder="e.g. 3×10 or 3×40s"></div>
       <div class="field"><label>How to do it</label><textarea id="fHow"></textarea></div>
+      <div class="field"><label>Demo (optional) — Instagram / TikTok / YouTube / Facebook link, or a GIF URL</label>
+        <input id="fMedia" placeholder="https://www.instagram.com/reel/… or …gif"></div>
+      <div class="field"><label>…or a photo / GIF from your device</label>
+        <input type="file" id="fMediaFile" accept="image/*"></div>
+      <p class="mut" id="fMediaStatus" style="display:none; margin:-4px 0 10px"></p>
       <button class="btn sm" id="addBtn">＋ Add to library</button>
       <div class="sec-label">Your custom movements</div>
       <div id="customList"><div class="empty">Nothing yet.</div></div>
@@ -657,6 +672,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
   <button data-page="more"><span class="ni">⚙️</span>More</button>
 </div></nav>
 
+<button class="amb-pill" id="ambPill" aria-label="Ambience volume"></button>
 <div class="timerbar" id="timerbar">
   <span class="tlab" id="tLabel">REST</span>
   <span class="tnum" id="tNum">0:00</span>
@@ -1641,23 +1657,46 @@ function probeVid(candidates, ok){
   }catch(e){}
 }
 /* ---- ambient music: local generated loops, zero streaming ---- */
+/* v9: viking drones retired (fire crackle read as fake) — rain and surf are the
+   ambiences broadband synthesis genuinely nails */
 const AMBIENCE = [
-  { id:"lofi",  n:"🎧 Lofi Flow",     file:"amb-lofi-1.mp3" },
-  { id:"tape",  n:"📼 Midnight Tape", file:"amb-lofi-2.mp3" },
-  { id:"fire",  n:"🔥 Fire & Frost",  file:"amb-viking-1.mp3" },
-  { id:"night", n:"🌙 Long Night",    file:"amb-viking-2.mp3" }
+  { id:"lofi", n:"🎧 Lofi Flow",     file:"amb-lofi-1.mp3" },
+  { id:"tape", n:"📼 Midnight Tape", file:"amb-lofi-2.mp3" },
+  { id:"rain", n:"🌧️ Rainfall",      file:"amb-rain.mp3" },
+  { id:"tide", n:"🌊 Slow Tide",     file:"amb-tide.mp3" }
 ];
-let _amb = null;
+let _amb = null, _ambLevel = "full";   // full → low → paused (the 🔊 pill cycles)
+function ambPillSync(){
+  const pill = document.getElementById("ambPill"); if(!pill) return;
+  if(!_amb){ pill.style.display = "none"; return; }
+  pill.style.display = "flex";
+  pill.textContent = _ambLevel==="full" ? "🔊" : _ambLevel==="low" ? "🔉" : "🔇";
+  pill.title = _ambLevel==="paused" ? "Resume ambience" : "Lower / pause ambience";
+}
 function playAmbience(id){
   try{
     if(_amb){ _amb.pause(); _amb = null; }
-    if(!id || id==="off") return;
-    const tr = AMBIENCE.find(a=>a.id===id); if(!tr) return;
+    if(!id || id==="off"){ ambPillSync(); return; }
+    const tr = AMBIENCE.find(a=>a.id===id); if(!tr){ ambPillSync(); return; }
     _amb = new Audio(tr.file);
-    _amb.loop = true; _amb.volume = 0.45;
+    _amb.loop = true; _amb.volume = 0.45; _ambLevel = "full";
     const p = _amb.play(); if(p && p.catch) p.catch(()=>{});
+    ambPillSync();
   }catch(e){}
 }
+/* one tap on the pill steps the music down without leaving the page:
+   full → quieter → paused → back to full */
+function ambPillTap(){
+  if(!_amb) return;
+  if(_ambLevel==="full"){ _amb.volume = 0.16; _ambLevel = "low"; }
+  else if(_ambLevel==="low"){ _amb.pause(); _ambLevel = "paused"; }
+  else { _amb.volume = 0.45; _ambLevel = "full"; const p = _amb.play(); if(p && p.catch) p.catch(()=>{}); }
+  ambPillSync();
+}
+/* saved ambience resumes on the first tap of the session (autoplay rules) */
+document.addEventListener("pointerdown", ()=>{
+  try{ if(!_amb && S && S.settings && S.settings.amb && S.settings.amb!=="off") playAmbience(S.settings.amb); }catch(e){}
+});
 function ambChips(){
   const cur = (S.settings && S.settings.amb) || "off";
   return [["off","🔇 Off"]].concat(AMBIENCE.map(a=>[a.id, a.n]))
@@ -1700,19 +1739,19 @@ const HERO_STAGES = [
    Art: local _min files first, generated-art CDN fallback (same pattern as BG_ART). */
 const HFCDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/";
 const AVATAR_STYLES = [
-  { id:"viking",  n:"Viking",    icon:"⚔️", d:"The classic saga — grim and glorious", voice:{pitch:.75, rate:.96, pref:"male"}, stages:HERO_STAGES },
-  { id:"buddy",   n:"Lil Buddy", icon:"🐣", d:"Cute, silly, surprisingly jacked",     voice:{pitch:1.45, rate:1.06, pref:"female"},
+  { id:"viking",  n:"Viking",    icon:"⚔️", d:"The classic saga — grim and glorious", voice:{pitch:.75, rate:.96, pref:"male"}, el:"VR6AewLTigWG4xSOukaG", stages:HERO_STAGES },
+  { id:"buddy",   n:"Lil Buddy", icon:"🐣", d:"Cute, silly, surprisingly jacked",     voice:{pitch:1.45, rate:1.06, pref:"female"}, el:"MF3mGyEYCl7XYWbV9V6O",
     stages:[ { lvl:1, n:"Squishling",     img:"hero-buddy-1_min.png", cdn:HFCDN+"hf_20260710_041607_cefca1e2-7994-4870-8ca2-44baa4b552e2_min.png", roast:"90% snack, 10% athlete." },
              { lvl:8, n:"Absolute Unit",  img:"hero-buddy-2_min.png", cdn:HFCDN+"hf_20260710_041609_fa4332c8-7a11-4109-9fea-81a524965f83_min.png" } ] },
-  { id:"rose",    n:"Rose",      icon:"🎀", d:"Girly, radiant, seriously strong",     voice:{pitch:1.15, rate:1.03, pref:"female"},
+  { id:"rose",    n:"Rose",      icon:"🎀", d:"Girly, radiant, seriously strong",     voice:{pitch:1.15, rate:1.03, pref:"female"}, el:"21m00Tcm4TlvDq8ikWAM",
     stages:[ { lvl:1, n:"Rookie Rose",    img:"hero-rose-1_min.png", cdn:HFCDN+"hf_20260710_041729_1eacdeb8-816a-465d-a9dc-a17ed9d2807d_min.png", roast:"So far the sparkles are doing the reps." },
              { lvl:8, n:"Star Champion",  img:"hero-rose-2_min.png", cdn:HFCDN+"hf_20260710_042153_9a37b983-e18c-4c03-bb93-957d58cdc104_min.png" } ] },
-  { id:"mini",    n:"Mini",      icon:"⚪", d:"Simple. Clean. Focused.",               voice:{pitch:1, rate:1, pref:null},
+  { id:"mini",    n:"Mini",      icon:"⚪", d:"Simple. Clean. Focused.",               voice:{pitch:1, rate:1, pref:null}, el:"EXAVITQu4vr4xnSDxMaL",
     stages:[ { lvl:1, n:"Mini",           img:"hero-mini-1_min.png", cdn:HFCDN+"hf_20260710_042156_1b7a151f-1651-4a41-a326-62fae8b8110d_min.png", roast:"A bean with a dream." },
              { lvl:8, n:"Mega Mini",      img:"hero-mini-2_min.png", cdn:HFCDN+"hf_20260710_042159_fa785d65-e6f3-4505-b326-c9462ed38a1d_min.png" } ] },
   /* owlbear cutouts pending (credits ran out at the bg-removal step) — the scene
      shows the 🦉 fallback until hero-owl art ships; raw gens are linked in HANDOFF */
-  { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",  voice:{pitch:.82, rate:.94, pref:"male"},
+  { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",  voice:{pitch:.82, rate:.94, pref:"male"}, el:"TxGEqnHWrfWFTfGW9XjX",
     stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1_min.png", roast:"Hoots first. Lifts eventually." },
              { lvl:8, n:"Elder Owlbear",  img:"hero-owl-2_min.png" } ] }
 ];
@@ -1768,7 +1807,7 @@ function nextRewards(){
    builder always allows Bodyweight moves regardless of selected gear. */
 const EQ_GROUPS = {
   "Free weights":["Barbell","Squat Rack","Bench","Dumbbells","Kettlebells","EZ Bar","Landmine","Plates"],
-  "Simple gear":["Bands","Medicine Ball","Pull-up Bar","Jump Rope","TRX / Suspension","Yoga Mat","Foam Roller"],
+  "Simple gear":["Bands","Medicine Ball","Pull-up Bar","Jump Rope","TRX / Suspension","Foam Roller"],
   "Gym machines":["Bench Press Machine","Lat Pulldown","Cable Machine","Leg Press","Row Machine","Smith Machine"],
   "Cardio machines":["Treadmill","Stationary Bike","Elliptical","Rowing Machine","Stair Climber"],
   "Sport":["Soccer Ball","Basketball & Hoop","Racquet & Paddle","Bat & Glove","Golf Clubs","Skateboard","Gloves & Pads","Pool Access","Bike"]
@@ -2227,6 +2266,16 @@ $("#cfYes").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove(
 $("#cfNo").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("show"); _cfCb=null; });
 const allMoves = () => LIB.concat(S.custom||[]);
 const ytSearch = n => "https://www.youtube.com/results?search_query=" + encodeURIComponent("how to " + n + " exercise");
+/* custom-movement demo media (v9): an attached image/GIF renders inline;
+   an Instagram/TikTok/YouTube/Facebook link takes over the ▶ Demo button */
+const mediaIsImg = u => /^data:image/.test(u) || /\.(gif|png|jpe?g|webp)(\?|#|$)/i.test(u);
+function moveMedia(m){
+  if(!m.media || !mediaIsImg(m.media)) return "";
+  return `<img src="${esc(m.media)}" alt="" loading="lazy" style="max-width:100%; max-height:220px; border-radius:12px; margin-top:8px; display:block">`;
+}
+function demoHref(m){
+  return (m.media && /^https?:/i.test(m.media) && !mediaIsImg(m.media)) ? m.media : ytSearch(m.n);
+}
 const dayKey = (d=new Date()) => d.toDateString();
 const sysColor = k => `var(${SYS[k].cv})`;
 
@@ -2533,26 +2582,38 @@ const TOUR_STEPS = [
   { page:"today", sel:"#checkinCard", t:"Three taps, honest plan",   s:"Energy · sleep · soreness. Feel rough and the plan offers an easier day — never guilt." },
   { page:"plan",  sel:"#planDays",    t:"Your whole block",          s:"Every session is pre-built. Drag days around with 🖐 Arrange, tune any slot with ✎ — swaps stick." },
   { page:"train", sel:"#recipeChips", t:"One-tap quick starts",      s:"Sessions filtered to your gear. Conditioning always builds circuits — KB HIIT scales to 40–60s work windows." },
+  { page:"more",  sel:"#ambChips",    t:"Your soundtrack is on",     s:"Lofi beats started with your plan. Swap to rain or surf, or mute, right here — or use the floating 🔊 pill anywhere in the app." },
   { page:"home",  sel:"#heroScene",   t:"Your champion grows",       s:"Everything you finish levels a system. Levels unlock forms, habitats, weapons and companions — and your first companion lands at a 3-day streak. Consistency writes the saga." }
 ];
+/* the pro tour: tracking, saved custom sessions, best practices — replayable from More */
+const ADV_STEPS = [
+  { page:"train", sel:"#recipeChips", t:"Quick starts learn YOUR version", s:"Start a lifting quick start — Chest & triceps, Back & biceps, Leg day. Swap or add any exercise and Momentum remembers your version next time. 🎲 Fresh version forgets it." },
+  { page:"train", sel:"#session",     t:"Log sets like a lifter",          s:"Open a movement and type weight × reps per set. Blank rows repeat last time. History and your all-time best live right on the card — beat it and you'll hear about it." },
+  { page:"plan",  sel:"#splitRow",    t:"Pick your split",                 s:"Training 5+ days with a lifting goal? Choose bro split, Arnold or push/pull/legs here — every day becomes a named bodypart day." },
+  { page:"plan",  sel:"#planDays",    t:"Tune any slot, forever",          s:"✎ opens the editor: duration, intensity, time-of-day window, training style, per-exercise swaps. 🔒 Lock a session and regenerates never touch it." },
+  { page:"today", sel:"#checkinCard", t:"Honest data beats hard plans",    s:"Three-tap check-ins adapt rough days. The journal understands plain sentences — 'did a 25-minute kettlebell workout' credits your rings, minutes and streak." },
+  { page:"home",  sel:"#systems",     t:"Where progress is tracked",       s:"Six systems level from everything you log. Armor shields fill for your problem areas. Streak freezes are earned at milestones, so one missed day never zeroes you." },
+  { page:"more",  sel:"#customList",  t:"Build your own movements",        s:"Add custom movements with your own demo — a GIF, a photo, or an Instagram/TikTok/YouTube link. They join the library, the builder and your plan." },
+  { page:"more",  sel:"#ambChips",    t:"Make it yours",                   s:"Ambience, Spotify, brief voice (plug in ElevenLabs for the Jarvis feel), themes, weights. The more it sounds like you, the more you come back." }
+];
 let TOUR = null;
-function runTour(){ TOUR = { i:0 }; tourStep(); }
+function runTour(steps){ TOUR = { i:0, steps: steps||TOUR_STEPS }; tourStep(); }
 function tourStep(){
   const ov = $("#tourOv");
   $$(".tour-hl").forEach(el=>el.classList.remove("tour-hl"));
-  if(!TOUR || TOUR.i >= TOUR_STEPS.length){
+  if(!TOUR || TOUR.i >= TOUR.steps.length){
     if(ov) ov.classList.remove("show");
-    if(TOUR){ S.tutorialDone = 1; save(); }
+    if(TOUR && TOUR.steps===TOUR_STEPS){ S.tutorialDone = 1; save(); }
     TOUR = null; go("today"); return;
   }
-  const st = TOUR_STEPS[TOUR.i];
+  const st = TOUR.steps[TOUR.i];
   go(st.page);
   const el = $(st.sel);
   if(el){ el.classList.add("tour-hl"); try{ if(el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){} }
-  ov.querySelector(".tourc-step").textContent = (TOUR.i+1) + " / " + TOUR_STEPS.length;
+  ov.querySelector(".tourc-step").textContent = (TOUR.i+1) + " / " + TOUR.steps.length;
   ov.querySelector(".tourc-title").textContent = st.t;
   ov.querySelector(".tourc-text").textContent = st.s;
-  ov.querySelector("#tourNext").textContent = TOUR.i===TOUR_STEPS.length-1 ? "LET'S GO ⚡" : "Next →";
+  ov.querySelector("#tourNext").textContent = TOUR.i===TOUR.steps.length-1 ? "LET'S GO ⚡" : "Next →";
   ov.classList.add("show"); SFX.play("advance");
 }
 function finishOnboarding(skip){
@@ -2583,6 +2644,9 @@ function applyOnboarding(skip){
     days:a.days, len:a.len, weeks:a.weeks, boost:a.boost||0,
     mode:a.mode, style:(a.mode==="companion") ? "flex" : "coach" };
   S.avatar = Object.assign({}, S.avatar||{}, { style:a.avatarStyle||"viking" });
+  /* v9: the experience starts with sound ON — lofi beats greet the new plan;
+     the tour teaches where to change or mute (More → Ambience, or the 🔊 pill) */
+  if(!skip && (!S.settings.amb || S.settings.amb==="off")) S.settings.amb = "lofi";
   S.sel.eq = a.eq.slice(); S.sel.time = [15,30,45,60].includes(a.len)?a.len:45;
   S.plan = (!skip && S.profile.style==="coach") ? makePlan(S.profile) : null;
   save();
@@ -2769,9 +2833,11 @@ function makePlan(p){
 }
 /* migrate pre-sports/pre-exps profiles: soccer goal → soccer sport, single exp → per-track */
 function migrateProfile(){
-  /* v7: "Adjustable Dumbbells" retired as separate gear — they ARE dumbbells */
+  /* v7: "Adjustable Dumbbells" retired as separate gear — they ARE dumbbells.
+     v9: "Yoga Mat" retired too — floor work never gated on owning one. */
   const fixAdj = arr => { if(!arr) return; const i = arr.indexOf("Adjustable Dumbbells");
-    if(i>=0){ arr.splice(i,1); if(!arr.includes("Dumbbells")) arr.push("Dumbbells"); } };
+    if(i>=0){ arr.splice(i,1); if(!arr.includes("Dumbbells")) arr.push("Dumbbells"); }
+    const y = arr.indexOf("Yoga Mat"); if(y>=0) arr.splice(y,1); };
   fixAdj(S.sel && S.sel.eq); fixAdj(S.profile && S.profile.eq);
   const p = S.profile; if(!p) return;
   p.sports = p.sports||[];
@@ -2873,6 +2939,14 @@ const RECIPES = [
  {id:"kb20",   n:"🔔 20-min KB full body",  o:{ focus:"Full Body", style:"kbflow", time:20, eqOnly:"Kettlebells", focusLabel:"KB full body" }},
  {id:"kb15",   n:"⚡ 15-min one-KB hit",     o:{ focus:"Full Body", style:"kbflow", time:15, eqOnly:"Kettlebells", focusLabel:"One-KB quick hit" }},
  {id:"kbnr",   n:"🔁 20-min no-repeat KB",  o:{ focus:"Full Body", style:"kbflow", time:20, eqOnly:"Kettlebells", noRepeat:true, focusLabel:"No-repeat KB" }},
+ /* v9: the lifting sessions heavy lifters actually run — native bro-audited doses
+    (bench 4×6–8, laterals 4×12–15…), fine-muscle targeted. Edits are REMEMBERED
+    per quick start (S.recipePrefs) — swap in your exercises once, it's yours. */
+ {id:"chesttri", n:"🏋️ Chest & triceps",  o:{ focus:"Strength", time:45, mgf:["chest","triceps"], focusLabel:"Chest & triceps · push heavy" }},
+ {id:"backbi",   n:"🏋️ Back & biceps",    o:{ focus:"Strength", time:45, mgf:["back","biceps","forearms"], focusLabel:"Back & biceps · pull day" }},
+ {id:"delts",    n:"🏋️ Shoulder day",     o:{ focus:"Strength", time:40, mgf:["shoulders","neck/traps"], focusLabel:"Shoulders · delts & traps" }},
+ {id:"legday",   n:"🏋️ Leg day",          o:{ focus:"Strength", time:45, mgf:["quads","hamstrings","glutes","calves"], focusLabel:"Leg day · no skipping" }},
+ {id:"armday",   n:"💪 Arm day",           o:{ focus:"Strength", time:35, mgf:["biceps","triceps","forearms"], focusLabel:"Arms · pump day" }},
  {id:"kbpush", n:"💪 KB chest·shoulders·tris", o:{ focus:"Strength", style:"hypertrophy", time:30, eqOnly:"Kettlebells", mg:["chest","shoulders","arms"], focusLabel:"KB push day" }},
  {id:"kbfun",  n:"🧰 Functional KB strength", o:{ focus:"Strength", style:"functional", time:30, eqOnly:"Kettlebells", focusLabel:"Functional KB strength" }},
  {id:"kb30",   n:"🔥 30-min KB HIIT",        o:{ focus:"Conditioning", style:"kbflow", time:30, eqOnly:"Kettlebells", focusLabel:"30-min KB HIIT" }},
@@ -2885,14 +2959,26 @@ const RECIPES = [
  {id:"soc",    n:"⚽ Soccer conditioning",   o:{ focus:"Soccer", time:30, focusLabel:"Soccer conditioning" }},
  {id:"runb",   n:"🏃 Running comeback",      o:{ focus:"__runlong", time:30, focusLabel:"Running comeback · easy" }}
 ];
-function applyRecipe(id){
+function applyRecipe(id, fresh){
   const r = RECIPES.find(x=>x.id===id); if(!r) return false;
-  if(buildSession(Object.assign({}, r.o))){
+  const o = Object.assign({}, r.o);
+  /* your saved version of this quick start, if you've edited it before */
+  const pref = !fresh && S.recipePrefs && S.recipePrefs[id];
+  if(pref && pref.length >= 2) o.fromNames = pref.slice();
+  if(buildSession(o)){
+    S.session.recipeId = id; save();
     go("train"); renderSession(); renderMusic();
     const el=$("#session"); if(el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth"});
+    if(pref && pref.length >= 2) toast("Your saved version — 🎲 for a fresh one");
     return true;
   }
   return false;
+}
+/* every in-session edit on a quick-start session becomes the new saved version */
+function syncRecipePrefs(){
+  const id = S.session && S.session.recipeId; if(!id) return;
+  S.recipePrefs = S.recipePrefs||{};
+  S.recipePrefs[id] = S.session.items.map(m=>m.n);
 }
 /* favorites, rankings and usage make the builder smarter over time */
 function moveScore(m){ const md = (S.moveMeta||{})[m.n]||{};
@@ -3009,6 +3095,11 @@ function buildSession(opts={}){
     /* split days are strict — a chest day full of squats isn't a chest day */
     if(opts.mgStrict && tagged.length >= 3) mainPool = tagged;
     else if(hit.filter(m=>m.mg).length >= 2) mainPool = hit;
+  }
+  /* fine-muscle targeting (v9 lifting quick starts: chest+triceps, back+biceps…) */
+  if(opts.mgf && opts.mgf.length){
+    const hit = mainPool.filter(m => (m.mgf||[]).some(g=>opts.mgf.includes(g)));
+    if(hit.length >= 3) mainPool = hit;
   }
   const arSel = (opts.areas || (focus==="Mobility" ? S.sel.areas : [])).filter(a=>!avoid.includes(a));
   if(arSel && arSel.length){
@@ -3444,32 +3535,42 @@ function renderHero(){
 }
 /* ---- Today's brief: the whole day in plain english, glanceable + speakable
    (the Ankle Armor "audible brief" — the thing that made that app instantly usable) */
+/* The Jarvis brief: greet → date → workouts by name → one useful beat. Short,
+   informative, flows like a person — never a settings dump. */
 function todayBrief(){
-  const now = new Date();
+  const now = new Date(), h = now.getHours();
+  const greet = h<5 ? "Burning the midnight oil" : h<12 ? "Good morning" : h<17 ? "Good afternoon" : "Good evening";
+  const name = (S.profile && S.profile.name && S.profile.name!=="You") ? ", "+S.profile.name : "";
   const dateStr = now.toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
   const pt = planToday();
-  if(!S.plan || !pt) return `Today is ${dateStr}. No plan is running — build a session on the Train tab, or take the interview and get a full block.`;
+  if(!S.plan || !pt) return `${greet}${name}. It's ${dateStr}. No plan running yet — build a session on Train, or take the interview and I'll map the whole block.`;
   const acts = pt.day.acts, full = acts.filter(a=>!a.micro);
   const boosters = acts.length - full.length;
-  /* order matters: the date, then your workouts BY NAME, then everything else briefly */
-  let text = `Today is ${dateStr}. `;
+  const wk = `week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}`;
+  let text = `${greet}${name}. It's ${dateStr}, ${wk}. `;
   if(full.length){
-    const names = full.slice().sort((x,y)=>winOrd(x)-winOrd(y))
+    const open = full.filter(a=>!a.done);
+    const names = (open.length?open:full).slice().sort((x,y)=>winOrd(x)-winOrd(y))
       .map(a=>{ const W = winOf(a);
-        return (a.label||DTYPES[a.type].t) + (W?` in the ${W.n.toLowerCase()}`:"") + (a.done?" — done":""); });
-    text += `On the plan: ${names.join("; ")}. `;
-    const mins = full.filter(a=>!DTYPES[a.type].life && !a.done)
+        return (a.label||DTYPES[a.type].t) + (W?` in the ${W.n.toLowerCase()}`:""); });
+    if(!open.length){ text += `Everything's banked — ${names.join(" and ")} done. Strong day.`; return text; }
+    text += `On deck: ${names.join(", then ")}`;
+    const mins = open.filter(a=>!DTYPES[a.type].life)
       .reduce((s,a)=>s+((a.o&&a.o.time)||(S.profile&&S.profile.len)||30),0);
-    if(mins) text += `About ${mins} minutes of work. `;
-  } else text += `Rest day — recovery is training too. `;
-  if(boosters>0) text += `Plus ${boosters>1?boosters+" boosters":"a booster"}, about 12 minutes each. `;
-  text += `Week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}.`;
-  const note = (pt.day.note||"").trim();
-  if(note && full.length) text += " " + note;
-  return text;
+    text += mins ? ` — about ${mins} minutes${boosters>0?" plus a quick booster":""} all in. ` : `. `;
+    /* one coaching beat, trimmed of the week prefix, first sentence only */
+    const note = (pt.day.note||"").replace(/^Week \d+:\s*/,"").split(/(?<=\.)\s/)[0].trim();
+    if(note && note.length <= 110) text += note;
+  } else {
+    text += boosters>0 ? `Recovery day — just your booster, about 12 minutes.` : `Rest day. Recovery is training too.`;
+  }
+  return text.trim();
 }
 /* the spoken brief speaks in your avatar's voice — pitch/rate per identity plus
-   a best-effort voice match (voice lists load async on iOS/macOS) */
+   a best-effort voice match. Quality ladder (v9):
+   1. ElevenLabs, when a key is saved in More (runs in YOUR browser, per-avatar voices)
+   2. best available system voice — premium/enhanced/Siri-class voices score highest
+   3. any English system voice */
 let _voices = [];
 function refreshVoices(){ try{ _voices = speechSynthesis.getVoices()||[]; }catch(e){} }
 if(typeof speechSynthesis!=="undefined"){ refreshVoices(); try{ speechSynthesis.onvoiceschanged = refreshVoices; }catch(e){} }
@@ -3479,22 +3580,48 @@ function briefVoice(){
   const en = _voices.filter(v=>/^en/i.test(v.lang||""));
   const pool = en.length ? en : _voices;
   if(!pool.length) return null;
-  if(!pref) return null;   // "mini" keeps the system default — simple all the way down
-  const fem = /female|samantha|victoria|karen|moira|tessa|zira|jenny|aria|ava|allison|susan|serena|kate|martha|nicky/i;
-  const male = /\bmale\b|daniel|alex|fred|george|guy|davis|aaron|arthur|gordon|oliver|rishi|james|tom/i;
-  const re = pref==="female" ? fem : male;
-  return pool.find(v=>re.test(v.name)) || null;
+  const fem = /female|samantha|victoria|karen|moira|tessa|zira|jenny|aria|ava|allison|susan|serena|kate|martha|nicky|zoe/i;
+  const male = /\bmale\b|daniel|alex|fred|george|guy|davis|aaron|arthur|gordon|oliver|rishi|james|tom|evan|nathan/i;
+  const genre = pref==="female" ? fem : pref==="male" ? male : null;
+  const score = v =>
+    (/premium|enhanced|natural|neural|siri/i.test(v.name) ? 4 : 0) +   // the good ones
+    (genre && genre.test(v.name) ? 2 : 0) +
+    (v.localService ? 1 : 0);
+  return pool.slice().sort((a,b)=>score(b)-score(a))[0] || null;
+}
+let _briefAudio = null;
+async function speakEleven(text){
+  const key = S.settings && S.settings.elKey; if(!key) return false;
+  const vid = avatarStyle().el || "21m00Tcm4TlvDq8ikWAM";
+  try{
+    if(_briefAudio){ _briefAudio.pause(); _briefAudio = null; return true; }   // tap again = stop
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}?output_format=mp3_44100_96`, {
+      method:"POST",
+      headers:{ "xi-api-key":key, "Content-Type":"application/json" },
+      body: JSON.stringify({ text, model_id:"eleven_turbo_v2_5" })
+    });
+    if(!r.ok) return false;
+    const blob = await r.blob();
+    _briefAudio = new Audio(URL.createObjectURL(blob));
+    _briefAudio.onended = ()=>{ _briefAudio = null; };
+    const p = _briefAudio.play(); if(p && p.catch) p.catch(()=>{});
+    return true;
+  }catch(e){ return false; }
 }
 function speakBrief(){
-  try{
-    if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
-    if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
-    const u = new SpeechSynthesisUtterance(todayBrief().replace(/[·✓]/g,""));
-    const vc = avatarStyle().voice||{};
-    u.rate = vc.rate||1.02; u.pitch = vc.pitch||1;
-    const v = briefVoice(); if(v) u.voice = v;
-    speechSynthesis.speak(u);
-  }catch(e){}
+  const text = todayBrief().replace(/[·✓]/g,"");
+  speakEleven(text).then(ok=>{
+    if(ok) return;
+    try{
+      if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
+      if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
+      const u = new SpeechSynthesisUtterance(text);
+      const vc = avatarStyle().voice||{};
+      u.rate = vc.rate||1.02; u.pitch = vc.pitch||1;
+      const v = briefVoice(); if(v) u.voice = v;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  });
 }
 /* build (or reuse) the session behind a plan act — Today check-offs and Start share this */
 function ensureActSession(idx, ai, force){
@@ -3806,6 +3933,7 @@ function exCard(m,i){
       <div class="ex-sub">${esc(m.d)} · ${esc(m.eq)}</div></div>
       <div class="ex-xp" style="color:${sysColor(m.p)}">+${m.xp}</div></div>
     <div class="ex-detail"><p>${esc(m.how)}</p>
+      ${moveMedia(m)}
       <div class="load" style="color:var(--dim); font-weight:500">🧠 ${esc(whyFor(m))}</div>
       ${m.mod?`<p class="mut" style="margin-top:8px">🟢 Easier: ${esc(m.mod.e)} · 🔴 Harder: ${esc(m.mod.h)}</p>`:""}
       ${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
@@ -3813,7 +3941,7 @@ function exCard(m,i){
       <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${m.rest?`<span class="tag">rest ${m.rest}s</span>`:""}${(m.pattern?`<span class="tag">${esc(m.pattern)}</span>`:"")}${m.lvl?`<span class="tag">lvl ${m.lvl}</span>`:""}</div>
       <div class="ex-actions">
         ${m.dur && m.dur<=600 ? `<button class="btn sm ghost" data-timer="${m.dur}" data-tname="${esc(m.n)}">⏱ ${m.dur}s timer</button>`:""}
-        <a class="btn sm ghost" style="text-decoration:none" href="${ytSearch(m.n)}" target="_blank" rel="noopener">▶ Demo</a>
+        <a class="btn sm ghost" style="text-decoration:none" href="${esc(demoHref(m))}" target="_blank" rel="noopener">▶ Demo</a>
         ${!m.done ? `<button class="btn sm ghost" data-swap="${i}">⟳ Swap</button>
         <button class="btn sm ghost" data-pick="${i}">☰ Choose</button>
         <button class="btn sm ghost" data-rm="${i}">✕</button>` : ""}
@@ -3850,7 +3978,7 @@ function syncActNames(){
 function replaceSessionMove(i, nm){
   const cur = S.session.items[i]; if(!cur || cur.done) return;
   S.session.items[i] = styledItem(nm, cur.b);
-  syncActNames(); save(); renderSession(); renderTodayPage();
+  syncActNames(); syncRecipePrefs(); save(); renderSession(); renderTodayPage();
 }
 function swapSessionMove(i){
   const m = S.session.items[i]; if(!m || m.done) return;
@@ -3864,7 +3992,7 @@ function removeSessionMove(i){
   const m = S.session.items[i]; if(!m || m.done) return;
   if(S.session.items.filter(x=>!x.done).length<=1){ toast("Keep at least one movement"); return; }
   S.session.items.splice(i,1);
-  syncActNames(); save(); renderSession(); renderTodayPage();
+  syncActNames(); syncRecipePrefs(); save(); renderSession(); renderTodayPage();
 }
 function addSessionMove(block, nm){
   const item = styledItem(nm, block);
@@ -3875,7 +4003,7 @@ function addSessionMove(block, nm){
     if(k===0) at = 0;
   }
   S.session.items.splice(at, 0, item);
-  syncActNames(); save(); renderSession(); renderTodayPage();
+  syncActNames(); syncRecipePrefs(); save(); renderSession(); renderTodayPage();
 }
 /* movement picker sheet — filtered to gear + block, grouped by system */
 let PK = null;
@@ -3923,6 +4051,9 @@ function renderSession(){
   const it = S.session.items, done = it.filter(m=>m.done).length;
   const blocks = { warmup:"Warm-up", main:"Main work", finisher:"Finisher" };
   let html = `<div class="session-head"><h2>${esc(S.session.focus)} · ${S.session.time} min</h2><span class="mut">${done}/${it.length}</span></div>`;
+  /* quick-start sessions carry your saved edits — offer a clean reroll */
+  if(S.session.recipeId && S.recipePrefs && S.recipePrefs[S.session.recipeId])
+    html += `<p class="mut" style="margin:2px 0 8px">Your saved version of this quick start. <button class="btn sm ghost" id="recipeFresh">🎲 Fresh version</button></p>`;
   if(S.session.actRef) html += `<p class="mut" style="margin:2px 0 6px; font-size:11.5px">✎ Every swap, add and remove here saves straight back to this plan slot.</p>`;
   if(done < it.length) html += `<button class="btn big" id="playBtn" style="margin:8px 0 14px">▶ START GUIDED</button>`;
   for(const b of ["warmup","main","finisher"]){
@@ -4110,13 +4241,14 @@ function libCard(m){
     <button class="fav ${md.fav?'on':''}" data-fav="${esc(m.n)}">${md.fav?"♥":"♡"}</button>
     <div class="ex-xp" style="color:${sysColor(m.p)}">+${m.xp}</div></div>
     <div class="ex-detail"><p>${esc(m.how)}</p>
+    ${moveMedia(m)}
     <div class="load" style="color:var(--dim); font-weight:500">🧠 ${esc(whyFor(m))}</div>
     ${m.mod?`<p class="mut" style="margin-top:8px">🟢 Easier: ${esc(m.mod.e)} · 🔴 Harder: ${esc(m.mod.h)}</p>`:""}
     ${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
     ${histStrip(m.n)}
     <div class="stars">${stars}<span class="st-lab">${(md.rank||0)>0?"your rating — favorites & ratings steer your plan":"rate it — ratings steer your plan"}</span></div>
     <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${(m.mg||[]).map(g=>`<span class="tag">${MG_LABELS[g]||g}</span>`).join("")}${m.sport?`<span class="tag">${esc(m.sport)}</span>`:""}</div>
-    <div class="ex-actions"><a class="btn sm ghost" style="text-decoration:none" href="${ytSearch(m.n)}" target="_blank" rel="noopener">▶ Demo</a></div></div></div>`;
+    <div class="ex-actions"><a class="btn sm ghost" style="text-decoration:none" href="${esc(demoHref(m))}" target="_blank" rel="noopener">▶ Demo</a></div></div></div>`;
 }
 function renderLib(){
   const views = [["all","All"],["fav","♥ Favorites"],["rank","★ My ranking"],["used","🔥 Most used"],["mg","💪 Muscle group"],["type","🗂 Activity type"]];
@@ -4204,6 +4336,7 @@ function renderMore(){
     .map(([k,l])=>`<button class="chip ${(S.settings.sound||"low")===k?'on':''}" data-sound="${k}">${l}</button>`).join("");
   $("#ambChips").innerHTML = ambChips();
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
+  const ek = $("#elKey"); if(ek) ek.value = S.settings.elKey||"";
   const p = S.profile||{lifts:{},caps:{}};
   $("#wSquat").value=p.lifts.squat||""; $("#wBench").value=p.lifts.bench||""; $("#wDead").value=p.lifts.deadlift||"";
   $("#wPress").value=p.lifts.press||""; $("#wDb").value=p.caps.db||""; $("#wKb").value=p.caps.kb||"";
@@ -4555,7 +4688,7 @@ document.addEventListener("click", ev=>{
 
   /* ---- feature tour + avatar look ---- */
   if(t.id==="tourNext" && TOUR){ TOUR.i++; tourStep(); return; }
-  if(t.id==="tourSkip" && TOUR){ TOUR.i = TOUR_STEPS.length; tourStep(); return; }
+  if(t.id==="tourSkip" && TOUR){ TOUR.i = TOUR.steps.length; tourStep(); return; }
   const avs = t.closest("[data-avstyle]");
   if(avs){ S.avatar = S.avatar||{}; S.avatar.style = avs.dataset.avstyle; save(); renderHero(); SFX.play("select"); return; }
   const avh = t.closest("[data-avhab]");
@@ -4582,10 +4715,18 @@ document.addEventListener("click", ev=>{
     $("#segMoves").style.display = libSeg==="moves"?"block":"none";
     $("#segMedia").style.display = libSeg==="media"?"block":"none"; return; }
   if(t.id==="playBtn"){ openPlayer(); return; }
+  if(t.id==="recipeFresh" && S.session && S.session.recipeId){
+    const rid = S.session.recipeId;
+    if(S.recipePrefs) delete S.recipePrefs[rid];
+    applyRecipe(rid, true); toast("Fresh roll — edit it and it saves again"); return; }
   if(t.id==="musicToggle"){ const d=$("#musicDrawer"); d.style.display = d.style.display==="none"?"block":"none"; return; }
+  if(t.id==="ambPill"){ ambPillTap(); return; }
 });
 
-$("#jrnSave").addEventListener("click", ()=>{ const ta = $("#jrnText"); if(saveJournal(ta.value)) ta.value = ""; });
+$("#jrnSave").addEventListener("click", ()=>{ const ta = $("#jrnText");
+  if(saveJournal(ta.value)){ ta.value = "";
+    renderTodayPage(); renderHero();   // a logged note credits XP/minutes — rings update on the spot
+  } });
 $("#buildBtn").addEventListener("click", ()=>{ if(buildSession()){ renderSession(); renderMusic();
   const el=$("#session"); if(el.scrollIntoView) el.scrollIntoView({behavior:"smooth"}); } });
 $("#libSearch").addEventListener("input", renderLib);
@@ -4598,17 +4739,51 @@ $("#mAdd").addEventListener("click", ()=>{
   $("#mUrl").value=$("#mTitle").value=$("#mTags").value="";
   save(); renderMedia(); toast("Saved to your profile");
 });
+/* device photo/GIF for a custom movement: GIFs under ~350KB keep their animation
+   as-is; anything else is downscaled to a lightweight JPEG (localStorage budget) */
+let FMEDIA = null;
+$("#fMediaFile").addEventListener("change", ev=>{
+  const f = ev.target.files && ev.target.files[0]; if(!f) return;
+  const status = $("#fMediaStatus");
+  const done = msg => { status.style.display="block"; status.textContent = msg; };
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    const dataUrl = rd.result;
+    if(f.type==="image/gif" && f.size <= 350*1024){ FMEDIA = dataUrl; done("🎞 GIF attached — animation kept"); return; }
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const scale = Math.min(1, 480/Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        FMEDIA = c.toDataURL("image/jpeg", 0.82);
+        done("🖼 Photo attached");
+      }catch(e){ FMEDIA = null; done("Couldn't read that image"); }
+    };
+    img.onerror = ()=>{ FMEDIA = null; done("Couldn't read that image"); };
+    img.src = dataUrl;
+  };
+  rd.readAsDataURL(f);
+});
 $("#addBtn").addEventListener("click", ()=>{
   const n=$("#fName").value.trim(); if(!n){ toast("Name your movement first"); return; }
+  const link = $("#fMedia").value.trim();
   S.custom.push({ n, eq:$("#fEq").value, p:$("#fSys").value, d:$("#fDose").value.trim()||"3×10",
     how:$("#fHow").value.trim()||"Your move, your rules.", b:"main", xp:15, custom:true,
+    media: FMEDIA || link || undefined,
     dur:(function(){ const m=($("#fDose").value||"").match(/(\d+)\s*s/); return m?+m[1]:undefined; })() });
-  $("#fName").value=$("#fDose").value=$("#fHow").value="";
+  $("#fName").value=$("#fDose").value=$("#fHow").value=$("#fMedia").value="";
+  $("#fMediaFile").value=""; FMEDIA=null; const st=$("#fMediaStatus"); if(st) st.style.display="none";
   save(); renderMore(); renderLib(); toast("Added to the library");
 });
 $("#saveMusic").addEventListener("click", ()=>{ S.settings.spotify=$("#spotifyUrl").value.trim();
   S.settings.yt=$("#ytUrl").value.trim(); save(); renderMusic(); toast("Music saved"); });
 $("#replayTour").addEventListener("click", ()=>{ runTour(); });
+$("#advTour").addEventListener("click", ()=>{ runTour(ADV_STEPS); });
+$("#saveElKey").addEventListener("click", ()=>{
+  S.settings.elKey = $("#elKey").value.trim(); save();
+  toast(S.settings.elKey ? "Voice key saved — the brief goes studio-grade" : "Voice key cleared — using device voices"); });
 $("#saveNums").addEventListener("click", ()=>{
   if(!S.profile) S.profile = { name:"You", goals:[], runFocus:"both", eq:S.sel.eq.slice(), lifts:{}, caps:{}, days:3, len:30, weeks:6, style:"flex" };
   S.profile.lifts = { squat:+$("#wSquat").value||0, bench:+$("#wBench").value||0, deadlift:+$("#wDead").value||0, press:+$("#wPress").value||0 };
