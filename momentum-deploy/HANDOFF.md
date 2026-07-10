@@ -45,10 +45,30 @@
 - **validate.js: 273 checks.** ⚠️ **Higgsfield: 0.28 credits — EMPTY.** (2k-quality gens
   cost ~0.7 ea, not 0.12.) Owlbear cutouts still needed: raw gens
   `hf_20260710_040124_e6e8eba2…_min.webp` (cub) + `hf_20260710_041604_a8e4901f…_min.webp`
-  (elder) on the usual CDN — run bg-removal (or nano-banana) next session and fill the
-  `cdn:` slots on the owlbear stages; scene shows 🦉 fallback until then. Local `_min`
-  files for buddy/rose/mini also not downloaded (container network blocks the CDN) —
-  CDN fallbacks are live, pull local copies whenever network allows.
+  (elder) on the usual CDN — scene shows 🦉 fallback until the `cdn:` slots on the
+  owlbear stages are filled. Local `_min` files for buddy/rose/mini also not downloaded
+  (container network blocks the CDN) — CDN fallbacks are live, pull local copies
+  whenever network allows.
+
+### Owlbear art plan (owner decision, July 10) — FREE routes, no Higgsfield spend
+Generate/cut out the owlbear stages next session via whichever of these looks best
+(try more than one and compare side by side before wiring in):
+1. **Gemini nano-banana via Claude in Chrome** — drive gemini.google.com in the
+   browser, either (a) upload the raw gens above and ask for a clean transparent-
+   background cutout, or (b) regenerate fresh: "young owlbear cub warrior / massive
+   armored elder owlbear, stylized game avatar, full body, transparent background" —
+   nano-banana handles character art + bg removal in one shot and was the owner's
+   named preference for the glass theme too.
+2. **ChatGPT image generator via Claude in Chrome** — same prompts at chatgpt.com;
+   its image model does transparent PNGs on request. Good second opinion.
+3. **Hugging Face connection** — the HF MCP is authed ('Antzos'): use a bg-removal
+   Space (e.g. briaai/RMBG-2.0) on the existing raw gens via `dynamic_space`, or an
+   SDXL/FLUX Space to regenerate. Zero cost, quality varies — compare with 1/2.
+Whichever wins: transparent PNG, ~525×700 portrait like the viking set, save as
+`hero-owl-1_min.png` / `hero-owl-2_min.png` beside index.html AND/OR fill the
+`cdn:` fields on the owlbear stages in `AVATAR_STYLES`. While at it, grab local
+copies of the buddy/rose/mini cutouts + `bg-glass.webp` (URLs in `AVATAR_STYLES`
+and `BG_ART.glass`) so the app is fully offline again.
 
 ## v6 program — see `PLAN-v6.md` — owner feedback pass, July 9
 1 ✅ Interview 3.0 (13 goals, 18 extracurricular activities, per-sport gear w/ auto-add,
