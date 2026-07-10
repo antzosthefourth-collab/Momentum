@@ -1,5 +1,29 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v7 · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v8 · July 2026*
+
+## v8 — per-set tracking + windows, July 10 (same day as v7)
+- **Per-set tracking + history (the retention feature)**: `S.setLog[move]` =
+  `[{d, t, sets:[{w,r}]}]`, one entry/move/day, cap 30. Train session strength cards
+  grow a **set grid** (`setGrid`/`data-slog`): weight×reps per planned set, last
+  time's numbers as ghost placeholders, **blank row = same as last time**, Save
+  marks the move done (rest timer + XP as usual). `logSets(i, sets)` is the core
+  (harness-callable); updates `S.logs` + `profile.lifts` for compat; **PR detection**
+  (beat previous best weight → 🏆 toast + burst). `histStrip(n)` (last 3 sessions +
+  best) renders in Train cards AND Library detail; `loadHint` now reads the ledger
+  ("Last time: 95 lb ×10,10,8 · nudge to 100…"). `setsPlanned(m)` parses "4×6–8"→4,
+  skips timed/circuit moves; circuits keep the follow-along player, no grids.
+- **Window-aware scheduling (Phase 7, in-app as decided)**: `WINDOWS` {am🌅/mid☀️/pm🌆},
+  set per plan slot via the ✎ act editor ("Time of day" chips, `act.o.win`, life rows
+  included). Today **sorts** acts by window (unscheduled sinks) and tags cards
+  ("🌅 Morning works best."); the spoken brief says "Chest day in the evening";
+  plan detail rows and the widget payload carry the window. Interview still never
+  asks — windows live in-app only.
+- **validate.js: 285 checks.**
+- ⚠️ Art routes tried this session, all blocked from cloud: Higgsfield still 0.28
+  credits (no free-plan refill); **HF MCP `dynamic_space` invoke is DISABLED on this
+  connector (`gradio=none` header)** — discovery works, invocation doesn't. Owlbear
+  cutouts therefore STILL pending → use the Claude-in-Chrome routes below (nano-banana
+  first). Local asset pulls still blocked by container network policy.
 
 ## v7 — owner feedback pass, July 10 (this session)
 - **Real 5-day lifting splits** (researched: bro split, Arnold split, PPLUL, Sulek/Zyzz

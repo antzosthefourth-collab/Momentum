@@ -758,6 +758,81 @@ setTimeout(()=>{ try {
   /* adjustable dumbbells fully retired */
   T("no adjustable dumbbells anywhere in gear", w.eval(`!ALL_EQ.includes("Adjustable Dumbbells")`));
 
+  /* ================= v8: per-set tracking + time-of-day windows ================= */
+  T("setsPlanned parses set counts, skips timed/circuit work", w.eval(`
+    setsPlanned({d:"4×6–8"})===4 && setsPlanned({d:"3×15–25 (AMRAP−2)"})===3
+    && setsPlanned({d:"3×30s", dur:30})===0 && setsPlanned({d:"40s on / 20s off"})===0`));
+  T("logging sets stores history, updates last-weight compat, completes the move", w.eval(`
+    (function(){
+      const savedEq=S.sel.eq.slice(), savedLog=JSON.parse(JSON.stringify(S.setLog||{}));
+      S.sel.eq=["Squat Rack","Bench","Barbell"];
+      buildSession({focus:"Strength", time:30, style:"hypertrophy"});
+      const i = S.session.items.findIndex(m=>m.b==="main" && setsPlanned(m)>0);
+      if(i<0){ S.sel.eq=savedEq; return false; }
+      const n = S.session.items[i].n;
+      logSets(i, [{w:95,r:10},{w:95,r:10},{w:95,r:8}]);
+      const h = S.setLog[n];
+      const ok = h && h.length===1 && h[0].sets.length===3 && S.logs[n]===95 && S.session.items[i].done===true;
+      S.sel.eq=savedEq; S.setLog=savedLog; return ok; })()`));
+  T("re-logging the same day replaces, not duplicates", w.eval(`
+    (function(){ const saved=JSON.parse(JSON.stringify(S.setLog||{}));
+      S.setLog={}; S.session={time:30, focus:"Strength", items:[{n:"Bench press", b:"main", d:"4×6–8", p:"strength", xp:1, done:true}]};
+      logSets(0,[{w:100,r:8}]); logSets(0,[{w:105,r:8}]);
+      const ok = S.setLog["Bench press"].length===1 && S.setLog["Bench press"][0].sets[0].w===105;
+      S.setLog=saved; return ok; })()`));
+  T("beating a previous best reports a PR", w.eval(`
+    (function(){ const saved=JSON.parse(JSON.stringify(S.setLog||{}));
+      S.setLog={"Bench press":[{d:"Mon Jul 06 2026", t:1, sets:[{w:100,r:8}]}]};
+      S.session={time:30, focus:"Strength", items:[{n:"Bench press", b:"main", d:"4×6–8", p:"strength", xp:1, done:true}]};
+      const res = logSets(0,[{w:110,r:6}]);
+      const ok = res && res.pr===true && bestSet("Bench press").w===110;
+      S.setLog=saved; return ok; })()`));
+  T("history strip renders last sessions + best", w.eval(`
+    (function(){ const saved=JSON.parse(JSON.stringify(S.setLog||{}));
+      S.setLog={"Bench press":[{d:"Mon Jul 06 2026", t:1, sets:[{w:100,r:8},{w:100,r:8}]}]};
+      const s = histStrip("Bench press");
+      S.setLog=saved;
+      return s.includes("📈") && s.includes("100 lb") && s.includes("🏆"); })()`));
+  T("load hint reads the per-set ledger", w.eval(`
+    (function(){ const saved=JSON.parse(JSON.stringify(S.setLog||{}));
+      S.setLog={"Bench press":[{d:"Mon Jul 06 2026", t:1, sets:[{w:100,r:8}]}]};
+      const hint = loadHint({n:"Bench press"});
+      S.setLog=saved;
+      return hint.includes("Last time") && hint.includes("100 lb") && hint.includes("105"); })()`));
+  T("set grid renders in strength session cards", w.eval(`
+    (function(){ const savedEq=S.sel.eq.slice();
+      S.sel.eq=["Squat Rack","Bench","Barbell"];
+      buildSession({focus:"Strength", time:30, style:"hypertrophy"}); renderSession();
+      const ok = !!document.querySelector("[data-slog]") && !!document.querySelector("[data-sw]") && !!document.querySelector("[data-sr]");
+      S.sel.eq=savedEq; return ok; })()`));
+  /* windows */
+  T("three time windows defined, unscheduled sinks last", w.eval(`
+    WINDOWS.am.ord===0 && WINDOWS.pm.ord===2 && winOrd({})===99 && winOrd({o:{win:"am"}})===0`));
+  T("act editor offers time-of-day chips", (function(){
+    w.eval(`openActSheet(0,0)`);
+    const ok = $$("#asBody [data-aswin]").length===4;
+    w.eval(`closeActSheet()`);
+    return ok;
+  })());
+  T("window choice persists on the act and tags Today + brief", w.eval(`
+    (function(){ const pt = planToday(); if(!pt) return false;
+      const acts = pt.day.acts;
+      acts.push({type:"STR", done:false, adhoc:true, o:{win:"pm"}, label:"Evening lift"});
+      save(); renderTodayPage();
+      const tagged = document.querySelector("#tdActs").innerHTML.includes("Evening works best");
+      const spoken = todayBrief().includes("Evening lift in the evening");
+      acts.pop(); save(); renderTodayPage();
+      return tagged && spoken; })()`));
+  T("Today sorts morning work above unscheduled", w.eval(`
+    (function(){ const pt = planToday(); if(!pt) return false;
+      const acts = pt.day.acts;
+      acts.push({type:"NUT", done:false, adhoc:true, o:{win:"am"}, label:"AM fuel check"});
+      save(); renderTodayPage();
+      const html = document.querySelector("#tdActs").innerHTML;
+      const ok = html.indexOf("AM fuel check") < html.indexOf(acts[0].label||"Booster") || acts.length===1;
+      acts.pop(); save(); renderTodayPage(); return ok; })()`));
+  T("widget payload carries windows", html.includes("win:(a.o&&a.o.win)||null"));
+
   console.log(`\n${pass} passed, ${fail} failed. Runtime errors: ${errs.length?errs.join("; "):"none"}`);
   if(fail || errs.length) process.exitCode = 1;
 } catch(e){ console.log("HARNESS CRASH:", e.message, e.stack); process.exitCode = 1; } }, 300);
