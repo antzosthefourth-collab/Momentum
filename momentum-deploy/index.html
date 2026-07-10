@@ -113,6 +113,10 @@ a{color:var(--accent)}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
 .mut{color:var(--dim); font-size:13.5px}
 .chip.wk-now::after{content:"•"; color:var(--accent); margin-left:5px}
+/* per-set logging grid */
+.setlog .setrow{display:flex; align-items:center; gap:8px; margin-top:6px}
+.setlog .sn{font-family:'Chakra Petch'; font-size:11px; font-weight:600; letter-spacing:.12em; color:var(--faint); width:46px; text-transform:uppercase; flex:none}
+.setlog input{width:92px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:14px}
 
 /* ---------- HERO ---------- */
 .banner{position:relative; height:140px; overflow:hidden; background:linear-gradient(160deg,var(--panel2),var(--bg))}
@@ -2611,6 +2615,11 @@ const DTYPES = {
   JRNL:{t:"Journal note", icon:"📓", life:"recharge", xp:8},
   REST:{t:"Rest & recharge", icon:"🌙", focus:null}
 };
+/* v8 Phase 7: time-of-day windows — set per plan slot in the act editor (never
+   asked in the interview; owner decision). Today sorts and labels by window. */
+const WINDOWS = { am:{n:"Morning", icon:"🌅", ord:0}, mid:{n:"Midday", icon:"☀️", ord:1}, pm:{n:"Evening", icon:"🌆", ord:2} };
+const winOf  = a => (a && a.o && a.o.win && WINDOWS[a.o.win]) || null;
+const winOrd = a => { const w = winOf(a); return w ? w.ord : 99; };   // unscheduled acts sink below timed ones
 /* activities picked in the interview register their own day types */
 const SPORT_DAYS = { cycling:{t:"Ride", icon:"🚴"}, swimming:{t:"Swim", icon:"🏊"}, basketball:{t:"Court work", icon:"🏀"},
   racquet:{t:"Racquet day", icon:"🎾"}, hiking:{t:"Hike / ruck", icon:"🥾"}, yoga:{t:"Yoga flow", icon:"🧘"},
@@ -3024,8 +3033,67 @@ function buildSession(opts={}){
   save(); return true;
 }
 
+/* ================= PER-SET TRACKING (v8) =================
+   S.setLog[move] = [{d:dayKey, t:ts, sets:[{w,r}]}] — one entry per move per day,
+   capped at 30. This is the progressive-overload ledger: last-time prefills,
+   history strips, and PR celebrations all read from here. S.logs (single last
+   weight) stays updated for backward compat with load hints + interview lifts. */
+function setsPlanned(m){
+  if(!m || m.dur || /s on \//.test(m.d||"")) return 0;         // timed & circuit work isn't set-logged
+  const mt = String(m.d||"").match(/^(\d+)×/);
+  return mt ? Math.min(8, +mt[1]) : 0;
+}
+function setHistory(n){ return (S.setLog && S.setLog[n]) || []; }
+function lastSetEntry(n){ const h = setHistory(n); return h.length ? h[h.length-1] : null; }
+function bestSet(n){
+  let best = null;
+  setHistory(n).forEach(e=>(e.sets||[]).forEach(s=>{
+    if(s.w > 0 && (!best || s.w > best.w || (s.w===best.w && s.r > best.r))) best = s;
+  }));
+  return best;
+}
+function fmtSets(sets){
+  const ws = [...new Set(sets.map(s=>s.w||0))];
+  if(ws.length===1) return (ws[0] ? ws[0]+" lb" : "bw") + " ×" + sets.map(s=>s.r||"–").join(",");
+  return sets.map(s=>`${s.w||"bw"}×${s.r||"–"}`).join(" · ");
+}
+function histStrip(n){
+  const h = setHistory(n).slice(-3).reverse();
+  if(!h.length) return "";
+  const best = bestSet(n);
+  return `<div class="load">📈 ${h.map(e=>`${esc(String(e.d).slice(0,10))}: ${esc(fmtSets(e.sets))}`).join(" · ")}` +
+    (best ? ` · 🏆 ${best.w} lb×${best.r}` : "") + `</div>`;
+}
+/* store a session's sets for item i; marks the movement done (that's the point).
+   Returns {pr:true} when a real previous best was beaten. */
+function logSets(i, sets){
+  const m = S.session && S.session.items[i];
+  const clean = (sets||[]).map(s=>({w:+s.w||0, r:+s.r||0})).filter(s=>s.w||s.r);
+  if(!m || !clean.length) return false;
+  const prevBest = bestSet(m.n);
+  S.setLog = S.setLog||{};
+  const h = S.setLog[m.n] = S.setLog[m.n]||[];
+  const d = dayKey();
+  const di = h.findIndex(e=>e.d===d); if(di>=0) h.splice(di,1);   // re-log replaces today
+  h.push({ d, t:Date.now(), sets:clean });
+  if(h.length>30) h.splice(0, h.length-30);
+  const maxW = Math.max(0, ...clean.map(s=>s.w));
+  if(maxW>0){
+    S.logs[m.n] = maxW;
+    const lib = allMoves().find(x=>x.n===m.n);
+    if(lib && lib.lift && S.profile){ S.profile.lifts = S.profile.lifts||{}; S.profile.lifts[lib.lift] = maxW; }
+  }
+  const pr = !!(prevBest && maxW > prevBest.w);
+  if(!m.done) toggleItem(i, false);
+  save();
+  return { pr };
+}
+
 /* ================= LOAD SUGGESTIONS ================= */
 function loadHint(m){
+  const le = lastSetEntry(m.n);
+  if(le){ const w = Math.max(0, ...le.sets.map(s=>s.w));
+    return `Last time: ${fmtSets(le.sets)}${w?` · nudge to ${round5(w+5)} when every set feels solid`:" · add a rep per set when it feels solid"}`; }
   if(S.logs && S.logs[m.n]) return `Last time: ${S.logs[m.n]} lb · nudge to ${round5(S.logs[m.n]+5)} when every set feels solid`;
   const p = S.profile; if(!p) return "";
   if(m.lift && p.lifts && p.lifts[m.lift]) {
@@ -3386,7 +3454,9 @@ function todayBrief(){
   /* order matters: the date, then your workouts BY NAME, then everything else briefly */
   let text = `Today is ${dateStr}. `;
   if(full.length){
-    const names = full.map(a=>(a.label||DTYPES[a.type].t) + (a.done?" — done":""));
+    const names = full.slice().sort((x,y)=>winOrd(x)-winOrd(y))
+      .map(a=>{ const W = winOf(a);
+        return (a.label||DTYPES[a.type].t) + (W?` in the ${W.n.toLowerCase()}`:"") + (a.done?" — done":""); });
     text += `On the plan: ${names.join("; ")}. `;
     const mins = full.filter(a=>!DTYPES[a.type].life && !a.done)
       .reduce((s,a)=>s+((a.o&&a.o.time)||(S.profile&&S.profile.len)||30),0);
@@ -3518,15 +3588,18 @@ function renderTodayPage(){
       `${full.length} ${full.length>1?"activities":"activity"}${acts.length>full.length?" + booster":""} today`;
     $("#tdSub").textContent = `Week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}`;   // the coach note lives in the brief — once
   }
-  $("#tdActs").innerHTML = (acts && acts.length) ? acts.map((a,ai)=>{
+  $("#tdActs").innerHTML = (acts && acts.length) ? acts.map((a,ai)=>({a,ai}))
+    .sort((x,y)=>winOrd(x.a)-winOrd(y.a))   // morning work floats to the top; unscheduled sinks
+    .map(({a,ai})=>{
     const D = DTYPES[a.type];
+    const W = winOf(a);
     const list = actMoveList(a, pt.idx, ai);
     const open = list && !a.micro && !a.done;   // today's real work arrives expanded — zero taps to see it
     return `<div class="pday ${a.done?'done-hl':''}" style="cursor:default; display:block">
       <div style="display:flex; align-items:center; gap:12px">
       <div class="dico">${D.icon}</div>
       <div class="ex-meta" ${list?`data-texpand="1" style="cursor:pointer"`:""}><div class="ex-name">${a.label||D.t}${a.done?" ✓":""}${a.adhoc?" <span class='tag' style='margin-left:4px'>added</span>":""}</div>
-      <div class="ex-sub">${a.done?"In the books.":"Any time today counts."}${list?` <span class="mut">${open?"▾":"▸"}</span>`:""}</div></div>
+      <div class="ex-sub">${a.done?"In the books.":W?`${W.icon} ${W.n} works best.`:"Any time today counts."}${list?` <span class="mut">${open?"▾":"▸"}</span>`:""}</div></div>
       ${D.life ? `<button class="btn sm ${a.done?'ghost':''}" data-actdone="${pt.idx}:${ai}">${a.done?"Undo":"Done ✓"}</button>`
         : !a.done ? `<button class="btn sm" data-startact="${pt.idx}:${ai}">Start</button>`
         : `<button class="btn sm ghost" data-startact="${pt.idx}:${ai}">Again</button>`}</div>
@@ -3707,6 +3780,24 @@ function renderPickers(){
       AREAS.map(([k,ic,l])=>`<button class="chip ${S.sel.areas.includes(k)?'on':''}" data-ar="${k}">${ic} ${l}</button>`).join("") + `</div>`;
   $("#subChips").innerHTML = sub;
 }
+/* per-set logging grid — weight × reps per planned set, last time as ghost text.
+   Leave a row blank and Save reuses last time's numbers: "same as last week" is one tap. */
+function setGrid(m, i){
+  const n = setsPlanned(m); if(!n || S.session.flow) return "";
+  const last = lastSetEntry(m.n);
+  const bw = m.eq==="Bodyweight" && !m.cap && !m.lift;
+  const rows = Array.from({length:n},(_,k)=>{
+    const ls = last && last.sets[k] || last && last.sets[last.sets.length-1] || {};
+    return `<div class="setrow"><span class="sn">Set ${k+1}</span>
+      ${bw?"":`<input type="number" inputmode="decimal" data-sw="${i}:${k}" placeholder="${ls.w||"lb"}">`}
+      <input type="number" inputmode="numeric" data-sr="${i}:${k}" placeholder="${ls.r||"reps"}">`+
+      `</div>`;
+  }).join("");
+  return `<div class="setlog" data-slbox="${i}">
+    <div class="sec-label" style="margin:10px 0 6px">Log your sets${last?` <span style="letter-spacing:0; text-transform:none; font-weight:500">(blank = same as last time)</span>`:""}</div>
+    ${rows}
+    <button class="btn sm" data-slog="${i}" style="margin-top:8px">✓ Save sets${m.done?"":" & complete"}</button></div>`;
+}
 function exCard(m,i){
   const P = SYS[m.p]; const hint = loadHint(m);
   return `<div class="ex ${m.done?'done':''}">
@@ -3718,6 +3809,7 @@ function exCard(m,i){
       <div class="load" style="color:var(--dim); font-weight:500">🧠 ${esc(whyFor(m))}</div>
       ${m.mod?`<p class="mut" style="margin-top:8px">🟢 Easier: ${esc(m.mod.e)} · 🔴 Harder: ${esc(m.mod.h)}</p>`:""}
       ${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
+      ${histStrip(m.n)}
       <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${m.rest?`<span class="tag">rest ${m.rest}s</span>`:""}${(m.pattern?`<span class="tag">${esc(m.pattern)}</span>`:"")}${m.lvl?`<span class="tag">lvl ${m.lvl}</span>`:""}</div>
       <div class="ex-actions">
         ${m.dur && m.dur<=600 ? `<button class="btn sm ghost" data-timer="${m.dur}" data-tname="${esc(m.n)}">⏱ ${m.dur}s timer</button>`:""}
@@ -3726,10 +3818,10 @@ function exCard(m,i){
         <button class="btn sm ghost" data-pick="${i}">☰ Choose</button>
         <button class="btn sm ghost" data-rm="${i}">✕</button>` : ""}
       </div>
-      ${(m.lift||m.cap||m.p==="strength") ? `<div class="ex-actions" style="align-items:center">
+      ${setGrid(m, i) || ((m.lift||m.cap||m.p==="strength") ? `<div class="ex-actions" style="align-items:center">
         <input type="number" inputmode="numeric" placeholder="Weight used (lb)" value="${S.logs[m.n]||""}"
           style="width:150px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px" data-winput="${esc(m.n)}">
-        <button class="btn sm ghost" data-logw="${esc(m.n)}">Log</button></div>`:""}
+        <button class="btn sm ghost" data-logw="${esc(m.n)}">Log</button></div>`:"")}
       </div></div>`;
 }
 /* ---- in-session editing: swap / choose / remove / add without a random rebuild.
@@ -3912,7 +4004,7 @@ function renderPlan(){
       <div class="ex-meta"><div class="ex-name">${title}</div><div class="ex-sub">${esc(day.note)}</div></div></div>
       <div class="pday-detail">
         ${day.acts.map((a,ai)=>`<div class="ex-actions" style="margin-top:6px; align-items:center">
-          <span style="font-size:13.5px; font-weight:600; min-width:110px">${DTYPES[a.type].icon} ${a.label||DTYPES[a.type].t}${a.done?" ✓":""}${a.lock?" 🔒":""}</span>
+          <span style="font-size:13.5px; font-weight:600; min-width:110px">${DTYPES[a.type].icon} ${a.label||DTYPES[a.type].t}${winOf(a)?" "+winOf(a).icon:""}${a.done?" ✓":""}${a.lock?" 🔒":""}</span>
           ${DTYPES[a.type].life?"":`<button class="btn sm" data-startact="${idx}:${ai}">Start</button>`}
           <button class="btn sm ghost" data-actedit="${idx}:${ai}">✎</button>
           <button class="btn sm ghost" data-actdone="${idx}:${ai}">${a.done?"Unmark":"Done"}</button>
@@ -3972,6 +4064,13 @@ function renderActSheet(){
       [15,30,45,60].map(t2=>`<button class="chip alt ${(o.time||((S.profile&&S.profile.len)||30))===t2?'on':''}" data-astime="${t2}">${t2} min</button>`).join("") + `</div>
     <div class="sec-label">Intensity</div><div class="chips">` +
       [["easy","🌿 Easier"],["","⚙️ Normal"],["push","🔥 Push"]].map(([k,l])=>`<button class="chip alt ${(o.intn||"")===k?'on':''}" data-asint="${k}">${l}</button>`).join("") + `</div>`;
+  }
+  /* time-of-day window — every act (life rows included) can claim a slot in the day */
+  h += `<div class="sec-label">Time of day</div><div class="chips">` +
+    [["","🕐 Any"],["am","🌅 Morning"],["mid","☀️ Midday"],["pm","🌆 Evening"]]
+      .map(([k,l])=>`<button class="chip alt ${(o.win||"")===k?'on':''}" data-aswin="${k}">${l}</button>`).join("") + `</div>`;
+  if(!isLife){
+    h += "";
     if(act.type==="STR") h += `<div class="sec-label">Training style</div><div class="chips">` +
       [["","Balanced"],["hypertrophy","Hypertrophy"],["strength","Strength"],["power","Power"],["functional","Functional"]]
         .map(([k,l])=>`<button class="chip alt ${(o.style||"")===k?'on':''}" data-asstyle="${k}">${l}</button>`).join("") + `</div>
@@ -4014,6 +4113,7 @@ function libCard(m){
     <div class="load" style="color:var(--dim); font-weight:500">🧠 ${esc(whyFor(m))}</div>
     ${m.mod?`<p class="mut" style="margin-top:8px">🟢 Easier: ${esc(m.mod.e)} · 🔴 Harder: ${esc(m.mod.h)}</p>`:""}
     ${hint?`<div class="load">💡 ${esc(hint)}</div>`:""}
+    ${histStrip(m.n)}
     <div class="stars">${stars}<span class="st-lab">${(md.rank||0)>0?"your rating — favorites & ratings steer your plan":"rate it — ratings steer your plan"}</span></div>
     <div class="ex-tags"><span class="tag">${P.name}</span><span class="tag">${esc(m.eq)}</span>${(m.mg||[]).map(g=>`<span class="tag">${MG_LABELS[g]||g}</span>`).join("")}${m.sport?`<span class="tag">${esc(m.sport)}</span>`:""}</div>
     <div class="ex-actions"><a class="btn sm ghost" style="text-decoration:none" href="${ytSearch(m.n)}" target="_blank" rel="noopener">▶ Demo</a></div></div></div>`;
@@ -4137,7 +4237,7 @@ function widgetPayload(){
     updated: Date.now(),
     hero: { name:(S.profile&&S.profile.name)||"You", lvl:L.lvl, tier:tierFor(L.lvl), pct:Math.round(L.into/L.next*100), streak:S.streak },
     today: pt ? { week:pt.day.w+1, note:pt.day.note,
-      acts: pt.day.acts.map(a=>({type:a.type, title:DTYPES[a.type].t, icon:DTYPES[a.type].icon, done:a.done, adhoc:!!a.adhoc})),
+      acts: pt.day.acts.map(a=>({type:a.type, title:DTYPES[a.type].t, icon:DTYPES[a.type].icon, done:a.done, adhoc:!!a.adhoc, win:(a.o&&a.o.win)||null})),
       done: pt.day.acts.length>0 && pt.day.acts.every(a=>a.done) } : null,
     systems: Object.keys(SYS).map(k=>{ const pl=levelFromXp(S.sys[k]||0);
       return { key:k, name:SYS[k].name, lvl:pl.lvl, pct:Math.round(pl.into/pl.next*100) }; }),
@@ -4280,7 +4380,27 @@ document.addEventListener("click", ev=>{
     closePickSheet(); return; }
   if(t.id==="pkClose" || (t.id==="pickSheet" && PK)){ closePickSheet(); return; }
 
-  if(t.closest("[data-winput]")) return;
+  if(t.closest("[data-winput],[data-sw],[data-sr]")) return;
+  /* per-set logging: read the grid, fall back to last time's numbers for blank rows */
+  const sl = t.closest("[data-slog]");
+  if(sl && S.session){
+    const i = +sl.dataset.slog, m = S.session.items[i];
+    const box = sl.closest("[data-slbox]");
+    const last = lastSetEntry(m.n), nS = setsPlanned(m);
+    const sets = [];
+    for(let k=0; k<nS; k++){
+      const wi = box.querySelector(`[data-sw="${i}:${k}"]`), ri = box.querySelector(`[data-sr="${i}:${k}"]`);
+      const ls = (last && (last.sets[k] || last.sets[last.sets.length-1])) || {};
+      const w = wi ? (+wi.value || ls.w || 0) : 0;
+      const r = ri ? (+ri.value || ls.r || 0) : 0;
+      if(w || r) sets.push({w, r});
+    }
+    if(!sets.length){ toast("Type your weight/reps for at least one set"); return; }
+    const res = logSets(i, sets);
+    if(res && res.pr){ SFX.play("complete"); bigBurst({n:60}); toast("🏆 New best on "+m.n+"!"); }
+    else toast("Sets logged 📈");
+    renderSession(); renderHero(); renderTodayPage();
+    return; }
   const op = t.closest("[data-open]"); if(op){ op.closest(".ex").classList.toggle("open"); return; }
   const lo = t.closest("[data-libopen]"); if(lo && !t.closest("a") && !t.closest(".fav")){
     const exEl = lo.closest(".ex"); exEl.classList.toggle("open");
@@ -4370,6 +4490,10 @@ document.addEventListener("click", ev=>{
     if(ti && act){ act.o = Object.assign({}, act.o, {time:+ti.dataset.astime}); buzz(); save(); renderActSheet(); return; }
     const ii = t.closest("[data-asint]");
     if(ii && act){ act.o = Object.assign({}, act.o, {intn:ii.dataset.asint}); buzz(); save(); renderActSheet(); return; }
+    const wn = t.closest("[data-aswin]");
+    if(wn && act){ act.o = Object.assign({}, act.o);
+      if(wn.dataset.aswin) act.o.win = wn.dataset.aswin; else delete act.o.win;
+      buzz(); save(); renderActSheet(); return; }
     const sy = t.closest("[data-asstyle]");
     if(sy && act){ act.o = Object.assign({}, act.o, {style:sy.dataset.asstyle}); delete act.names; buzz(); save(); renderActSheet(); return; }
     const mgb = t.closest("[data-asmg]");
