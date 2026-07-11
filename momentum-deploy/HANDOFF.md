@@ -14,6 +14,25 @@ the schedule step (`a.hiit` → `p.hiit`); `weekTypes` honors `p.hiit`; migratio
 legacy `activities.hiit` into the flag so regenerated plans keep their MOT day;
 cardio-exp derivation list updated. **validate.js: 312 checks.**
 
+**🎙 VOICE 2.0 — next up, owner wants "something else" than key-paste ElevenLabs
+(July 11). Run this from a DESKTOP session** (real browser + audio + open network —
+the cloud container can't hear or reach TTS APIs). Options, ranked:
+1. **Zero-work quick win (tell the owner first):** download an Enhanced/Premium Siri
+   voice on the phone — Settings → Accessibility → Spoken Content → Voices → English →
+   e.g. "Ava (Premium)" / "Evan (Enhanced)". `briefVoice()` already scores
+   premium/enhanced/Siri voices first and will use it automatically. Free, offline,
+   kills the robot voice today.
+2. **In-browser neural TTS (the real project):** Kokoro-82M (or Piper) via
+   transformers.js/WebGPU — near-ElevenLabs quality, no keys, no per-use cost. ~80–90MB
+   model fetched once + cached (Cache API). Costs: 3rd vendored lib → fires the Vite
+   trigger; needs a real browser to develop/listen, so desktop session only.
+   Per-avatar character via speed/pitch + Kokoro's multiple voices.
+3. **Native at TestFlight:** AVSpeechSynthesizer with premium voices via Capacitor —
+   solid quality, zero payload, ties into the widget/HealthKit phase anyway.
+4. **Keep ElevenLabs optional** (already shipped: More → Brief voice) for max quality.
+Decision rubric: if TestFlight is close, do 1+3 and skip 2; if the web app remains
+primary for months, 2 is worth the Vite migration.
+
 **Next-session queue, in priority order:**
 1. ~~Move HIIT out of the activities/hobby grid~~ ✅ shipped in v10.
 2. **Owner does a hands-on pass** — v7–v9 changed the interview, plan engine, sound and
