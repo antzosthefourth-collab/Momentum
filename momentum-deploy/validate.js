@@ -79,8 +79,8 @@ setTimeout(()=>{ try {
   T("Bodyweight removed from gear options", !$('[data-oeq="Bodyweight"]'));
   T("gym machines offered", !!$('[data-oeq="Lat Pulldown"]') && !!$('[data-oeq="Leg Press"]') && !!$('[data-oeq="Smith Machine"]') && !!$('[data-oeq="Cable Machine"]'));
   T("cardio machines offered", !!$('[data-oeq="Treadmill"]') && !!$('[data-oeq="Stationary Bike"]') && !!$('[data-oeq="Elliptical"]') && !!$('[data-oeq="Stair Climber"]'));
-  T("new gear catalog offered", !!$('[data-oeq="TRX / Suspension"]') && !!$('[data-oeq="Yoga Mat"]') && !!$('[data-oeq="Foam Roller"]'));
-  T("adjustable dumbbells retired from gear catalog", !$('[data-oeq="Adjustable Dumbbells"]'));
+  T("new gear catalog offered", !!$('[data-oeq="TRX / Suspension"]') && !!$('[data-oeq="Foam Roller"]'));
+  T("adjustable dumbbells + yoga mat retired from gear catalog", !$('[data-oeq="Adjustable Dumbbells"]') && !$('[data-oeq="Yoga Mat"]'));
   const oeqSet = new Set($$("[data-oeq]").map(e=>e.dataset.oeq));   // jsdom selectors dislike "&" in values
   T("per-sport gear replaces Sports Gear", oeqSet.has("Pool Access") && oeqSet.has("Racquet & Paddle")
     && oeqSet.has("Bat & Glove") && oeqSet.has("Bike") && !oeqSet.has("Sports Gear"));
@@ -165,7 +165,7 @@ setTimeout(()=>{ try {
   T("family activity fully retired from quick-add", !$('[data-qadd="SP_family"]'));
 
   /* ---- v6 Phase 3: Today's brief + inline movement checklists ---- */
-  T("Today shows a plain-english brief", $("#tdBrief").textContent.includes("Today is") && /week 1/i.test($("#tdBrief").textContent));
+  T("Today shows a Jarvis-style brief (greeting + date + week)", /Good (morning|afternoon|evening)|midnight oil/.test($("#tdBrief").textContent) && /It's /.test($("#tdBrief").textContent) && /week 1/i.test($("#tdBrief").textContent));
   T("brief includes real minutes", /about \d+ minutes/.test($("#tdBrief").textContent));
   T("brief has a speak button", !!$("#briefSpeak"));
   T("today's workouts expand into inline checklists", $$("#tdActs [data-tcheck]").length>=3, `(${$$("#tdActs [data-tcheck]").length} moves)`);
@@ -608,8 +608,8 @@ setTimeout(()=>{ try {
   d.querySelectorAll(".nav button")[5].dispatchEvent(new w.Event("click",{bubbles:true}));
   T("ambience chips render in More", $$("#ambChips [data-amb]").length===5);
   T("backdrop video feature fully removed", !$("#bgvChips") && !$("#bgVid") && state().settings.bgv===undefined);
-  click($('[data-amb="fire"]'));
-  T("ambience choice persists", state().settings.amb==="fire");
+  click($('[data-amb="rain"]'));
+  T("ambience choice persists", state().settings.amb==="rain");
   click($('[data-amb="off"]'));
   T("ambience off persists", state().settings.amb==="off");
   d.querySelectorAll(".nav button")[2].dispatchEvent(new w.Event("click",{bubbles:true}));
@@ -741,8 +741,9 @@ setTimeout(()=>{ try {
   /* voice + brief */
   T("brief speaks workouts by name right after the date", w.eval(`
     (function(){ const b = todayBrief();
-      const di = b.indexOf("Today is"), pi = b.indexOf("On the plan:");
-      return di===0 && (pi>0 ? pi < b.indexOf("Week ") : true); })()`));
+      return /^(Good (morning|afternoon|evening)|Burning the midnight oil)/.test(b)
+        && b.indexOf("It's ") > 0
+        && (b.indexOf("On deck:") === -1 || b.indexOf("It's ") < b.indexOf("On deck:")); })()`));
   T("avatar voices carry distinct pitch characters", w.eval(`
     AVATAR_STYLES.find(a=>a.id==="viking").voice.pitch < 1 && AVATAR_STYLES.find(a=>a.id==="buddy").voice.pitch > 1.2`));
   /* themes */
@@ -832,6 +833,94 @@ setTimeout(()=>{ try {
       const ok = html.indexOf("AM fuel check") < html.indexOf(acts[0].label||"Booster") || acts.length===1;
       acts.pop(); save(); renderTodayPage(); return ok; })()`));
   T("widget payload carries windows", html.includes("win:(a.o&&a.o.win)||null"));
+
+  /* ================= v9: lifting quick starts · ambience v2 · Jarvis brief · tours · media ================= */
+  T("yoga mat fully retired from gear", w.eval(`!ALL_EQ.includes("Yoga Mat")`));
+  T("yoga mat migrates out of saved gear", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(); S.sel.eq=["Yoga Mat","Bands"]; migrateProfile();
+      const ok = !S.sel.eq.includes("Yoga Mat") && S.sel.eq.includes("Bands");
+      S.sel.eq=saved; return ok; })()`));
+  T("lifting quick starts exist (chest&tri, back&bi, shoulders, legs, arms)", w.eval(`
+    ["chesttri","backbi","delts","legday","armday"].every(id=>RECIPES.some(r=>r.id===id))`));
+  T("chest & triceps quick start targets chest/triceps", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(); S.sel.eq=["Barbell","Bench","Squat Rack","Dumbbells","Cable Machine","EZ Bar"];
+      applyRecipe("chesttri");
+      const mains = S.session.items.filter(m=>m.b==="main");
+      const ok = mains.length>=3 && mains.every(m=>(m.mgf||[]).some(g=>["chest","triceps"].includes(g)));
+      S.sel.eq=saved; return ok; })()`));
+  T("quick-start edits are remembered (recipe prefs)", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(), sp=JSON.parse(JSON.stringify(S.recipePrefs||{}));
+      S.sel.eq=["Barbell","Bench","Squat Rack","Dumbbells","Cable Machine","EZ Bar"]; S.recipePrefs={};
+      applyRecipe("backbi");
+      const i = S.session.items.findIndex(m=>m.b==="main" && !m.done);
+      swapSessionMove(i);
+      const prefSaved = (S.recipePrefs.backbi||[]).length >= 2
+        && S.recipePrefs.backbi.join()===S.session.items.map(m=>m.n).join();
+      const myVersion = (S.recipePrefs.backbi||[]).slice();
+      applyRecipe("backbi");   // relaunch → my version comes back
+      const restored = S.session.items.map(m=>m.n).join()===myVersion.join();
+      applyRecipe("backbi", true);   // fresh build ignores prefs
+      S.sel.eq=saved; S.recipePrefs=sp; save();
+      return prefSaved && restored; })()`));
+  T("fresh-version button renders on saved quick starts", w.eval(`
+    (function(){ const saved=S.sel.eq.slice(), sp=JSON.parse(JSON.stringify(S.recipePrefs||{}));
+      S.sel.eq=["Barbell","Bench","Dumbbells"]; S.recipePrefs={};
+      applyRecipe("chesttri");
+      const i = S.session.items.findIndex(m=>m.b==="main" && !m.done);
+      swapSessionMove(i); renderSession();
+      const ok = !!document.getElementById("recipeFresh");
+      S.sel.eq=saved; S.recipePrefs=sp; save(); return ok; })()`));
+  /* ambience v2 */
+  T("viking drones replaced by rain + tide", w.eval(`
+    AMBIENCE.length===4 && !AMBIENCE.some(a=>/viking/.test(a.file))
+    && AMBIENCE.some(a=>a.id==="rain") && AMBIENCE.some(a=>a.id==="tide")`));
+  T("rain + tide files ship beside the app; viking files gone", (function(){
+    const fs = require("fs");
+    return fs.existsSync(__dirname+"/amb-rain.mp3") && fs.existsSync(__dirname+"/amb-tide.mp3")
+      && !fs.existsSync(__dirname+"/amb-viking-1.mp3") && !fs.existsSync(__dirname+"/amb-viking-2.mp3");
+  })());
+  T("onboarding turns lofi on by default (wiring)", html.includes('S.settings.amb = "lofi"'));
+  T("floating ambience pill exists and cycles", w.eval(`
+    typeof ambPillTap==="function" && !!document.getElementById("ambPill")`));
+  /* Jarvis brief + voice ladder */
+  T("brief is one breath: no 'Week N:' residue, stays short", w.eval(`
+    (function(){ const b = todayBrief(); return !/Week \\d+:/.test(b) && b.length < 420; })()`));
+  T("avatar voices carry ElevenLabs ids", w.eval(`AVATAR_STYLES.every(a=>a.el && a.el.length>10)`));
+  T("ElevenLabs plumbing present with graceful fallback", w.eval(`typeof speakEleven==="function"`) && html.includes("api.elevenlabs.io"));
+  T("voice key field lives in More", !!$("#elKey") && !!$("#saveElKey"));
+  T("system-voice pick prefers premium/enhanced voices (wiring)", html.includes("premium|enhanced|natural|neural|siri"));
+  /* tours */
+  T("intro tour teaches the soundtrack toggle", w.eval(`TOUR_STEPS.some(s=>s.sel==="#ambChips")`));
+  T("pro tour exists with 8 stops incl. tracking + custom sessions", w.eval(`
+    ADV_STEPS.length===8 && ADV_STEPS.some(s=>s.sel==="#systems") && ADV_STEPS.some(s=>s.sel==="#customList")`));
+  T("pro tour launches and completes", (function(){
+    w.eval(`runTour(ADV_STEPS)`);
+    let g = 0; while($("#tourOv").classList.contains("show") && g++<12) click($("#tourNext"));
+    return g>=8 && !$("#tourOv").classList.contains("show");
+  })());
+  /* journal → rings */
+  T("logged journal note updates the rings on the spot", (function(){
+    const before = w.eval(`(S.dayXP&&S.dayXP[dayKey()])||0`);
+    w.eval(`saveJournal("Did a 20 minute kettlebell workout, mostly swings")`);
+    w.eval(`renderTodayPage()`);
+    const after = w.eval(`(S.dayXP&&S.dayXP[dayKey()])||0`);
+    return after > before && !!($("#rings4") && $("#rings4").textContent);
+  })());
+  /* custom movement media */
+  T("custom form offers demo link + device photo", !!$("#fMedia") && !!$("#fMediaFile"));
+  T("image/GIF renders inline; social links take the Demo button", w.eval(`
+    moveMedia({media:"data:image/gif;base64,R0lGOD"}).includes("<img")
+    && moveMedia({media:"https://www.instagram.com/reel/xyz"})===""
+    && demoHref({n:"X", media:"https://www.tiktok.com/@u/video/1"})==="https://www.tiktok.com/@u/video/1"
+    && demoHref({n:"Push-ups"}).includes("youtube.com/results")`));
+  T("custom movement stores media", w.eval(`
+    (function(){ const c=S.custom.length;
+      document.getElementById("fName").value="GIF move";
+      document.getElementById("fMedia").value="https://media.example.com/demo.gif";
+      document.getElementById("addBtn").dispatchEvent(new Event("click",{bubbles:true}));
+      const m = S.custom[S.custom.length-1];
+      const ok = S.custom.length===c+1 && m.media==="https://media.example.com/demo.gif";
+      S.custom.pop(); save(); return ok; })()`));
 
   console.log(`\n${pass} passed, ${fail} failed. Runtime errors: ${errs.length?errs.join("; "):"none"}`);
   if(fail || errs.length) process.exitCode = 1;

@@ -1,5 +1,51 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v8 · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v9 · July 2026*
+
+## v9 — owner feedback batch, July 11
+- **Yoga Mat retired from gear** (nothing gated on it); migration scrubs saved eq.
+- **Lifting quick starts** (Train): 🏋️ Chest & triceps / Back & biceps / Shoulder day /
+  Leg day / 💪 Arm day — fine-muscle targeted (`opts.mgf` filter on `m.mgf`), native
+  bro-audited doses (bench 4×6–8, laterals 4×12–15…). **Edits are remembered per quick
+  start**: swap/add/remove writes `S.recipePrefs[id]`; relaunch = your version;
+  "🎲 Fresh version" button forgets it (`applyRecipe(id, fresh)`).
+- **Ambience v2**: viking drones deleted (fake-sounding crackle) → `amb-rain.mp3`
+  (🌧️ Rainfall: bandpassed wash + droplet ticks + tent thumps) + `amb-tide.mp3`
+  (🌊 Slow Tide: 6 asymmetric surf swells/min, foam only at the crash) — synth script
+  scratchpad `music/nature.mjs`. AMBIENCE = lofi, tape, rain, tide.
+- **Jarvis brief**: `todayBrief()` = greeting (time-of-day + first name) → date + week
+  → "On deck: X, then Y — about N minutes all in." → ONE trimmed coaching beat.
+  Short, flows, no settings-dump.
+- **Voice ladder**: 1) **ElevenLabs** when a key is saved in More (`S.settings.elKey`,
+  browser-side fetch, per-avatar premade voices via `AVATAR_STYLES[].el` — viking=Arnold,
+  owlbear=Josh, rose=Rachel, buddy=Elli, mini=Bella; turbo_v2_5, tap-again-to-stop);
+  2) best system voice (premium/enhanced/Siri-class scored first); 3) any English voice.
+  Owner is signed into ElevenLabs on the web — they just paste an API key in More.
+- **Sound-on onboarding**: finishing the interview sets ambience to lofi; saved ambience
+  auto-resumes on first tap every visit (autoplay-safe); intro tour gained a "your
+  soundtrack is on — change or mute here" stop.
+- **🎓 Pro tour** (`ADV_STEPS`, More → "Pro tour"): 8 stops — quick-start memory,
+  per-set logging, split picker, act editor/lock, check-ins+journal, systems/armor
+  tracking, custom movements, personalization.
+- **Journal → rings**: logging a note re-renders Today (rings/XP/minutes update on
+  the spot).
+- **Custom movement media**: demo link (IG/TikTok/YT/FB → takes over ▶ Demo) or GIF
+  URL / device photo (GIF ≤350KB kept animated as dataURL; photos canvas-downscaled
+  to ≤480px JPEG) — renders inline in Library + session cards (`moveMedia`/`demoHref`).
+- **Floating 🔊 pill** (`#ambPill`, above the nav): tap cycles full → quiet → paused →
+  full. No trip to More to kill the music.
+- **validate.js: 307 checks.**
+- **✅ Owlbear art RESOLVED (July 11)**: owner uploaded two nano-banana renders to the
+  repo; shipped as `hero-owl-1.jpg` (portrait → Cub) + `hero-owl-2.jpg` (forest epic →
+  Elder), Pillow-optimized 1200px JPEGs (91/157KB, originals were 16MB). No cutouts
+  needed — owlbear stages use `scene:true` (image fills the hero card, habitat layer
+  hides; `.hero-scene.full` CSS). The "Owlbear art plan" section below is now only
+  relevant for pulling LOCAL copies of buddy/rose/mini cutouts + bg-glass.webp.
+- **Deferred / needs things this cloud session can't reach:**
+  - **Sleep habit ergonomics**: owner: "you don't want users clicking 'phone off'
+    five minutes before bed." Right call: iOS interactive widget with tap-to-complete
+    habits (widget payload already carries habits done/total — extend WIDGETS.md
+    spec), and/or auto-credit via HealthKit sleep / Screen Time at TestFlight stage.
+    NOT an in-web fix; do it in the Capacitor phase.
 
 ## Queued for v9 (owner feedback, July 10)
 - **Move HIIT out of the activities/hobby grid.** HIIT currently sits in the
