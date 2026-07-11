@@ -8,9 +8,14 @@ Working branch `claude/fitness-app-ui-workouts-uvjvj6` == main. **validate.js: 3
 checks** — run `npm i jsdom && node validate.js` after EVERY edit. index.html is
 ~4.9k lines (Vite trigger fires at ~9k or a 3rd vendored lib).
 
+**v10 (July 11, after session close): HIIT relocation SHIPPED.** HIIT left the
+activities grid (17 activities now) → "Conditioning circuits (HIIT)" yes/no chip on
+the schedule step (`a.hiit` → `p.hiit`); `weekTypes` honors `p.hiit`; migration folds
+legacy `activities.hiit` into the flag so regenerated plans keep their MOT day;
+cardio-exp derivation list updated. **validate.js: 312 checks.**
+
 **Next-session queue, in priority order:**
-1. **Move HIIT out of the activities/hobby grid** → training-side home (fully specced
-   in "Queued for v9" below — wiring lines + migration requirement).
+1. ~~Move HIIT out of the activities/hobby grid~~ ✅ shipped in v10.
 2. **Owner does a hands-on pass** — v7–v9 changed the interview, plan engine, sound and
    voice; expect a fresh feedback batch. Owner still needs to paste their ElevenLabs
    key into More → Brief voice (key was shared in chat July 11 → advise ROTATING it

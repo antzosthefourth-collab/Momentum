@@ -47,11 +47,12 @@ setTimeout(()=>{ try {
 
   /* ---- "What activities do you do?" — 18 extracurricular activities (v6) ---- */
   T("activities step replaces sports step", $("#onbBody").textContent.includes("activities"));
-  T("18 extracurricular activities offered", $$("[data-activity]").length===18, `(${$$("[data-activity]").length})`);
+  T("17 extracurricular activities offered (HIIT moved to schedule)", $$("[data-activity]").length===17, `(${$$("[data-activity]").length})`);
+  T("HIIT is no longer a hobby", !$('[data-activity="hiit"]'));
   T("gym modalities removed from activities", !$('[data-activity="kettlebells"]') && !$('[data-activity="dumbbells"]')
     && !$('[data-activity="barbell"]') && !$('[data-activity="machines"]') && !$('[data-activity="bodyweight"]')
     && !$('[data-activity="elliptical"]') && !$('[data-activity="family"]'));
-  T("real activities still offered", !!$('[data-activity="hiit"]') && !!$('[data-activity="martial"]') && !!$('[data-activity="swimming"]'));
+  T("real activities still offered", !!$('[data-activity="stairs"]') && !!$('[data-activity="martial"]') && !!$('[data-activity="swimming"]'));
   click($('[data-activity="soccer"]')); click($('[data-activity="cycling"]'));
   T("per-activity comfort sliders appear", $$("[data-alevel]").length===8, `(${$$("[data-alevel]").length})`);
   click($('[data-alevel="soccer:1"]'));               // brand-new to soccer
@@ -94,6 +95,8 @@ setTimeout(()=>{ try {
   T("schedule step follows gear directly", !!$('[data-odays="3"]'));
 
   /* ---- schedule + weekly target + daily boosters ---- */
+  T("HIIT lives on the schedule step now", $$("[data-ohiit]").length===2 && $("#onbBody").textContent.includes("Conditioning circuits"));
+  click($('[data-ohiit="1"]'));
   click($('[data-odays="3"]')); click($('[data-olen="45"]')); click($('[data-oweeks="6"]'));
   T("weekly consistency target asked", $$("[data-wktarget]").length===4);
   click($('[data-wktarget="4"]'));
@@ -138,6 +141,8 @@ setTimeout(()=>{ try {
   T("weekly target saved", st.profile.streakTol===4);
   T("coach mode saved", st.profile.mode==="coach" && st.profile.style==="coach");
   T("booster setting saved", st.profile.boost===1);
+  T("HIIT choice saved as a training flag, not an activity", st.profile.hiit===true && !st.profile.activities.hiit);
+  T("HIIT flag earns a Conditioning day", st.plan.days.slice(0,7).some(x=>x.acts.some(a=>a.type==="MOT")));
 
   /* ---- stacked plan: soccer + cycling influence the week ---- */
   T("plan has 42 days", st.plan.days.length===42);
@@ -921,6 +926,16 @@ setTimeout(()=>{ try {
       const m = S.custom[S.custom.length-1];
       const ok = S.custom.length===c+1 && m.media==="https://media.example.com/demo.gif";
       S.custom.pop(); save(); return ok; })()`));
+
+  /* v10: HIIT relocation migration */
+  T("legacy activities.hiit migrates to p.hiit (conditioning day survives)", w.eval(`
+    (function(){ const saved = S.profile;
+      S.profile = Object.assign(JSON.parse(JSON.stringify(saved)), {hiit:undefined});
+      S.profile.activities = Object.assign({}, S.profile.activities, {hiit:3});
+      migrateProfile();
+      const p = S.profile; S.profile = saved;
+      return p.hiit===true && !p.activities.hiit
+        && weekTypes(Object.assign({}, p, {goals:[], activities:{}, days:3})).includes("MOT"); })()`));
 
   console.log(`\n${pass} passed, ${fail} failed. Runtime errors: ${errs.length?errs.join("; "):"none"}`);
   if(fail || errs.length) process.exitCode = 1;
