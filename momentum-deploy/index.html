@@ -227,6 +227,8 @@ a{color:var(--accent)}
 .hero-scene{position:relative; height:230px; overflow:hidden; background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 18%, var(--panel)), var(--panel2)); border-bottom:1px solid var(--line)}
 .hero-scene .hs-bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
 .hero-scene .hs-char{position:absolute; bottom:0; left:50%; transform:translateX(-50%); height:88%; object-fit:contain; filter:drop-shadow(0 8px 18px rgba(0,0,0,.45))}
+/* full-scene avatar art (owlbear): the image IS the scene */
+.hero-scene.full .hs-char{left:0; transform:none; width:100%; height:100%; object-fit:cover; filter:none}
 .hero-scene .hs-pet{position:absolute; bottom:6px; left:calc(50% + 58px); height:34%; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .hs-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:64px; opacity:.5}
 .hs-streak{position:absolute; top:10px; left:12px; background:color-mix(in srgb, var(--bg) 60%, transparent); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-family:'Chakra Petch'; font-weight:700; font-size:13px}
@@ -1749,11 +1751,14 @@ const AVATAR_STYLES = [
   { id:"mini",    n:"Mini",      icon:"⚪", d:"Simple. Clean. Focused.",               voice:{pitch:1, rate:1, pref:null}, el:"EXAVITQu4vr4xnSDxMaL",
     stages:[ { lvl:1, n:"Mini",           img:"hero-mini-1_min.png", cdn:HFCDN+"hf_20260710_042156_1b7a151f-1651-4a41-a326-62fae8b8110d_min.png", roast:"A bean with a dream." },
              { lvl:8, n:"Mega Mini",      img:"hero-mini-2_min.png", cdn:HFCDN+"hf_20260710_042159_fa785d65-e6f3-4505-b326-c9462ed38a1d_min.png" } ] },
-  /* owlbear cutouts pending (credits ran out at the bg-removal step) — the scene
-     shows the 🦉 fallback until hero-owl art ships; raw gens are linked in HANDOFF */
+  /* owlbear ships as FULL-SCENE art (owner's nano-banana renders come with their
+     own worlds — portrait at stage 1, epic forest at stage 2). scene:true makes the
+     image fill the hero card and the habitat layer step aside. Drop the two files
+     beside index.html as hero-owl-1.jpg / hero-owl-2.jpg and it lights up;
+     🦉 fallback until then. */
   { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",  voice:{pitch:.82, rate:.94, pref:"male"}, el:"TxGEqnHWrfWFTfGW9XjX",
-    stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1_min.png", roast:"Hoots first. Lifts eventually." },
-             { lvl:8, n:"Elder Owlbear",  img:"hero-owl-2_min.png" } ] }
+    stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1.jpg", scene:true, roast:"Hoots first. Lifts eventually." },
+             { lvl:8, n:"Elder Owlbear",  img:"hero-owl-2.jpg", scene:true } ] }
 ];
 function avatarStyle(){ const id = (S.avatar && S.avatar.style) || "viking";
   return AVATAR_STYLES.find(a=>a.id===id) || AVATAR_STYLES[0]; }
@@ -3423,7 +3428,13 @@ function renderHeroScene(){
   $("#hsLvl").textContent = L.lvl;
   $("#hsName").textContent = (S.profile && S.profile.name) || "You";
   $("#hsStage").textContent = "· " + stage.n;
-  probeImg([hab.img], u=>{ $("#hsBg").src = u; });
+  /* full-scene stages (owlbear): the art carries its own world — image covers the
+     card, habitat layer steps aside. Cutout stages keep the layered look. */
+  const scene = $("#heroScene");
+  if(scene) scene.classList.toggle("full", !!stage.scene);
+  const bg = $("#hsBg");
+  if(bg) bg.style.display = stage.scene ? "none" : "";
+  if(!stage.scene) probeImg([hab.img], u=>{ bg.src = u; });
   /* switching identities: clear the old character until the new art lands */
   const ch = $("#hsChar"), fb = $("#hsFallback");
   if(ch) ch.style.display = "none";
