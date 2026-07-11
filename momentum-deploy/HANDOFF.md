@@ -1,5 +1,35 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v9 · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v9 SHIPPED · July 2026*
+
+## ⚡ START HERE — state of the world (session close, July 11)
+**Everything is merged to `main`** (PRs #1–#5: v7 splits/themes/avatars/lofi →
+v8 per-set tracking/windows → v9 quick-start memory/ambience v2/Jarvis brief/owlbear).
+Working branch `claude/fitness-app-ui-workouts-uvjvj6` == main. **validate.js: 307
+checks** — run `npm i jsdom && node validate.js` after EVERY edit. index.html is
+~4.9k lines (Vite trigger fires at ~9k or a 3rd vendored lib).
+
+**Next-session queue, in priority order:**
+1. **Move HIIT out of the activities/hobby grid** → training-side home (fully specced
+   in "Queued for v9" below — wiring lines + migration requirement).
+2. **Owner does a hands-on pass** — v7–v9 changed the interview, plan engine, sound and
+   voice; expect a fresh feedback batch. Owner still needs to paste their ElevenLabs
+   key into More → Brief voice (key was shared in chat July 11 → advise ROTATING it
+   at elevenlabs.io first; never commit keys to this repo — it's a client-side file).
+3. **Local asset pull** (needs open network or owner upload): buddy/rose/mini cutouts +
+   bg-glass.webp still CDN-only (URLs in `AVATAR_STYLES`/`BG_ART.glass`).
+4. **TestFlight phase** (WIDGETS.md): interactive widget with tap-to-complete habits
+   (solves the "phone-off before bed" UX) + HealthKit sleep auto-credit; haptics.
+
+**Environment facts learned the hard way (cloud sessions):**
+- Container network allows ONLY package registries (npm/pypi/etc). No CDN pulls, no
+  external APIs, no browsing — but `pip install pillow` works (used it to optimize the
+  owlbear art). Owner-uploaded repo files ARE reachable via git.
+- Chat-attached images arrive as vision only, NOT files — have the owner upload
+  binaries to the repo (github.com → Add file → Upload) and `git fetch`.
+- Higgsfield: ~0.28 credits (empty; 2k gens cost ~0.7 ea, removals ~0.2). HF MCP
+  `dynamic_space` invoke is DISABLED on this connector (`gradio=none`).
+- "Claude in Chrome" = owner's local browser extension, a separate surface — not
+  reachable from cloud sessions; owner must start those sessions themselves.
 
 ## v9 — owner feedback batch, July 11
 - **Yoga Mat retired from gear** (nothing gated on it); migration scrubs saved eq.
