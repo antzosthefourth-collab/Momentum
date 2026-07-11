@@ -34,12 +34,13 @@
 - **Floating 🔊 pill** (`#ambPill`, above the nav): tap cycles full → quiet → paused →
   full. No trip to More to kill the music.
 - **validate.js: 307 checks.**
+- **✅ Owlbear art RESOLVED (July 11)**: owner uploaded two nano-banana renders to the
+  repo; shipped as `hero-owl-1.jpg` (portrait → Cub) + `hero-owl-2.jpg` (forest epic →
+  Elder), Pillow-optimized 1200px JPEGs (91/157KB, originals were 16MB). No cutouts
+  needed — owlbear stages use `scene:true` (image fills the hero card, habitat layer
+  hides; `.hero-scene.full` CSS). The "Owlbear art plan" section below is now only
+  relevant for pulling LOCAL copies of buddy/rose/mini cutouts + bg-glass.webp.
 - **Deferred / needs things this cloud session can't reach:**
-  - **Owlbear art**: owner has nano-banana images in their Downloads (from an open
-    Gemini Chrome tab). Get them into the repo: attach to a Claude session (images
-    paste-able → save + `pip install pillow` to resize/verify alpha; pypi IS reachable)
-    or commit them directly. Then fill owlbear `cdn:`/local slots. See "Owlbear art
-    plan" below.
   - **Sleep habit ergonomics**: owner: "you don't want users clicking 'phone off'
     five minutes before bed." Right call: iOS interactive widget with tap-to-complete
     habits (widget payload already carries habits done/total — extend WIDGETS.md
