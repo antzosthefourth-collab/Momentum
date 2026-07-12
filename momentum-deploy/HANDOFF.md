@@ -1,12 +1,22 @@
 # MOMENTUM — Session Handoff
-*Training + life OS · single-file web app → iOS via Capacitor · v9 SHIPPED · July 2026*
+*Training + life OS · single-file web app → iOS via Capacitor · v10 SHIPPED · July 2026*
 
-## ⚡ START HERE — state of the world (session close, July 11)
-**Everything is merged to `main`** (PRs #1–#5: v7 splits/themes/avatars/lofi →
-v8 per-set tracking/windows → v9 quick-start memory/ambience v2/Jarvis brief/owlbear).
-Working branch `claude/fitness-app-ui-workouts-uvjvj6` == main. **validate.js: 307
-checks** — run `npm i jsdom && node validate.js` after EVERY edit. index.html is
-~4.9k lines (Vite trigger fires at ~9k or a 3rd vendored lib).
+## ⚡ START HERE — state of the world (final session close, July 11)
+**Everything is merged to `main` — PRs #1–#9, nothing open, branch == main.**
+v7 (splits/themes/avatars/lofi) → v8 (per-set tracking/windows) → v9 (quick-start
+memory/ambience v2/Jarvis brief/owlbear) → v10 (HIIT → schedule step) → Pages deploy.
+**validate.js: 312 checks** — run `npm i jsdom && node validate.js` after EVERY edit.
+index.html ~4.9k lines (Vite trigger fires at ~9k or a 3rd vendored lib).
+
+**🌐 VIEWING/DEPLOY (July 11):** GitHub Pages wired — root `index.html` redirects
+into `momentum-deploy/`, `.nojekyll` added. Owner flips the switch at
+`github.com/antzosthefourth-collab/Momentum/settings/pages` → Deploy from a branch →
+`main` + `/ (root)`. Live URL: **https://antzosthefourth-collab.github.io/Momentum/**
+— auto-updates on every merge to main. (Owner was navigating to this setting at
+session end — VERIFY Pages is actually enabled next session; if the URL 404s, that
+switch never got flipped.) Phone install: open URL in Safari → Share → Add to Home
+Screen. Desktop dev: just open `momentum-deploy/index.html`, no server needed.
+Note: Pages on a public repo is public; user data stays in device localStorage.
 
 **v10 (July 11, after session close): HIIT relocation SHIPPED.** HIIT left the
 activities grid (17 activities now) → "Conditioning circuits (HIIT)" yes/no chip on
