@@ -580,7 +580,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="chips" id="tdQuick" style="display:none; margin-top:10px"></div>
       </div>
       <div data-tsec="rings">
-      <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
+      <div class="rings-card" data-ringsinfo="1" style="cursor:pointer"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
       <div class="rings4" id="rings4"></div></div>
       </div>
       <div data-tsec="streak"><div id="streakCard"></div></div>
@@ -663,8 +663,16 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div id="armorCard"></div>
       <div class="sec-label">Your saga</div>
       <div id="sagaCard"></div>
-      <div class="sec-label">Memories</div>
+    </div>
+  </section>
+
+  <!-- ============ MEMORIES ============ -->
+  <section class="page" id="page-mem">
+    <div class="pad">
+      <h2 style="font-size:20px; margin:6px 0 2px">Memories</h2>
       <div id="codexBox"></div>
+      <div class="sec-label">Journal entries</div>
+      <div id="memJournal"></div>
     </div>
   </section>
 
@@ -805,6 +813,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
   <button data-page="home"><span class="ni">📊</span>Stats</button>
   <button data-page="train"><span class="ni">💪</span>Train</button>
   <button data-page="plan"><span class="ni">🗓️</span>Plan</button>
+  <button data-page="mem"><span class="ni">📖</span>Memories</button>
   <button data-page="lib"><span class="ni">📚</span>Library</button>
   <button data-page="more"><span class="ni">⚙️</span>More</button>
 </div></nav>
@@ -2456,6 +2465,17 @@ function grantXp(sysKey, amount){
 }
 /* Streak 2.0 — guilt-free by design: freezes auto-granted BEFORE they're needed,
    silently consumed on a one-day gap; comebacks celebrated, never shamed. */
+/* v20: things you actually did check themselves off */
+function autoHabit(id){
+  try{
+    const today = dayKey(); S.habitLog[today] = S.habitLog[today]||{};
+    if(S.habitLog[today][id]) return;
+    const h = habitSet().find(x=>x.id===id); if(!h) return;
+    S.habitLog[today][id] = true; touchStreak(); grantXp(h.sys, h.xp);
+    toast(`✓ auto-checked: ${h.n}`);
+    save(); renderHabits();
+  }catch(e){}
+}
 function touchStreak(){
   const today = dayKey();
   if(S.lastDay === today) return;
@@ -3781,7 +3801,7 @@ function renderHero(){
     .filter(([k])=>k!=="skill" || soccerPicked() || (S.sys.skill||0)>0)   // SKILL earns a row only if you play
     .map(([k,P])=>{
     const pl = levelFromXp(S.sys[k]||0), pct = Math.min(100, Math.round(pl.into/pl.next*100));
-    return `<div class="sys"><div class="sys-top">
+    return `<div class="sys" data-sysinfo="${k}" style="cursor:pointer"><div class="sys-top">
       <div class="sys-ico">${P.icon}</div>
       <div class="sys-meta"><div class="sys-name" style="color:${sysColor(k)}">${P.name}</div>
       <div class="sys-sub">${P.sub} · ${tierFor(pl.lvl)}</div></div>
@@ -3796,7 +3816,7 @@ function renderHero(){
     const A = AREAS.find(x=>x[0]===a); const xp = (S.areaXP||{})[a]||0;
     const lvl = Math.floor(xp/150)+1, pct2 = Math.round((xp%150)/1.5);
     const info = (S.profile.areaInfo||{})[a];
-    return `<div class="sys"><div class="sys-top"><div class="sys-ico">${A?A[1]:"🛡️"}</div>
+    return `<div class="sys" data-sysinfo="${k}" style="cursor:pointer"><div class="sys-top"><div class="sys-ico">${A?A[1]:"🛡️"}</div>
       <div class="sys-meta"><div class="sys-name" style="color:var(--c-armor)">${A?A[2]:a}</div>
       <div class="sys-sub">armor level ${lvl}${info&&info.mode==="rehab"?" · rehab":info&&info.mode==="avoid"?" · protected":""}</div></div>
       <div class="sys-lvl" style="color:var(--c-armor)">${xp} XP</div></div>
@@ -4327,10 +4347,10 @@ function saveJournal(txt){
     grantXp(m.typ==="STR" ? "strength" : m.typ==="ARM" ? "armor" : m.typ==="SKL" ? "skill" : "motor",
       Math.min(30, 10 + Math.round((m.dur||10)/3)));
     entry.tags.push("streak credit");
-    SFX.play("done"); toast("Logged & credited 💪");
-  } else { SFX.play("tap"); toast("Noted 📓"); }
+    SFX.play("done"); toast("Logged, credited & saved to Memories 💪");
+  } else { SFX.play("tap"); toast("Saved to Memories 📖"); }
   S.journal.unshift(entry);
-  save(); renderTodayPage(); renderHero(); renderPlan();
+  save(); renderTodayPage(); renderHero(); renderPlan(); try{ renderCodex(); }catch(e){}
   return true;
 }
 function renderJournal(){
@@ -4435,6 +4455,44 @@ function renderLifeScore(){
     <button class="btn sm ghost" data-lsopen="1" style="margin-top:10px">🧮 Show the math</button>
   </div>`;
 }
+/* v20: tap anything that scores you and it explains itself */
+function openSysInfo(k){
+  const P = SYS[k]; if(!P) return;
+  const pl = levelFromXp(S.sys[k]||0);
+  const base = sysBaseline(k), today = sysDayXP(dayKey(), k);
+  const FEED = { strength:"Lifting sessions, strength habits, logged sets — PRs mint Milestones.",
+    motor:"Runs, rides, conditioning circuits, steps and distance from Health.",
+    armor:"Mobility work, rehab, stretching — fills your body-armor shields too.",
+    skill:"Sport skill work and drills.",
+    fuel:"Water and protein goals, clean-eating habits and journal notes.",
+    recharge:"Sleep, rest days taken honestly, evening closes, wind-down habits." };
+  $("#lsBody").innerHTML = `<h3 style="color:${sysColor(k)}">${P.icon} ${P.name}</h3>
+    <p class="mut" style="margin-top:4px">${esc(P.sub)}</p>
+    <div class="card" style="margin-top:10px">
+      <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px">
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">LVL ${pl.lvl}</b> <span class="mut">${tierFor(pl.lvl)}</span></span>
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">${pl.into}</b> <span class="mut">/ ${pl.next} XP to next</span></span>
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">${today}</b> <span class="mut">XP today</span></span>
+        ${base!==null?`<span><b style="font-size:17px; font-family:'Chakra Petch'">${Math.round(base)}</b> <span class="mut">XP/day normal</span></span>`:""}</div></div>
+    <p class="mut" style="font-size:12.5px; margin-top:10px"><b>What feeds it:</b> ${FEED[k]||""}</p>
+    <p class="mut" style="font-size:11.5px; margin-top:8px">System levels never reset or decay — they're the long haul. The Life Score bar is today measured against your own 28-day normal.</p>
+    <div class="sheet-foot"><button class="btn" id="lsClose" style="flex:1">Got it</button></div>`;
+  $("#lifeSheet").classList.add("show");
+}
+function openRingsInfo(){
+  const dk = dayKey();
+  $("#lsBody").innerHTML = `<h3>⭕ Today's rings</h3>
+    <p class="mut" style="margin-top:4px">Four honest questions about today — close what you can, none of them judge.</p>
+    ${[["✓ MOVES","Planned activities finished. Target = what's on your day; freestyle counts."],
+       ["⚡ XP","Everything you do earns XP toward 60 for the day — sessions, habits, journal, fuel goals."],
+       ["⏱ TIME","Minutes trained, from sessions and journal-logged work. Target follows your session length."],
+       ["🔁 HABITS","Daily habits checked — several now check themselves when Health, fuel or your evening close proves you did them."]]
+      .map(([tt,d])=>`<div class="card" style="margin-top:8px"><b style="font-family:'Chakra Petch'; font-size:13px">${tt}</b>
+        <p class="mut" style="font-size:12px; margin-top:4px">${d}</p></div>`).join("")}
+    <p class="mut" style="font-size:11.5px; margin-top:10px">Rings are about today only — tomorrow they reset with zero grudges. Streaks and levels carry the long story.</p>
+    <div class="sheet-foot"><button class="btn" id="lsClose" style="flex:1">Got it</button></div>`;
+  $("#lifeSheet").classList.add("show");
+}
 function openLifeSheet(){
   const { score, bars } = lifeScore();
   const learning = bars[0] && bars[0].learning;
@@ -4500,6 +4558,7 @@ function setVibe(v){
   ev.vibe = v;
   if(!ev.credited){ ev.credited = 1; grantXp("recharge", 5); toast("Day closed — +5 RECHARGE 🌙"); SFX.play("done"); }
   else buzz();
+  autoHabit("checkin");
   save(); renderEvening(); renderLifeScore(); renderHero();
 }
 /* ================= v8: BACKUP — export / restore / erase =================
@@ -4590,15 +4649,19 @@ function renderTodayAva(){
     img.src = u; img.style.display = "block"; if(fb) fb.style.display = "none"; });
 }
 /* pick-what-you're-adding flow — no silent defaults, editor opens right after */
+let TP_SPORTS = false;
 function openTypePicker(dayIdx){
-  const mySports = (S.profile && S.profile.sports)||[];
-  const types = Object.entries(DTYPES).filter(([k])=>k!=="REST")
-    .filter(([k])=>k!=="SKL" || (soccerPicked() && (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball")))
-    .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy);
+  /* workouts up top; every sport & activity lives behind one chip — tap to unfold */
+  const main = Object.entries(DTYPES).filter(([k,D])=>k!=="REST" && !D.sport && !D.legacy && k!=="SKL");
+  const sports = Object.entries(DTYPES).filter(([k,D])=>D.sport && !D.legacy)
+    .concat(soccerPicked() ? [["SKL", DTYPES.SKL]] : []);
   $("#pkBody").innerHTML = `<h3>＋ What are we adding?</h3>
     <p class="mut" style="margin-top:4px">Pick a type — the editor opens next so you can shape it before it lands.</p>
-    <div class="chips" style="margin-top:10px">${types.map(([k,D])=>
-      `<button class="chip" data-tpick="${dayIdx}:${k}" style="padding:10px 14px">${D.icon} ${D.t}</button>`).join("")}</div>
+    <div class="chips" style="margin-top:10px">${main.map(([k,D])=>
+      `<button class="chip" data-tpick="${dayIdx}:${k}" style="padding:10px 14px">${D.icon} ${D.t}</button>`).join("")}
+      <button class="chip ${TP_SPORTS?'on':''}" data-tsports="${dayIdx}" style="padding:10px 14px">🏅 Sports & activities ${TP_SPORTS?"▾":"▸"}</button></div>
+    ${TP_SPORTS?`<div class="chips" style="margin-top:8px">${sports.map(([k,D])=>
+      `<button class="chip" data-tpick="${dayIdx}:${k}" style="padding:10px 14px">${D.icon} ${D.t}</button>`).join("")}</div>`:""}
     <div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Cancel</button></div>`;
   $("#pickSheet").classList.add("show"); SFX.play("select");
 }
@@ -4655,7 +4718,7 @@ function renderIntent(){
     box.innerHTML = `<div class="card" style="margin-top:10px">
       <div style="font-family:'Chakra Petch'; font-weight:700; font-size:13px">🎯 ${h<12?"Morning":"Today's"} intention</div>
       <div style="display:flex; gap:8px; margin-top:8px">
-        <input id="itTxt" placeholder="One thing that would make today a win…" maxlength="140"
+        <input id="itTxt" placeholder="What would make today a win?" maxlength="140"
           style="flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none">
         <button class="btn sm" id="itSet">Set</button></div>
       <p class="mut" style="font-size:11px; margin-top:6px">Tonight the evening close asks if you kept it. Kept intentions earn XP.</p></div>`;
@@ -4778,6 +4841,9 @@ function saveHealth(){
     const due = HL_RULES[k].calc(v), had = h.cr[k]||0;
     if(due > had){ grantXp(HL_RULES[k].sys, due-had); granted += due-had; h.cr[k] = due; }
   });
+  const hv2 = todayHealth();
+  if((hv2.steps||0) >= 5000) autoHabit("walk");
+  if((hv2.steps||0) >= 7500) autoHabit("steps");
   save(); renderHealth(); renderHero(); renderTodayPage();
   toast(granted>0 ? `Signals credited — +${granted} XP` : "Signals noted — nothing new to credit");
   if(granted>0) SFX.play("done");
@@ -5188,8 +5254,8 @@ function renderFuel(){
 function fuelCredit(){
   const g = fuelGoals(); if(!g) return;
   const f = todayFuel();
-  if(f.water >= g.water && !f.cr.w){ f.cr.w = 1; grantXp("fuel", 6); toast("Water goal hit — +6 FUEL 💧"); SFX.play("done"); }
-  if(f.protein >= g.protein && !f.cr.p){ f.cr.p = 1; grantXp("fuel", 8); toast("Protein goal hit — +8 FUEL 🥩"); SFX.play("done"); }
+  if(f.water >= g.water && !f.cr.w){ f.cr.w = 1; grantXp("fuel", 6); toast("Water goal hit — +6 FUEL 💧"); SFX.play("done"); autoHabit("water"); }
+  if(f.protein >= g.protein && !f.cr.p){ f.cr.p = 1; grantXp("fuel", 8); toast("Protein goal hit — +8 FUEL 🥩"); SFX.play("done"); autoHabit("protein"); }
 }
 function renderStatsCard(){
   const box = $("#statsCard"); if(!box) return;
@@ -5267,6 +5333,19 @@ function renderCodex(){
     : `<div class="empty">Nothing here yet. Mention someone in the journal — <b>@Marcus crushed hill sprints with me</b> — or add one below. Level-ups, streaks and PRs save themselves as milestones.</div>`}
     <button class="btn sm ghost" data-cdxnew="1" style="margin-top:10px">＋ Add a memory</button>
     <p class="mut" style="font-size:11px; margin-top:8px">One photo and a sentence beats a perfect record. Memories never punish missed days.</p>`;
+  /* v20: every journal entry lives here forever — @mentions just organize them */
+  const mj = $("#memJournal");
+  if(mj){
+    const hi2 = txt => esc(txt).replace(/@([A-Za-z][A-Za-z0-9_-]{1,20})/g, (mm,nm)=>{
+      const c = codexFind(nm); const T = c && CDX_TYPES[c.type];
+      return `<span class="cdx-mention" data-cdxname="${esc(nm)}" style="color:${T?T.c:"var(--accent)"}">@${esc(nm)}</span>`; });
+    const list2 = (S.journal||[]);
+    mj.innerHTML = list2.length ? list2.map(e=>`<div class="card" style="margin-top:8px">
+      <div class="mut" style="font-size:11px">${esc(e.d)}</div>
+      <div style="font-size:14px; margin-top:3px">${hi2(e.txt)}</div>
+      <div class="ex-tags" style="margin-top:8px">${(e.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join("")}</div></div>`).join("")
+    : `<div class="empty">Write on Today and every entry lands here — forever.</div>`;
+  }
 }
 let CDX_PHOTO = null;
 function openCodexCard(id){
@@ -6244,6 +6323,9 @@ document.addEventListener("click", ev=>{
     toast("Recovery credited — streak safe 🌙"); return; }
   /* ---- v8: life score + evening close ---- */
   if(t.closest("[data-lsopen]")){ openLifeSheet(); SFX.play("select"); return; }
+  const syi = t.closest("[data-sysinfo]");
+  if(syi){ openSysInfo(syi.dataset.sysinfo); SFX.play("select"); return; }
+  if(t.closest("[data-ringsinfo]") && !t.closest("button")){ openRingsInfo(); SFX.play("select"); return; }
   if(t.id==="lsClose" || t.id==="lifeSheet"){ $("#lifeSheet").classList.remove("show"); return; }
   const vb = t.closest("[data-vibe]");
   if(vb){ setVibe(+vb.dataset.vibe); return; }
@@ -6474,6 +6556,8 @@ document.addEventListener("click", ev=>{
   if(t.closest("[data-tdadd]")){ const pt2 = planToday(); if(pt2) openTypePicker(pt2.idx); return; }
   const arradd = t.closest("[data-arradd]");
   if(arradd){ openTypePicker(+arradd.dataset.arradd); return; }
+  const tsp = t.closest("[data-tsports]");
+  if(tsp){ TP_SPORTS = !TP_SPORTS; openTypePicker(+tsp.dataset.tsports); return; }
   const tpick = t.closest("[data-tpick]");
   if(tpick){ const [di, typ2] = tpick.dataset.tpick.split(":");
     const day = S.plan && S.plan.days[+di]; if(!day) return;
@@ -6726,6 +6810,8 @@ async function nativeSync(){
           if(due > had){ grantXp(HL_RULES[k].sys, due-had); granted += due-had; rec.cr[k] = due; }
         });
         rec.native = Date.now();
+        if((rec.steps||0) >= 5000) autoHabit("walk");
+        if((rec.steps||0) >= 7500) autoHabit("steps");
         if(granted) toast(`Apple Health synced — +${granted} XP`);
         save(); renderHealth(); renderTodayPage(); renderHero();
       }

@@ -605,3 +605,5 @@ Top up or connect a funded account, then:
 **Note:** interim v14 colorways were produced with deterministic pixel recoloring
 (preserves original art exactly). Gemini free-tier key had no image quota;
 HF Spaces invoke disabled in that session.
+
+**UPDATE (v20):** avatar customizations + emotes will use the **Higgsfield Sprite Creator** app — owner is arranging a new key/connection. Prefer sprite-sheet outputs (idle/tap/celebrate/epic frames) over single renders; wire into the same file-naming + IMG_VARIANTS/emote slots described above.
