@@ -95,8 +95,16 @@ body::after{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none
 body.hasphoto::before{background-image:var(--bgphoto); background-position:center; background-size:cover; background-repeat:no-repeat}
 body.hasphoto{--panel:rgba(26,26,33,.7); --panel2:rgba(37,38,48,.76)}
 /* light themes keep light glass over a photo — the dark override above is for dark themes only */
-body[data-theme="glass"].hasphoto{--panel:rgba(255,255,255,.62); --panel2:rgba(250,248,255,.78)}
-body[data-theme="daylight"].hasphoto{--panel:rgba(255,255,255,.74); --panel2:rgba(245,244,248,.82)}
+body[data-theme="glass"].hasphoto{--panel:rgba(255,255,255,.82); --panel2:rgba(252,250,255,.92)}
+body[data-theme="daylight"].hasphoto{--panel:rgba(255,255,255,.82); --panel2:rgba(245,244,248,.9)}
+/* v16: photo backdrops never eat the copy — every piece of text that sits
+   OUTSIDE a panel gets a halo in the theme's base color, and section rules
+   get enough ink to hold the line */
+body.hasphoto .sec-label, body.hasphoto .field>label, body.hasphoto .eq-group .g, body.hasphoto .block-label{
+  color:var(--text); text-shadow:0 0 3px var(--bg), 0 1px 10px var(--bg), 0 0 18px var(--bg)}
+body.hasphoto .sec-label::after{background:color-mix(in srgb, var(--text) 30%, transparent)}
+body.hasphoto .pad>p.mut, body.hasphoto .today-eyebrow, body.hasphoto h2, body.hasphoto .empty{
+  text-shadow:0 0 4px var(--bg), 0 1px 10px var(--bg), 0 0 16px var(--bg)}
 /* real blur only on LARGE glass surfaces — blurring every chip/input multiplied
    compositor cost ~5x for near-zero visual gain (small elements sit on panels) */
 .card,.stat,.sys,.ex,.pday,.habit,.lib-item,.media-card,.today-card,.hero-card,.opt{backdrop-filter:blur(14px) saturate(1.25); -webkit-backdrop-filter:blur(14px) saturate(1.25)}
@@ -546,10 +554,13 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div id="intentCard"></div>
       </div>
       <div data-tsec="acts">
-      <div id="tdActs" style="margin-top:14px"></div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:14px">
+        <span class="sec-label" style="margin:0; flex:1">Today's activities</span>
+        <button class="sw" id="tdArrange" title="Edit & rearrange" aria-label="Edit activities" style="font-size:15px; padding:6px 12px">✎</button>
+      </div>
+      <div id="tdActs" style="margin-top:10px"></div>
       <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
         <button class="btn sm ghost" id="tdQuickBtn">＋ Add activity</button>
-        <button class="btn sm ghost" id="tdArrange">🖐 Rearrange</button>
         <button class="btn sm ghost" id="layOpen">🎛 Screen layout</button>
       </div>
       <div class="chips" id="tdQuick" style="display:none; margin-top:10px"></div>
@@ -4031,23 +4042,45 @@ function renderTodayPage(){
       `${full.length} ${full.length>1?"activities":"activity"}${acts.length>full.length?" + booster":""} today`;
     $("#tdSub").textContent = `Week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}`;   // the coach note lives in the brief — once
   }
-  /* v15: arrange-in-place — raw order, drag handles, add button */
+  /* v16: edit mode — reorder, remove, edit activities; tap one and its
+     exercises unfold pivot-style: drag those too, or ✎ any single movement */
   if(todayArrange && pt && acts){
-    $("#tdActs").innerHTML = `<p class="mut" style="font-size:11.5px; margin:10px 0 8px">Drag to reorder — this order wins over time-of-day sorting. ✎ to edit anything.</p>
-      <div id="tdArrList">` + acts.map((a,ai)=>`<div class="arr-act ${a.done?'done-a':''}" data-ai="${ai}">
-        <span class="drag-h">⠿</span><span style="flex:1">${DTYPES[a.type].icon} ${esc(a.label||DTYPES[a.type].t)}${a.done?" ✓":""}</span>
-        <button class="sw" data-actedit="${pt.idx}:${ai}">✎</button></div>`).join("") + `</div>
+    $("#tdActs").innerHTML = `<p class="mut" style="font-size:11.5px; margin:10px 0 8px">Drag ⠿ to reorder · ✕ removes · ✎ edits · tap a workout to unfold its exercises.</p>
+      <div id="tdArrList">` + acts.map((a,ai)=>{
+        const list = a.done ? null : ensureActNames(a);
+        const open = tdExpArr.has(ai) && list && list.length;
+        return `<div data-ai="${ai}"><div class="arr-act ${a.done?'done-a':''}" ${list&&list.length?`data-tdexp="${ai}" style="cursor:pointer"`:""}>
+          <span class="drag-h">⠿</span>
+          <span style="flex:1">${DTYPES[a.type].icon} ${esc(a.label||DTYPES[a.type].t)}${a.done?" ✓":""}${list&&list.length?` <span class="mut" style="font-size:11px">${open?"▾":"▸"} ${list.length} moves</span>`:""}</span>
+          <button class="sw" data-actrm="${pt.idx}:${ai}">✕</button>
+          <button class="sw" data-actedit="${pt.idx}:${ai}">✎</button></div>
+        ${open?`<div class="td-exlist" data-exfor="${ai}" style="margin:2px 0 8px 26px">${list.map((n,ni)=>
+          `<div class="arr-act" style="padding:7px 10px" data-ni="${ni}">
+            <span class="drag-h">⠿</span><span style="flex:1; font-size:13px">${esc(n)}</span>
+            <button class="sw" data-exrm="${pt.idx}:${ai}:${ni}">✕</button>
+            <button class="sw" data-exswap="${pt.idx}:${ai}:${ni}">✎</button></div>`).join("")}</div>`:""}</div>`;
+      }).join("") + `</div>
       <div style="display:flex; gap:8px; margin-top:10px">
         <button class="chip" data-tdadd="1">＋ Add activity</button>
-        <button class="chip" id="tdArrangeDone">✓ Done arranging</button></div>`;
+        <button class="chip" id="tdArrangeDone">✓ Done</button></div>`;
     try{ if(tdSortable) tdSortable.destroy(); }catch(e){}
+    tdExSorts.forEach(x=>{ try{ x.destroy(); }catch(e){} }); tdExSorts = [];
     if(typeof Sortable === "function"){
       try{ tdSortable = new Sortable($("#tdArrList"), { animation:150, handle:".drag-h",
-        delay:120, delayOnTouchOnly:true, ghostClass:"sortable-ghost",
+        draggable:"[data-ai]", delay:120, delayOnTouchOnly:true, ghostClass:"sortable-ghost",
         onEnd:(evt)=>{ const day = S.plan.days[pt.idx];
           const it = day.acts.splice(evt.oldIndex,1)[0];
           day.acts.splice(evt.newIndex,0,it); day.manual = 1;
-          save(); renderTodayPage(); renderPlan(); } }); }catch(e){}
+          tdExpArr.clear(); save(); renderTodayPage(); renderPlan(); } }); }catch(e){}
+      $$("#tdArrList .td-exlist").forEach(el=>{
+        try{ tdExSorts.push(new Sortable(el, { animation:150, handle:".drag-h",
+          delay:120, delayOnTouchOnly:true, ghostClass:"sortable-ghost",
+          onEnd:(evt)=>{ const ai2 = +el.dataset.exfor;
+            const names = ensureActNames(S.plan.days[pt.idx].acts[ai2]);
+            const n2 = names.splice(evt.oldIndex,1)[0];
+            names.splice(evt.newIndex,0,n2);
+            save(); renderTodayPage(); toast("Order saved"); } })); }catch(e){}
+      });
     }
     renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
     renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
@@ -4092,7 +4125,7 @@ function renderTodayPage(){
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
   renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
   renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
-  const arrBtn = $("#tdArrange"); if(arrBtn) arrBtn.style.display = (pt && acts && acts.length>1) ? "" : "none";
+  const arrBtn = $("#tdArrange"); if(arrBtn) arrBtn.style.display = (pt && acts && acts.length>0) ? "" : "none";
 }
 function renderHabits(){
   const today = dayKey(); const log = S.habitLog[today] || {};
@@ -4490,7 +4523,47 @@ function openTypePicker(dayIdx){
     <div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Cancel</button></div>`;
   $("#pickSheet").classList.add("show"); SFX.play("select");
 }
-let todayArrange = false, tdSortable = null;
+let todayArrange = false, tdSortable = null, tdExSorts = [], tdExpArr = new Set();
+/* v16: hoisted — the act editor's type switch crashed on a TDZ reference to
+   this when it lived inside the click handler. Every "change type" tap threw. */
+function tplFor(typ){
+  const k = S.plan && S.plan.templates && Object.keys(S.plan.templates).find(x=>x.split(":")[1]===typ);
+  return k ? { tpl:k, label:S.plan.templates[k].label } : {};
+}
+/* act-scoped exercise editing (no session required) */
+function ensureActNames(act){
+  if(!act.names){ const n = actNames(act); act.names = (n||[]).slice(); }
+  return act.names;
+}
+function actEditPool(act, target){
+  const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) || (S.profile && S.profile.eq.includes(m.eq));
+  const cur = act.names||[];
+  let pool = allMoves().filter(eqOk).filter(m=>m.b!=="warmup").filter(m=>!cur.includes(m.n));
+  const likeLong = target && ((target.dur||0) >= 900 || target.run);
+  if(!likeLong) pool = pool.filter(m=>(m.dur||0) < 900 && !m.run);
+  return pool;
+}
+function openExPicker(di, ai, ni){
+  const act = S.plan && S.plan.days[di] && S.plan.days[di].acts[ai]; if(!act) return;
+  const names = ensureActNames(act);
+  const target = allMoves().find(m=>m.n===names[ni]) || {};
+  const pool = actEditPool(act, target);
+  if(!pool.length){ toast("Nothing else fits your gear"); return; }
+  const recs = swapRecs(target, pool);
+  $("#pkBody").innerHTML = `<h3>☰ Replace ${esc(names[ni]||"movement")}</h3>
+    ${recs.length?`<div class="block-label">⭐ Best swaps</div>` + recs.map(r=>
+      `<div class="as-move">${esc(r.m.n)}<span class="mut" style="font-size:11px"> · ${esc(r.m.d)} · ${esc(r.m.eq)} · ${esc(r.why)}</span>
+        <button class="sw" data-expick="${di}:${ai}:${ni}:${esc(r.m.n)}">⟳ use</button></div>`).join(""):""}
+    <input id="pkSearch" placeholder="🔍 Search ${pool.length} movements…" style="width:100%; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px">
+    <div style="max-height:44vh; overflow-y:auto; margin-top:6px">${pool.map(m=>
+      `<div class="as-move">${esc(m.n)}<span class="mut" style="font-size:11px"> · ${esc(m.d)} · ${esc(m.eq)}</span>
+        <button class="sw" data-expick="${di}:${ai}:${ni}:${esc(m.n)}">⟳ use</button></div>`).join("")}</div>
+    <div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Close</button></div>`;
+  const inp = $("#pkSearch");
+  if(inp) inp.addEventListener("input", ()=>{ const q = inp.value.toLowerCase();
+    $$("#pkBody .as-move").forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none"; }); });
+  $("#pickSheet").classList.add("show"); SFX.play("select");
+}
 /* ================= v9: MORNING INTENTION → EVENING LOOP =================
    LifeXP's best loop: say one thing in the morning, rate it honestly at night.
    Kept intentions earn XP — follow-through is a trainable skill. */
@@ -6235,8 +6308,6 @@ document.addEventListener("click", ev=>{
       return; }
     if(t.id==="asDone"){ closeActSheet(); return; }
   }
-  const tplFor = typ => { const k = S.plan && S.plan.templates && Object.keys(S.plan.templates).find(k=>k.split(":")[1]===typ);
-    return k ? {tpl:k, label:S.plan.templates[k].label} : {}; };
   if(t.id==="tdQuickBtn"){ const q=$("#tdQuick"); const openq = q.style.display==="none";
     q.style.display = openq ? "" : "none";
     t.textContent = openq ? "✕ Never mind" : "＋ Add activity"; return; }
@@ -6273,8 +6344,33 @@ document.addEventListener("click", ev=>{
     if(S.settings.todayHide[k]) delete S.settings.todayHide[k]; else S.settings.todayHide[k] = 1;
     save(); applyTodayOrder(); openLaySheet(); buzz(); return; }
   if(t.closest("#tdAvaBtn")){ go("home"); SFX.play("tap"); return; }
-  if(t.id==="tdArrange"){ todayArrange = true; renderTodayPage(); SFX.play("select"); return; }
+  if(t.id==="tdArrange"){ todayArrange = !todayArrange; tdExpArr.clear(); renderTodayPage(); SFX.play("select"); return; }
   if(t.id==="tdArrangeDone"){ todayArrange = false; renderTodayPage(); return; }
+  const texp = t.closest("[data-tdexp]");
+  if(texp && !t.closest("button")){ const ai3 = +texp.dataset.tdexp;
+    tdExpArr.has(ai3) ? tdExpArr.delete(ai3) : tdExpArr.add(ai3);
+    renderTodayPage(); return; }
+  const arm = t.closest("[data-actrm]");
+  if(arm){ const [di,ai4] = arm.dataset.actrm.split(":").map(Number);
+    const day = S.plan.days[di]; if(!day) return;
+    const gone = day.acts.splice(ai4,1)[0];
+    tdExpArr.clear(); save(); renderTodayPage(); renderPlan();
+    toast((gone && (gone.label||DTYPES[gone.type].t)) + " removed"); return; }
+  const exs = t.closest("[data-exswap]");
+  if(exs){ const [di,ai5,ni] = exs.dataset.exswap.split(":").map(Number);
+    openExPicker(di, ai5, ni); return; }
+  const exr = t.closest("[data-exrm]");
+  if(exr){ const [di,ai6,ni2] = exr.dataset.exrm.split(":").map(Number);
+    const act = S.plan.days[di] && S.plan.days[di].acts[ai6]; if(!act) return;
+    const names = ensureActNames(act);
+    if(names.length<=1){ toast("Keep at least one movement"); return; }
+    names.splice(ni2,1); save(); renderTodayPage(); return; }
+  const exp2 = t.closest("[data-expick]");
+  if(exp2){ const parts = exp2.dataset.expick.split(":");
+    const di = +parts[0], ai7 = +parts[1], ni3 = +parts[2], nm = parts.slice(3).join(":");
+    const act = S.plan.days[di] && S.plan.days[di].acts[ai7]; if(!act) return;
+    const names = ensureActNames(act); names[ni3] = nm;
+    save(); closePickSheet(); renderTodayPage(); SFX.play("select"); toast("Swapped in "+nm); return; }
   if(t.closest("[data-tdadd]")){ const pt2 = planToday(); if(pt2) openTypePicker(pt2.idx); return; }
   const arradd = t.closest("[data-arradd]");
   if(arradd){ openTypePicker(+arradd.dataset.arradd); return; }
