@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MOMENTUM — Training & Life OS</title>
 <meta name="theme-color" content="#121014">
+<!-- v18: installable app — Add to Home Screen gets a real icon, standalone
+     chrome, and full offline via the service worker -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Momentum">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -3432,6 +3440,7 @@ function toggleItem(i, fromPlayer){
         else logFreeAct(S.session.focus);   // v10: no plan? the day still lists it, by name
       }
       stopTimer(); SFX.play("complete"); bigBurst({n:90});
+      try{ notePlace(); }catch(e){}   // v18: the gym you're in becomes a Place memory
       if(!fromPlayer) toast("Session complete 💥");
     } else if(m.rest && !fromPlayer){ SFX.play("done"); startTimer(m.rest, "REST"); }
     else { SFX.play("done"); if(!fromPlayer) toast(`+${m.xp} XP · ${SYS[m.p].name}`); }
@@ -4742,7 +4751,9 @@ function renderHealth(){
     <div style="display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap">
       <button class="btn sm" id="hlSave">Credit signals</button>
       <span class="mut" style="font-size:11px">Honest caps: ${HL_RULES.steps.why} · sleep ${HL_RULES.sleepH.why}. Edits add, never claw back.</span></div>
-    <p class="mut" style="font-size:10.5px; margin-top:7px">📱 In the iOS app build these fill themselves from Apple Health — same reads, zero typing. On the web, thirty seconds of honesty does the job.</p></div>`;
+    <p class="mut" style="font-size:10.5px; margin-top:7px">${h.native
+      ? `✅ Synced from Apple Health at ${new Date(h.native).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})} — edits on top still count.`
+      : `📱 In the iOS app build these fill themselves from Apple Health — same reads, zero typing. On the web, thirty seconds of honesty does the job.`}</p></div>`;
 }
 function saveHealth(){
   S.health = S.health||{}; const dk = dayKey();
@@ -5212,6 +5223,11 @@ function codexAuto(type, name, note){
   const c = codexAdd(type, name, { note:note||"", auto:1 });
   toast("📜 Saved to memories: " + name); return c;
 }
+/* v18: finished a session somewhere the wrapper recognizes? chronicle the place */
+function notePlace(){
+  if(!S.lastPlace) return;
+  if(!codexFind(S.lastPlace)) codexAdd("ground", S.lastPlace, { note:"Trained here.", auto:1 });
+}
 function codexLinked(card){
   const needle = "@"+card.name.toLowerCase();
   return (S.journal||[]).filter(e=>e.txt.toLowerCase().includes(needle)).slice(0,6);
@@ -5613,6 +5629,7 @@ function finishSessionEarly(){
     else logFreeAct(S.session.focus);
   }
   stopTimer(); SFX.play("complete"); bigBurst({n:70});
+  try{ notePlace(); }catch(e){}
   S.session = null; save();
   renderSession(); renderTodayPage(); renderHero(); renderPlan();
   toast(`Banked ${done}/${total} — ${mins} min credited 🏁`);
@@ -6666,6 +6683,40 @@ if(!S.settings.tv7){ if(S.settings.theme==="ember" || !S.settings.theme) S.setti
 document.body.dataset.theme = S.settings.theme || "glass";
 applyBg();
 renderAll(); pushWidgets(); checkMonthChapter(); applyTodayOrder();
+/* ================= v18: INSTALL + NATIVE BRIDGE =================
+   Service worker → works offline, updates when online. The native bridge is
+   a tiny contract the iOS wrapper fulfills (see ROLLOUT.md): when present,
+   Apple Health fills the day automatically and the gym you're standing in
+   becomes a Place memory — LifeXP-style passive capture, honestly scoped. */
+try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{}); }catch(e){}
+async function nativeSync(){
+  try{
+    const N = window.MomentumNative; if(!N) return;
+    if(N.health){
+      const h = await N.health();   // {steps, sleepH, daylight, dist} for today
+      if(h){
+        S.health = S.health||{}; const dk = dayKey();
+        const rec = S.health[dk] = S.health[dk]||{}; rec.cr = rec.cr||{};
+        let granted = 0;
+        Object.keys(HL_RULES).forEach(k=>{
+          const v = +h[k]; if(isNaN(v) || v<=0) return;
+          rec[k] = Math.max(rec[k]||0, v);
+          const due = HL_RULES[k].calc(rec[k]), had = rec.cr[k]||0;
+          if(due > had){ grantXp(HL_RULES[k].sys, due-had); granted += due-had; rec.cr[k] = due; }
+        });
+        rec.native = Date.now();
+        if(granted) toast(`Apple Health synced — +${granted} XP`);
+        save(); renderHealth(); renderTodayPage(); renderHero();
+      }
+    }
+    if(N.place){
+      const p = await N.place();    // {name, kind} — current significant place, or null
+      if(p && p.name){ S.lastPlace = String(p.name).slice(0,40); save(); }
+    }
+  }catch(e){}
+}
+nativeSync();
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) nativeSync(); });
 if(!S.profile){ openOnb(); }
 </script>
 </body>
