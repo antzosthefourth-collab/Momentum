@@ -2438,8 +2438,9 @@ function habitSet(){
   const g = (S.profile && S.profile.goals) || [];
   const H = [
     {id:"walk", n:"10-min walk (any pace counts)", sys:"recharge", xp:8},
-    {id:"water", n:"Hit your water target", sys:"fuel", xp:8},
-    {id:"protein", n:"Protein with every meal", sys:"fuel", xp:8}
+    /* v13: the fuel habits carry their actual computed numbers */
+    {id:"water", n:"Hit your water target" + (function(){ try{ const g=fuelGoals(); return g?` — ${g.water} oz`:""; }catch(e){ return ""; } })(), sys:"fuel", xp:8},
+    {id:"protein", n:"Hit your protein target" + (function(){ try{ const g=fuelGoals(); return g?` — ${g.protein} g`:" (protein with every meal)"; }catch(e){ return ""; } })(), sys:"fuel", xp:8}
   ];
   if(g.includes("fat")) H.push({id:"kitchen", n:"Kitchen closed 2h before bed", sys:"fuel", xp:8});
   if(g.includes("feel")||g.includes("sleep")) H.push({id:"winddown", n:"5-min phone-free wind-down", sys:"recharge", xp:8},
@@ -3573,9 +3574,14 @@ function renderHeroScene(){
   if(ch) ch.style.display = "none";
   if(fb){ fb.textContent = avatarStyle().icon || "🛡️"; fb.style.display = ""; }
   if(ch) ch.style.filter = "";
-  /* v12: buildable hero renders instantly from its trait layers */
-  if(stage.hv){
-    if(ch){ ch.src = heroSVGURL(hvCfg(), L.lvl); ch.style.display = "block"; }
+  /* v13: any customized identity renders from its trait layers; classic art
+     stays the default until the user touches a trait */
+  const avId = avatarStyle().id;
+  if(stage.hv || avCustomized(avId)){
+    if(scene) scene.classList.remove("full");
+    if(bg) bg.style.display = "";
+    probeImg([hab.img], u=>{ if(bg) bg.src = u; });
+    if(ch){ ch.src = avatarSVGURL(avId, avCfg(avId), L.lvl); ch.style.display = "block"; }
     if(fb) fb.style.display = "none";
   } else probeImg([stage.img, stage.cdn], u=>{
     if(ch.getAttribute("src")===u) ch.style.display = "block";   // same art re-render: onload won't re-fire
@@ -3616,11 +3622,10 @@ function renderLook(){
       return `<button class="chip ${A.companion===c.id?'on':''}" data-avpet="${c.id}" ${un?"":"disabled"}>${un?c.n:`🔒 ${c.n} · ${st}/${c.streak}d`}</button>`; })).join("");
   $("#lookCard").innerHTML = `<div class="card">
     <div class="sec-label" style="margin-top:0">Avatar</div><div class="chips">${styles}</div>
-    ${cur.id==="custom"
-      ? `<div style="display:flex; gap:12px; align-items:center; margin-top:10px">
-          <img src="${heroSVGURL(hvCfg(), L.lvl)}" alt="" style="width:64px; height:80px; flex:none">
-          <button class="btn sm" data-hvopen="1">🎨 Customize — skin, hair, face, outfit</button></div>`
-      : `<p class="mut" style="font-size:11px; margin-top:8px">Pick <b>🎨 Custom</b> to build your own — skin tone, hairstyle, hair color, face, outfit and accessories.</p>`}
+    <div style="display:flex; gap:12px; align-items:center; margin-top:10px">
+      ${avCustomized(cur.id) ? `<img src="${avatarSVGURL(cur.id, avCfg(cur.id), L.lvl)}" alt="" style="width:64px; height:80px; flex:none">` : ""}
+      <button class="btn sm" data-avopen="${cur.id}">🎨 Customize ${esc(cur.n)} — ${cur.id==="viking"?"beard, helm, war paint":cur.id==="buddy"?"fluff, eyes, topper":cur.id==="rose"?"hair, ribbon, outfit":cur.id==="mini"?"color, mood, band":cur.id==="owlbear"?"feathers, tufts, eyes":"skin, hair, face, outfit"}</button></div>
+    ${!avCustomized(cur.id) ? `<p class="mut" style="font-size:11px; margin-top:7px">Classic art stays until you change something — and one tap brings it back.</p>` : ""}
     <div class="sec-label">Habitat</div><div class="chips">${habs}</div>
     <div class="sec-label">Companion</div><div class="chips">${pets}</div>
     <p class="mut" style="margin-top:8px; font-size:11.5px">Avatars are yours from day one — habitats open as you level, companions arrive on streaks (first one at just ${COMPANIONS[0].streak} days) and evolve as streaks grow.</p></div>`;
@@ -3741,8 +3746,19 @@ if(typeof speechSynthesis!=="undefined"){ refreshVoices(); try{ speechSynthesis.
 function deviceVoices(){
   if(!_voices.length) refreshVoices();
   const en = _voices.filter(v=>/^en/i.test(v.lang||""));
-  const score = v => (/premium|enhanced|natural|neural|siri/i.test(v.name)?4:0) + (v.localService?1:0);
+  const score = v => (/siri/i.test((v.name||"")+(v.voiceURI||""))?8:0) +
+    (/premium|enhanced|natural|neural/i.test(v.name)?4:0) + (v.localService?1:0);
   return en.slice().sort((a,b)=>score(b)-score(a));
+}
+/* v13: Siri-first catalog — when the device exposes English Siri voices, they're
+   the whole list, numbered Voice 1…N (the new ones are the good ones). Otherwise
+   the best English voices available get the same clean numbering. */
+function voiceCatalog(){
+  const all = deviceVoices();
+  const siri = all.filter(v=>/siri/i.test((v.name||"")+(v.voiceURI||"")));
+  const pool = (siri.length ? siri : all).slice(0,8);
+  return pool.map((v,i)=>({ v, label:"Voice "+(i+1), siri:/siri/i.test((v.name||"")+(v.voiceURI||"")),
+    hq:/siri|premium|enhanced|natural|neural/i.test((v.name||"")+(v.voiceURI||"")) }));
 }
 function briefVoice(){
   /* v12: your picked voice, else the best one the device has. No personas. */
@@ -3830,16 +3846,20 @@ function speakBrief(){
 function renderVoice(){
   const box = $("#voiceCard"); if(!box) return;
   const hd = !!S.settings.hdOn;
-  const sysList = deviceVoices().slice(0,7);
-  const chosen = S.settings.voiceName || (sysList[0] && sysList[0].name) || "";
+  const cat = voiceCatalog();
+  const anySiri = cat.some(c=>c.siri);
+  const chosen = S.settings.voiceName || (cat[0] && cat[0].v.name) || "";
   const shortName = n => esc(String(n).replace(/\s*\(.*\)\s*/g," ").trim());
   box.innerHTML = `<div class="card">
-    <p class="mut" style="font-size:11.5px; margin-bottom:9px">The best voices already on this device — no setup, no account. ▶ to hear a sample, then pick one.</p>
-    ${sysList.length ? sysList.map(v=>`
-      <div class="as-move">${shortName(v.name)}<span class="mut" style="font-size:11px">${/premium|enhanced|natural|neural|siri/i.test(v.name)?" · ✨ high quality":""}</span>
-        <span style="display:flex; gap:6px"><button class="sw" data-vprev="${esc(v.name)}">▶</button>
-        <button class="sw" data-vpick="${esc(v.name)}">${chosen===v.name?"✓ chosen":"use"}</button></span></div>`).join("")
-      : `<p class="mut" style="font-size:11.5px">Your device's voices show up here once it shares them — on iPhone the Siri-class ones are already excellent.</p>`}
+    <p class="mut" style="font-size:11.5px; margin-bottom:9px">${anySiri
+      ? "Your iPhone's Siri voices — the newer ones sound the best. ▶ to hear each, then pick."
+      : "The best voices on this device — ▶ to hear each, then pick."}</p>
+    ${cat.length ? cat.map(c=>`
+      <div class="as-move"><b>${c.label}</b><span class="mut" style="font-size:11px"> · ${shortName(c.v.name)}${c.siri?" ✨":c.hq?" · ✨":""}</span>
+        <span style="display:flex; gap:6px"><button class="sw" data-vprev="${esc(c.v.name)}">▶</button>
+        <button class="sw" data-vpick="${esc(c.v.name)}">${chosen===c.v.name?"✓ chosen":"use"}</button></span></div>`).join("")
+      : `<p class="mut" style="font-size:11.5px">Your device's voices show up here once it shares them.</p>`}
+    <p class="mut" style="font-size:10.5px; margin-top:9px">Want newer Siri voices? iPhone Settings → Accessibility → Spoken Content → Voices → English — download there and they appear here.</p>
   </div>
   <div class="card" style="margin-top:8px">
     ${hd ? `<div style="display:flex; align-items:center; gap:8px"><b style="font-family:'Chakra Petch'; font-size:13px">✨ HD voices</b><span class="tag" style="color:var(--c-skill)">downloaded · work offline</span></div>
@@ -4482,7 +4502,10 @@ const HV_OUTFIT = ["#2A9D8F","#E76F51","#E9C46A","#4C9AFF","#9B7BFF","#2F9E44"];
 const HV_HAIRS  = [["bald","Bald"],["buzz","Buzz"],["short","Short"],["curls","Curls"],["long","Long"],["bun","Bun"]];
 const HV_FACES  = [["smile","Smile"],["grin","Grin"],["chill","Chill"],["fierce","Game face"]];
 const HV_ACCS   = [["none","None"],["feather","Feather"],["band","Headband"],["cap","Cap"],["shades","Shades"]];
-function hvCfg(){ return Object.assign({skin:1,hair:"short",hairC:1,face:"smile",outfit:0,acc:"none"}, (S.avatar&&S.avatar.hv)||{}); }
+/* v13 migration: the old custom-hero config moves into the per-identity store */
+if(S.avatar && S.avatar.hv && !(S.avatar.cfgs && S.avatar.cfgs.custom)){
+  S.avatar.cfgs = S.avatar.cfgs||{}; S.avatar.cfgs.custom = S.avatar.hv; delete S.avatar.hv;
+}
 function heroSVG(cfg, lvl){
   cfg = Object.assign({skin:1,hair:"short",hairC:1,face:"smile",outfit:0,acc:"none"}, cfg||{});
   lvl = lvl||1;
@@ -4547,24 +4570,238 @@ function heroSVG(cfg, lvl){
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 6 92 144">${P.join("")}</svg>`;
 }
 function heroSVGURL(cfg, lvl){ return "data:image/svg+xml;utf8," + encodeURIComponent(heroSVG(cfg, lvl)); }
-function openHeroSheet(){
-  const cfg = hvCfg(); const L = levelFromXp(S.xp);
-  const opt = (group, list) => list.map(([v,l])=>{
-    const c2 = Object.assign({}, cfg); c2[group] = v;
-    return `<button class="hv-opt ${String(cfg[group])===String(v)?'on':''}" data-hv="${group}:${v}">
-      <img src="${heroSVGURL(c2, L.lvl)}" alt=""><div class="pl">${l}</div></button>`; }).join("");
-  const dots = (group, cols) => `<div class="hv-opts">${cols.map((c,i)=>
-    `<button class="hv-dot ${cfg[group]===i?'on':''}" data-hv="${group}:${i}" style="background:${c}" aria-label="${group} ${i+1}"></button>`).join("")}</div>`;
-  $("#hvBody").innerHTML = `<h3>Your hero</h3>
-    <div class="hv-prev" style="margin-top:10px"><img src="${heroSVGURL(cfg, L.lvl)}" alt="Your hero"></div>
-    <p class="mut" style="font-size:11px; margin-top:6px; text-align:center">Change one thing, one thing changes. Gold armband at LVL 8, cape at LVL 15 — earned, not picked.</p>
-    <div class="sec-label">Skin tone</div>${dots("skin", HV_SKINS)}
-    <div class="sec-label">Hairstyle</div><div class="hv-opts">${opt("hair", HV_HAIRS)}</div>
-    <div class="sec-label">Hair color</div>${dots("hairC", HV_HAIRC)}
-    <div class="sec-label">Face</div><div class="hv-opts">${opt("face", HV_FACES)}</div>
-    <div class="sec-label">Outfit</div>${dots("outfit", HV_OUTFIT)}
-    <div class="sec-label">Accessory</div><div class="hv-opts">${opt("acc", HV_ACCS)}</div>
-    <div class="sheet-foot"><button class="btn" id="hvClose" style="flex:1">Done</button></div>`;
+/* ================= v13: EVERY CHARACTER, ITS OWN CUSTOMIZER =================
+   Same depth of customization for all six identities — but each in the terms
+   of its character. The Viking gets beards, helms and war paint; Lil Buddy
+   gets fluff and toppers; Rose gets hair and ribbons; Mini gets colors and
+   moods; the Owlbear gets feathers and tufts. Classic art stays the default —
+   touch a trait and the layered version takes over; reset any time. */
+const VK_PAINTC = ["#3E6FD9","#C4432B","#2B2430"];
+const BD_FLUFF  = ["#FFD65C","#FFAFC7","#8FE3B0","#9BD1FF","#CBB4FF","#FFB27A"];
+const OW_FEATH  = ["#8C6239","#EDE6D6","#7C8792","#5A4B78","#5E7A4E"];
+const OW_BELLY  = ["#F2E8D0","#FFFFFF","#E8C87A"];
+const OW_EYEC   = ["#E8B44A","#C97B2E","#7BE495"];
+const RB_RIBB   = ["#E0578A","#C4432B","#E8B44A","#4C9AFF","#9B7BFF","#2B2430"];
+function vikingSVG(c, lvl){
+  c = Object.assign({skin:1,beard:"full",hairC:1,helm:"horned",paint:"none",paintC:0,tunic:0}, c||{});
+  const skin=HV_SKINS[c.skin]||HV_SKINS[1], hairC=HV_HAIRC[c.hairC]||HV_HAIRC[1];
+  const out=HV_OUTFIT[c.tunic]||HV_OUTFIT[0], pc=VK_PAINTC[c.paintC]||VK_PAINTC[0];
+  const dark="#2B2430", gold="#E8B44A", steel="#9AA3AD", P=[];
+  if(lvl>=15) P.push(`<path d="M34 104 L24 146 H44 L40 108 Z M86 104 L96 146 H76 L80 108 Z" fill="#B33B2E"/>`);
+  P.push(`<rect x="24" y="106" width="11" height="30" rx="5.5" fill="${skin}"/>`,
+         `<rect x="85" y="106" width="11" height="30" rx="5.5" fill="${skin}"/>`,
+         `<path d="M36 146 V118 Q36 100 60 100 Q84 100 84 118 V146 Z" fill="${out}"/>`,
+         `<path d="M40 104 Q60 93 80 104 L77 113 Q60 103 43 113 Z" fill="#CFC6B8"/>`,      /* fur collar */
+         `<path d="M56 116 h8 v22 h-8 Z" fill="rgba(0,0,0,.18)"/>`);                        /* belt line */
+  if(lvl>=8) P.push(`<rect x="85" y="112" width="11" height="7" rx="3.5" fill="${gold}"/>`);
+  P.push(`<rect x="53" y="76" width="14" height="14" rx="5" fill="${skin}"/>`,
+         `<circle cx="34.5" cy="58" r="5" fill="${skin}"/><circle cx="85.5" cy="58" r="5" fill="${skin}"/>`,
+         `<ellipse cx="60" cy="56" rx="24" ry="27" fill="${skin}"/>`);
+  if(c.paint==="stripe") P.push(`<rect x="46" y="42" width="9" height="21" rx="2.5" fill="${pc}" opacity=".55"/>`);
+  if(c.paint==="slashes") P.push(`<path d="M40 58 L50 64 M42 64 L52 70" stroke="${pc}" stroke-width="2.6" opacity=".7" stroke-linecap="round"/>`,
+                                 `<path d="M80 58 L70 64 M78 64 L68 70" stroke="${pc}" stroke-width="2.6" opacity=".7" stroke-linecap="round"/>`);
+  P.push(`<path d="M45 45 L57 49" stroke="${dark}" stroke-width="2.6" stroke-linecap="round"/>`,
+         `<path d="M75 45 L63 49" stroke="${dark}" stroke-width="2.6" stroke-linecap="round"/>`,
+         `<circle cx="51" cy="55" r="2.7" fill="${dark}"/><circle cx="69" cy="55" r="2.7" fill="${dark}"/>`);
+  if(c.beard==="none") P.push(`<path d="M52 68 H68" stroke="${dark}" stroke-width="2.6" stroke-linecap="round"/>`);
+  if(c.beard==="stubble") P.push(`<path d="M38 58 Q40 82 60 83 Q80 82 82 58 Q74 72 60 72 Q46 72 38 58 Z" fill="${hairC}" opacity=".35"/>`,
+                                 `<path d="M52 68 H68" stroke="${dark}" stroke-width="2.4" stroke-linecap="round"/>`);
+  if(c.beard==="full"||c.beard==="braided"){
+    P.push(`<path d="M37 54 Q37 90 60 92 Q83 90 83 54 Q76 72 60 71 Q44 72 37 54 Z" fill="${hairC}"/>`,
+           `<path d="M52 71 Q60 76 68 71 Q64 74 60 74 Q56 74 52 71 Z" fill="${dark}" opacity=".55"/>`);
+    if(c.beard==="braided") P.push(`<rect x="49" y="88" width="5" height="15" rx="2.5" fill="${hairC}"/>`,
+      `<rect x="66" y="88" width="5" height="15" rx="2.5" fill="${hairC}"/>`,
+      `<rect x="48.5" y="96" width="6" height="3" rx="1.5" fill="${gold}"/>`,
+      `<rect x="65.5" y="96" width="6" height="3" rx="1.5" fill="${gold}"/>`);
+  }
+  if(c.helm==="horned") P.push(`<path d="M36 46 Q38 24 60 24 Q82 24 84 46 Z" fill="${steel}"/>`,
+    `<rect x="36" y="42" width="48" height="5" rx="2.5" fill="#7C8792"/>`,
+    `<path d="M36 44 Q22 38 24 20 Q36 28 40 42 Z" fill="#EDE6D6"/>`,
+    `<path d="M84 44 Q98 38 96 20 Q84 28 80 42 Z" fill="#EDE6D6"/>`);
+  else if(c.helm==="winged") P.push(`<path d="M36 46 Q38 24 60 24 Q82 24 84 46 Z" fill="${steel}"/>`,
+    `<rect x="36" y="42" width="48" height="5" rx="2.5" fill="#7C8792"/>`,
+    `<path d="M37 40 Q26 34 28 24 Q38 28 41 38 Z" fill="${gold}"/>`,
+    `<path d="M83 40 Q94 34 92 24 Q82 28 79 38 Z" fill="${gold}"/>`);
+  else P.push(`<path d="M36 54 Q36 27 60 27 Q84 27 84 54 Q78 39 60 39 Q42 39 36 54 Z" fill="${hairC}"/>`,
+    `<rect x="33" y="50" width="6" height="22" rx="3" fill="${hairC}"/>`,
+    `<rect x="81" y="50" width="6" height="22" rx="3" fill="${hairC}"/>`,
+    `<rect x="32.5" y="64" width="7" height="3" rx="1.5" fill="${gold}"/>`,
+    `<rect x="80.5" y="64" width="7" height="3" rx="1.5" fill="${gold}"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 6 92 144">${P.join("")}</svg>`;
+}
+function buddySVG(c, lvl){
+  c = Object.assign({fluff:0,eyes:"sparkle",cheeks:0,top:"none"}, c||{});
+  const F=BD_FLUFF[c.fluff]||BD_FLUFF[0], dark="#2B2430", P=[];
+  const belly = "rgba(255,255,255,.5)";
+  if(lvl>=15) P.push(`<path d="M32 92 L22 140 H42 L38 96 Z M88 92 L98 140 H78 L82 96 Z" fill="#B33B2E"/>`);
+  P.push(`<ellipse cx="60" cy="88" rx="33" ry="41" fill="${F}"/>`,
+         `<ellipse cx="60" cy="102" rx="22" ry="22" fill="${belly}"/>`,
+         `<ellipse cx="30" cy="92" rx="8" ry="14" fill="${F}"/>`,
+         `<ellipse cx="90" cy="92" rx="8" ry="14" fill="${F}"/>`,
+         `<ellipse cx="50" cy="130" rx="7" ry="4.5" fill="#F2A93B"/>`,
+         `<ellipse cx="70" cy="130" rx="7" ry="4.5" fill="#F2A93B"/>`);
+  if(lvl>=8) P.push(`<circle cx="60" cy="106" r="6.5" fill="#E8B44A"/><rect x="57.5" y="98" width="5" height="6" fill="#C4432B"/>`);
+  if(c.eyes==="sparkle") P.push(`<circle cx="48" cy="72" r="6.5" fill="${dark}"/><circle cx="72" cy="72" r="6.5" fill="${dark}"/>`,
+    `<circle cx="50" cy="70" r="2.2" fill="#fff"/><circle cx="74" cy="70" r="2.2" fill="#fff"/>`,
+    `<circle cx="46.5" cy="74.5" r="1.1" fill="#fff"/><circle cx="70.5" cy="74.5" r="1.1" fill="#fff"/>`);
+  else if(c.eyes==="sleepy") P.push(`<path d="M42 72 Q48 77 54 72" stroke="${dark}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`,
+    `<path d="M66 72 Q72 77 78 72" stroke="${dark}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);
+  else P.push(`<path d="M41 64 L53 68" stroke="${dark}" stroke-width="2.6" stroke-linecap="round"/>`,
+    `<path d="M79 64 L67 68" stroke="${dark}" stroke-width="2.6" stroke-linecap="round"/>`,
+    `<circle cx="48" cy="73" r="5.5" fill="${dark}"/><circle cx="72" cy="73" r="5.5" fill="${dark}"/>`,
+    `<circle cx="49.5" cy="71.5" r="1.6" fill="#fff"/><circle cx="73.5" cy="71.5" r="1.6" fill="#fff"/>`);
+  P.push(`<path d="M55 82 L65 82 L60 89 Z" fill="#F2A93B"/>`);
+  if(c.cheeks===0) P.push(`<ellipse cx="40" cy="82" rx="4.5" ry="2.6" fill="#F2A0A0" opacity=".6"/><ellipse cx="80" cy="82" rx="4.5" ry="2.6" fill="#F2A0A0" opacity=".6"/>`);
+  if(c.cheeks===1) P.push(`<ellipse cx="40" cy="82" rx="4.5" ry="2.6" fill="#F7C59F" opacity=".7"/><ellipse cx="80" cy="82" rx="4.5" ry="2.6" fill="#F7C59F" opacity=".7"/>`);
+  if(c.top==="sprout") P.push(`<path d="M60 48 Q59 38 60 32" stroke="#2F9E44" stroke-width="2.6" fill="none"/>`,
+    `<path d="M60 34 Q52 26 46 28 Q50 36 60 34 Z" fill="#57C793"/>`,`<path d="M60 34 Q68 26 74 28 Q70 36 60 34 Z" fill="#2F9E44"/>`);
+  else if(c.top==="bow") P.push(`<path d="M60 44 L46 36 Q44 44 46 52 Z" fill="#E0578A"/>`,
+    `<path d="M60 44 L74 36 Q76 44 74 52 Z" fill="#E0578A"/>`,`<circle cx="60" cy="44" r="4" fill="#C4437A"/>`);
+  else if(c.top==="shell") P.push(`<path d="M34 60 Q36 30 60 30 Q84 30 86 60 L78 52 L72 60 L66 52 L60 60 L54 52 L48 60 L42 52 Z" fill="#F5EFE2"/>`);
+  else if(c.top==="band") P.push(`<path d="M30 62 Q60 48 90 62 L89 68 Q60 55 31 68 Z" fill="#C4432B"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 20 92 120">${P.join("")}</svg>`;
+}
+function roseSVG(c, lvl){
+  c = Object.assign({skin:1,hair:"pony",hairC:2,ribbon:0,face:"bright",outfit:4}, c||{});
+  const skin=HV_SKINS[c.skin]||HV_SKINS[1], hairC=HV_HAIRC[c.hairC]||HV_HAIRC[2];
+  const out=HV_OUTFIT[c.outfit]||HV_OUTFIT[4], rb=RB_RIBB[c.ribbon]||RB_RIBB[0];
+  const dark="#2B2430", P=[];
+  if(lvl>=15) P.push(`<path d="M34 104 L24 146 H44 L40 108 Z M86 104 L96 146 H76 L80 108 Z" fill="#B33B2E"/>`);
+  if(c.hair==="pony") P.push(`<path d="M82 40 Q96 52 90 84 Q84 96 80 84 Q86 60 76 44 Z" fill="${hairC}"/>`);
+  if(c.hair==="waves") P.push(`<path d="M35 46 Q28 70 34 96 Q40 104 44 96 Q38 72 46 54 Z" fill="${hairC}"/>`,
+    `<path d="M85 46 Q92 70 86 96 Q80 104 76 96 Q82 72 74 54 Z" fill="${hairC}"/>`);
+  if(c.hair==="braid") P.push(`<path d="M82 44 Q90 60 86 92 L78 92 Q80 64 74 48 Z" fill="${hairC}"/>`,
+    `<circle cx="82" cy="70" r="4.5" fill="rgba(0,0,0,.14)"/><circle cx="82" cy="82" r="4.5" fill="rgba(0,0,0,.14)"/>`);
+  P.push(`<rect x="24" y="106" width="11" height="30" rx="5.5" fill="${skin}"/>`,
+         `<rect x="85" y="106" width="11" height="30" rx="5.5" fill="${skin}"/>`,
+         `<path d="M36 146 V118 Q36 100 60 100 Q84 100 84 118 V146 Z" fill="${out}"/>`,
+         `<path d="M42 104 Q60 96 78 104 L74 112 Q60 105 46 112 Z" fill="rgba(0,0,0,.16)"/>`);
+  if(lvl>=8) P.push(`<rect x="85" y="112" width="11" height="7" rx="3.5" fill="#E8B44A"/>`);
+  P.push(`<rect x="53" y="76" width="14" height="14" rx="5" fill="${skin}"/>`,
+         `<circle cx="34.5" cy="58" r="5" fill="${skin}"/><circle cx="85.5" cy="58" r="5" fill="${skin}"/>`,
+         `<ellipse cx="60" cy="56" rx="24" ry="27" fill="${skin}"/>`);
+  const lashL = `<path d="M45 52 L42 50 M47 50 L45 47.5" stroke="${dark}" stroke-width="1.4" stroke-linecap="round"/>`;
+  const lashR = `<path d="M75 52 L78 50 M73 50 L75 47.5" stroke="${dark}" stroke-width="1.4" stroke-linecap="round"/>`;
+  const blush = `<ellipse cx="44" cy="63" rx="3.6" ry="2" fill="#F2A0A0" opacity=".5"/><ellipse cx="76" cy="63" rx="3.6" ry="2" fill="#F2A0A0" opacity=".5"/>`;
+  if(c.face==="bright") P.push(`<circle cx="51" cy="54" r="2.9" fill="${dark}"/><circle cx="69" cy="54" r="2.9" fill="${dark}"/>`,
+    `<circle cx="52" cy="53" r="1" fill="#fff"/><circle cx="70" cy="53" r="1" fill="#fff"/>`, lashL, lashR, blush,
+    `<path d="M51 66 Q60 74 69 66" stroke="${dark}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
+  else if(c.face==="wink") P.push(`<circle cx="51" cy="54" r="2.9" fill="${dark}"/>`,
+    `<path d="M65 54 Q69 57 73 54" stroke="${dark}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`, lashL, blush,
+    `<path d="M52 66 Q60 73 68 66" stroke="${dark}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
+  else P.push(`<path d="M45 45 L57 49 M75 45 L63 49" stroke="${dark}" stroke-width="2.4" stroke-linecap="round"/>`,
+    `<circle cx="51" cy="55" r="2.7" fill="${dark}"/><circle cx="69" cy="55" r="2.7" fill="${dark}"/>`, blush,
+    `<path d="M52 68 H68" stroke="${dark}" stroke-width="2.6" stroke-linecap="round"/>`);
+  if(c.hair==="buns") P.push(`<circle cx="40" cy="28" r="9" fill="${hairC}"/><circle cx="80" cy="28" r="9" fill="${hairC}"/>`);
+  P.push(`<path d="M35 54 Q36 27 60 27 Q84 27 85 54 Q78 38 60 38 Q42 38 35 54 Z" fill="${hairC}"/>`);
+  if(c.hair==="pony") P.push(`<path d="M74 36 L84 30 Q87 38 82 44 Z" fill="${rb}"/>`);
+  else if(c.hair==="buns") P.push(`<path d="M34 22 L46 22 L40 32 Z" fill="${rb}"/>`,`<path d="M74 22 L86 22 L80 32 Z" fill="${rb}"/>`);
+  else if(c.hair==="braid") P.push(`<rect x="77" y="88" width="10" height="4" rx="2" fill="${rb}"/>`);
+  else P.push(`<rect x="37" y="42" width="46" height="5.5" rx="2.7" fill="${rb}"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 6 92 144">${P.join("")}</svg>`;
+}
+function miniSVG(c, lvl){
+  c = Object.assign({color:3,eyes:"dots",band:"none"}, c||{});
+  const COLS = HV_OUTFIT.concat(["#F2F3F7","#2B2430"]);
+  const B = COLS[c.color]||COLS[3], dark = c.color===7 ? "#F2F3F7" : "#2B2430", P=[];
+  if(lvl>=15) P.push(`<path d="M34 84 L24 138 H44 L40 88 Z M86 84 L96 138 H76 L80 88 Z" fill="#B33B2E"/>`);
+  P.push(`<rect x="32" y="36" width="56" height="96" rx="26" fill="${B}" ${lvl>=8?'stroke="#E8B44A" stroke-width="3"':''}/>`,
+         `<ellipse cx="46" cy="134" rx="9" ry="5" fill="${B}"/>`,`<ellipse cx="74" cy="134" rx="9" ry="5" fill="${B}"/>`);
+  if(c.eyes==="dots") P.push(`<circle cx="49" cy="66" r="3.4" fill="${dark}"/><circle cx="71" cy="66" r="3.4" fill="${dark}"/>`,
+    `<path d="M53 78 Q60 83 67 78" stroke="${dark}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
+  else if(c.eyes==="happy") P.push(`<path d="M44 66 Q49 61 54 66" stroke="${dark}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`,
+    `<path d="M66 66 Q71 61 76 66" stroke="${dark}" stroke-width="2.8" fill="none" stroke-linecap="round"/>`,
+    `<path d="M52 78 Q60 85 68 78" stroke="${dark}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
+  else P.push(`<rect x="44" y="63" width="10" height="3" rx="1.5" fill="${dark}"/><rect x="66" y="63" width="10" height="3" rx="1.5" fill="${dark}"/>`,
+    `<path d="M54 79 H66" stroke="${dark}" stroke-width="2.4" stroke-linecap="round"/>`);
+  if(c.band!=="none") P.push(`<rect x="32" y="46" width="56" height="7" rx="3.5" fill="${c.band}"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 20 92 124">${P.join("")}</svg>`;
+}
+function owlSVG(c, lvl){
+  c = Object.assign({feath:0,belly:0,eyec:0,tufts:"long",beak:0}, c||{});
+  const F=OW_FEATH[c.feath]||OW_FEATH[0], BL=OW_BELLY[c.belly]||OW_BELLY[0], IR=OW_EYEC[c.eyec]||OW_EYEC[0];
+  const F2 = "rgba(0,0,0,.18)", dark="#2B2430", bk = c.beak===1 ? dark : "#E8B44A", P=[];
+  if(lvl>=15) P.push(`<path d="M34 96 L24 142 H44 L40 100 Z M86 96 L96 142 H76 L80 100 Z" fill="#B33B2E"/>`);
+  const ty = c.tufts==="long" ? 12 : 22;
+  P.push(`<path d="M38 40 L34 ${ty} L50 34 Z" fill="${F}"/>`,`<path d="M82 40 L86 ${ty} L70 34 Z" fill="${F}"/>`);
+  P.push(`<ellipse cx="60" cy="96" rx="30" ry="36" fill="${F}"/>`,
+         `<ellipse cx="33" cy="96" rx="8" ry="20" fill="${F}"/><ellipse cx="87" cy="96" rx="8" ry="20" fill="${F}"/>`,
+         `<ellipse cx="33" cy="96" rx="4" ry="14" fill="${F2}"/><ellipse cx="87" cy="96" rx="4" ry="14" fill="${F2}"/>`,
+         `<ellipse cx="60" cy="104" rx="19" ry="24" fill="${BL}"/>`,
+         `<path d="M52 94 L60 100 L68 94 M52 106 L60 112 L68 106" stroke="${F2}" stroke-width="2" fill="none"/>`,
+         `<circle cx="60" cy="52" r="26" fill="${F}"/>`,
+         `<circle cx="49" cy="52" r="11.5" fill="${BL}"/><circle cx="71" cy="52" r="11.5" fill="${BL}"/>`,
+         `<circle cx="49" cy="52" r="8" fill="${IR}"/><circle cx="71" cy="52" r="8" fill="${IR}"/>`,
+         `<circle cx="49" cy="52" r="4" fill="${dark}"/><circle cx="71" cy="52" r="4" fill="${dark}"/>`,
+         `<circle cx="50.5" cy="50.5" r="1.4" fill="#fff"/><circle cx="72.5" cy="50.5" r="1.4" fill="#fff"/>`,
+         `<path d="M55 62 L65 62 L60 71 Z" fill="${bk}"/>`,
+         `<path d="M50 130 L46 137 M54 131 L52 138 M66 131 L68 138 M70 130 L74 137" stroke="${bk}" stroke-width="2.6" stroke-linecap="round"/>`);
+  if(lvl>=8) P.push(`<rect x="42" y="124" width="12" height="5" rx="2.5" fill="#E8B44A"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 8 92 138">${P.join("")}</svg>`;
+}
+const AV_TRAITS = {
+  custom: { render:(c,l)=>heroSVG(c,l), def:{skin:1,hair:"short",hairC:1,face:"smile",outfit:0,acc:"none"},
+    groups:[["skin","Skin tone","dots",HV_SKINS],["hair","Hairstyle","opts",HV_HAIRS],["hairC","Hair color","dots",HV_HAIRC],
+            ["face","Face","opts",HV_FACES],["outfit","Outfit","dots",HV_OUTFIT],["acc","Accessory","opts",HV_ACCS]] },
+  viking: { render:vikingSVG, def:{skin:1,beard:"full",hairC:1,helm:"horned",paint:"none",paintC:0,tunic:0},
+    groups:[["skin","Skin tone","dots",HV_SKINS],
+            ["beard","Beard","opts",[["none","Clean"],["stubble","Stubble"],["full","Full"],["braided","Braided"]]],
+            ["hairC","Hair & beard","dots",HV_HAIRC.slice(0,6)],
+            ["helm","Helm / hair","opts",[["horned","Horned"],["winged","Winged"],["braids","Braids"]]],
+            ["paint","War paint","opts",[["none","None"],["stripe","Eye stripe"],["slashes","Slashes"]]],
+            ["paintC","Paint color","dots",VK_PAINTC],
+            ["tunic","Tunic","dots",HV_OUTFIT]] },
+  buddy: { render:buddySVG, def:{fluff:0,eyes:"sparkle",cheeks:0,top:"none"},
+    groups:[["fluff","Fluff","dots",BD_FLUFF],
+            ["eyes","Eyes","opts",[["sparkle","Sparkle"],["sleepy","Sleepy"],["game","Game on"]]],
+            ["cheeks","Cheeks","opts",[[0,"Rosy"],[1,"Peach"],[2,"None"]]],
+            ["top","Topper","opts",[["none","None"],["sprout","Sprout"],["bow","Bow"],["shell","Eggshell"],["band","Headband"]]]] },
+  rose: { render:roseSVG, def:{skin:1,hair:"pony",hairC:2,ribbon:0,face:"bright",outfit:4},
+    groups:[["skin","Skin tone","dots",HV_SKINS],
+            ["hair","Hair","opts",[["pony","Ponytail"],["buns","Twin buns"],["braid","Braid"],["waves","Waves"]]],
+            ["hairC","Hair color","dots",HV_HAIRC],
+            ["ribbon","Ribbon","dots",RB_RIBB],
+            ["face","Face","opts",[["bright","Bright"],["wink","Wink"],["fierce","Game face"]]],
+            ["outfit","Outfit","dots",HV_OUTFIT]] },
+  mini: { render:miniSVG, def:{color:3,eyes:"dots",band:"none"},
+    groups:[["color","Color","dots",HV_OUTFIT.concat(["#F2F3F7","#2B2430"])],
+            ["eyes","Mood","opts",[["dots","Classic"],["happy","Happy"],["focus","Focused"]]],
+            ["band","Headband","opts",[["none","None"],["#C4432B","Red"],["#4C9AFF","Blue"],["#E8B44A","Gold"],["#9B7BFF","Violet"]]]] },
+  owlbear: { render:owlSVG, def:{feath:0,belly:0,eyec:0,tufts:"long",beak:0},
+    groups:[["feath","Feathers","dots",OW_FEATH],
+            ["belly","Belly","dots",OW_BELLY],
+            ["eyec","Eyes","dots",OW_EYEC],
+            ["tufts","Ear tufts","opts",[["long","Long"],["short","Short"]]],
+            ["beak","Beak & talons","opts",[[0,"Gold"],[1,"Dark"]]]] }
+};
+function avCfg(id){
+  id = id || avatarStyle().id;
+  const T = AV_TRAITS[id]; if(!T) return null;
+  return Object.assign({}, T.def, ((S.avatar||{}).cfgs||{})[id]||{});
+}
+function avCustomized(id){ return id==="custom" || !!(((S.avatar||{}).cfgs||{})[id]); }
+function avatarSVGURL(id, cfg, lvl){ return "data:image/svg+xml;utf8," + encodeURIComponent(AV_TRAITS[id].render(cfg, lvl)); }
+let AVI = null;
+function openAvSheet(id){
+  AVI = id = id || avatarStyle().id;
+  const T = AV_TRAITS[id]; if(!T) return;
+  const cfg = avCfg(id); const L = levelFromXp(S.xp);
+  const st = AVATAR_STYLES.find(a=>a.id===id) || {};
+  const parts = T.groups.map(([k, label, kind, list])=>{
+    if(kind==="dots") return `<div class="sec-label">${label}</div><div class="hv-opts">${list.map((col,i)=>
+      `<button class="hv-dot ${cfg[k]===i?'on':''}" data-av="${k}:${i}" style="background:${col}" aria-label="${label} ${i+1}"></button>`).join("")}</div>`;
+    return `<div class="sec-label">${label}</div><div class="hv-opts">${list.map(([v,l])=>{
+      const c2 = Object.assign({}, cfg); c2[k] = v;
+      return `<button class="hv-opt ${String(cfg[k])===String(v)?'on':''}" data-av="${k}:${v}">
+        <img src="${avatarSVGURL(id, c2, L.lvl)}" alt=""><div class="pl">${l}</div></button>`; }).join("")}</div>`;
+  }).join("");
+  $("#hvBody").innerHTML = `<h3>${st.icon||"🎨"} ${esc(st.n||"Your hero")}</h3>
+    <div class="hv-prev" style="margin-top:10px"><img src="${avatarSVGURL(id, cfg, L.lvl)}" alt=""></div>
+    <p class="mut" style="font-size:11px; margin-top:6px; text-align:center">Change one thing, one thing changes. Gold at LVL 8, cape at LVL 15 — earned, not picked.</p>
+    ${parts}
+    <div class="sheet-foot" style="flex-wrap:wrap">
+      ${id!=="custom" && avCustomized(id) ? `<button class="btn ghost sm" id="avReset">↺ Classic look</button>` : ""}
+      <button class="btn" id="hvClose" style="flex:1">Done</button></div>`;
   $("#heroSheet").classList.add("show");
 }
 /* ================= v12: FUEL GOALS — water & protein from YOUR stats =================
@@ -4581,7 +4818,12 @@ function fuelGoals(){
   const protein = Math.round(wt*rate/5)*5;                                      // g/day
   return { water, protein, wt, trained, rate };
 }
-function todayFuel(){ S.fuelLog = S.fuelLog||{}; return S.fuelLog[dayKey()] = S.fuelLog[dayKey()]||{ water:0, protein:0, cr:{} }; }
+function todayFuel(){
+  S.fuelLog = S.fuelLog||{};
+  const f = S.fuelLog[dayKey()] = S.fuelLog[dayKey()]||{ water:0, protein:0, cr:{} };
+  const g = fuelGoals(); if(g) f.g = { w:g.water, p:g.protein };   // snapshot today's goals for the history strip
+  return f;
+}
 function renderFuel(){
   const box = $("#fuelCard"); if(!box) return;
   const g = fuelGoals();
@@ -4607,7 +4849,23 @@ function renderFuel(){
     <div class="chips" style="gap:6px; margin-top:9px">
       ${[10,20,30,40].map(n=>`<button class="chip" data-prot="${n}">+${n}g</button>`).join("")}
       <button class="chip" data-protz="1">↺</button></div>
-    <p class="mut" style="font-size:10.5px; margin-top:7px">Your math: ${g.wt} lb × ${g.rate} g/lb (${dietGoalKey()==="gain"?"building muscle":dietGoalKey()==="lose"?"cutting — protein protects muscle":"maintaining"}) = ${g.protein} g · water ½ oz/lb${g.trained?` + ${Math.round(g.trained*0.4)} oz for ${g.trained} trained min`:""}. Hitting either goal credits FUEL.</p>
+    <div style="display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap">
+      <span class="mut" style="font-size:11px; font-family:'Chakra Petch'; letter-spacing:.05em">EXACT:</span>
+      <input id="fWater" type="number" inputmode="numeric" placeholder="${f.water||"oz"}" style="width:70px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; outline:none">
+      <span class="mut" style="font-size:11px">oz</span>
+      <input id="fProt" type="number" inputmode="numeric" placeholder="${f.protein||"g"}" style="width:70px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px; outline:none">
+      <span class="mut" style="font-size:11px">g</span>
+      <button class="btn sm ghost" id="fuelSet">Log</button></div>
+    <div class="ev-strip" style="margin-top:12px">${(function(){
+      const out = [];
+      for(let i=6;i>=0;i--){ const d = new Date(); d.setDate(d.getDate()-i);
+        const dk2 = dayKey(d), fd = (S.fuelLog||{})[dk2];
+        const gg = fd && fd.g;
+        const wHit = fd && gg && fd.water >= gg.w, pHit = fd && gg && fd.protein >= gg.p;
+        const col = (wHit&&pHit) ? "background:var(--c-fuel)" : (wHit||pHit) ? "background:color-mix(in srgb, var(--c-fuel) 45%, transparent)" : fd&&(fd.water||fd.protein) ? "background:var(--line); outline:1px solid var(--c-fuel)" : "";
+        out.push(`<span class="ev-day" style="${col}" title="${dk2}: ${fd?`${fd.water||0} oz · ${fd.protein||0} g`:"nothing logged"}"></span>`); }
+      return out.join(""); })()}<span class="ev-lab">last 7 days · solid = both goals hit</span></div>
+    <p class="mut" style="font-size:10.5px; margin-top:9px">Your math: ${g.wt} lb × ${g.rate} g/lb (${dietGoalKey()==="gain"?"building muscle":dietGoalKey()==="lose"?"cutting — protein protects muscle":"maintaining"}) = ${g.protein} g · water ½ oz/lb${g.trained?` + ${Math.round(g.trained*0.4)} oz for ${g.trained} trained min`:""}. Hitting either goal credits FUEL.</p>
   </div>`;
 }
 function fuelCredit(){
@@ -5589,7 +5847,14 @@ document.addEventListener("click", ev=>{
   const hb = t.closest("[data-habit]");
   if(hb){ const id=hb.dataset.habit, today=dayKey(); S.habitLog[today]=S.habitLog[today]||{};
     const h = habitSet().find(x=>x.id===id);
-    if(!S.habitLog[today][id]){ S.habitLog[today][id]=true; touchStreak(); grantXp(h.sys, h.xp); SFX.play("select"); toast(`+${h.xp} XP · ${SYS[h.sys].name}`); }
+    if(!S.habitLog[today][id]){ S.habitLog[today][id]=true; touchStreak(); grantXp(h.sys, h.xp); SFX.play("select"); toast(`+${h.xp} XP · ${SYS[h.sys].name}`);
+      /* v13: crossing off a fuel habit syncs the tracker — the numbers follow */
+      const g = fuelGoals();
+      if(g && (id==="water" || id==="protein")){ const f = todayFuel();
+        if(id==="water") f.water = Math.max(f.water, g.water);
+        if(id==="protein") f.protein = Math.max(f.protein, g.protein);
+        fuelCredit(); renderFuel(); }
+    }
     else delete S.habitLog[today][id];
     save(); renderHabits(); renderHero(); return; }
 
@@ -5672,15 +5937,20 @@ document.addEventListener("click", ev=>{
   if(t.closest("[data-recapopen]")){ openRecap(); SFX.play("select"); return; }
   if(t.id==="rcClose" || t.id==="recapSheet"){ $("#recapSheet").classList.remove("show"); return; }
   if(t.id==="hlSave"){ saveHealth(); return; }
-  /* ---- v12: hero customizer ---- */
-  if(t.closest("[data-hvopen]")){ openHeroSheet(); SFX.play("select"); return; }
+  /* ---- v13: per-character customizers ---- */
+  const avo = t.closest("[data-avopen]");
+  if(avo){ openAvSheet(avo.dataset.avopen); SFX.play("select"); return; }
   if(t.id==="hvClose" || t.id==="heroSheet"){ $("#heroSheet").classList.remove("show"); renderLook(); return; }
-  const hv = t.closest("[data-hv]");
-  if(hv){ const sVal = hv.dataset.hv, ix = sVal.indexOf(":");
+  if(t.id==="avReset" && AVI){ if(S.avatar && S.avatar.cfgs) delete S.avatar.cfgs[AVI];
+    save(); renderHero(); openAvSheet(AVI); toast("Classic art restored ↺"); return; }
+  const av = t.closest("[data-av]");
+  if(av && AVI){ const sVal = av.dataset.av, ix = sVal.indexOf(":");
     const k = sVal.slice(0,ix); let v = sVal.slice(ix+1);
-    if(k==="skin"||k==="hairC"||k==="outfit") v = +v;
-    S.avatar = S.avatar||{}; S.avatar.hv = Object.assign(hvCfg(), {[k]:v});
-    buzz(); save(); openHeroSheet(); renderHero(); return; }
+    const grp = (AV_TRAITS[AVI].groups.find(g=>g[0]===k)||[])[2];
+    if(grp==="dots" || /^\d+$/.test(v)) v = +v;
+    S.avatar = S.avatar||{}; S.avatar.cfgs = S.avatar.cfgs||{};
+    S.avatar.cfgs[AVI] = Object.assign(avCfg(AVI), {[k]:v});
+    buzz(); save(); openAvSheet(AVI); renderHero(); return; }
   /* ---- v12: fuel goals ---- */
   if(t.closest("[data-gomore]")){ go("more"); return; }
   const wtr = t.closest("[data-water]");
@@ -5691,6 +5961,11 @@ document.addEventListener("click", ev=>{
   if(pr){ const f = todayFuel(); f.protein += +pr.dataset.prot;
     buzz(); fuelCredit(); save(); renderFuel(); renderHero(); return; }
   if(t.closest("[data-protz]")){ const f = todayFuel(); f.protein = 0; save(); renderFuel(); return; }
+  if(t.id==="fuelSet"){ const f = todayFuel();
+    const w = parseFloat($("#fWater").value), pv = parseFloat($("#fProt").value);
+    if(!isNaN(w) && w>=0) f.water = Math.min(400, Math.round(w));
+    if(!isNaN(pv) && pv>=0) f.protein = Math.min(500, Math.round(pv));
+    fuelCredit(); save(); renderFuel(); renderHero(); toast("Logged — tracked for today 📊"); return; }
   const dgo = t.closest("[data-dietgoal]");
   if(dgo){ if(!S.profile) S.profile = {lifts:{},caps:{},goals:[],eq:S.sel.eq.slice()};
     S.profile.dietGoal = dgo.dataset.dietgoal; buzz(); save(); renderStatsCard(); renderFuel(); return; }
