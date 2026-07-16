@@ -60,13 +60,15 @@
 }
 /* glass — the default: light lavender, iOS liquid-glass, monochromatic + minimalist */
 [data-theme="glass"]{
-  --bg:#EFEBF8; --panel:rgba(255,255,255,.6); --panel2:rgba(255,255,255,.78); --line:rgba(96,74,158,.14);
+  /* v15: contrast pass — panels more solid, secondary text darker, lines firmer
+     so copy never melts into the frost */
+  --bg:#EFEBF8; --panel:rgba(255,255,255,.82); --panel2:rgba(255,255,255,.92); --line:rgba(76,54,138,.22);
   --bgart:radial-gradient(120% 70% at 80% 110%, rgba(167,139,250,.35), transparent 62%),
           radial-gradient(90% 60% at 5% -5%, rgba(196,181,253,.4), transparent 55%),
           radial-gradient(60% 40% at 20% 70%, rgba(221,214,254,.5), transparent 60%),
           linear-gradient(180deg,#F4F1FB,#EAE5F6);
-  --text:#251D3E; --dim:#5D5480; --faint:#8B84A6; --accent:#8B5CF6; --accent2:#A78BFA; --onaccent:#fff;
-  --c-strength:#7C5CE8; --c-motor:#9B7BFF; --c-armor:#7C90E0; --c-skill:#A263D9; --c-fuel:#C46BC0; --c-recharge:#8F86D9;
+  --text:#1F1836; --dim:#453C6B; --faint:#655C8C; --accent:#7C4DEF; --accent2:#8F6BF2; --onaccent:#fff;
+  --c-strength:#6D49DB; --c-motor:#8663F2; --c-armor:#5F77D6; --c-skill:#9550CC; --c-fuel:#B855B2; --c-recharge:#7A70CC;
 }
 /* paper + ink — the ultra-minimalist pair: one accent, quiet greys, zero noise */
 [data-theme="paper"]{
@@ -526,32 +528,64 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 
   <!-- ============ TODAY ============ -->
   <section class="page on" id="page-today">
-    <div class="pad">
-      <div class="today-eyebrow" id="tdDate" style="margin-top:10px"></div>
-      <h2 style="font-size:22px; margin:4px 0 2px" id="tdTitle">Today</h2>
-      <p class="mut" id="tdSub"></p>
+    <div class="pad" id="todayPad">
+      <div style="display:flex; align-items:flex-start; gap:12px">
+        <div style="flex:1; min-width:0">
+          <div class="today-eyebrow" id="tdDate" style="margin-top:10px"></div>
+          <h2 style="font-size:22px; margin:4px 0 2px" id="tdTitle">Today</h2>
+          <p class="mut" id="tdSub"></p>
+        </div>
+        <button id="tdAvaBtn" aria-label="Your hero" style="flex:none; margin-top:10px; width:52px; height:60px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:3px; position:relative">
+          <img id="tdAva" alt="" style="width:100%; height:100%; object-fit:contain; display:none">
+          <span id="tdAvaFb" style="font-size:22px; line-height:52px">🛡️</span>
+          <span id="tdAvaLvl" style="position:absolute; bottom:-6px; right:-6px; background:var(--accent); color:var(--onaccent); font-family:'Chakra Petch'; font-weight:700; font-size:10px; padding:2px 6px; border-radius:99px">1</span>
+        </button>
+      </div>
+      <div data-tsec="brief">
       <div id="tdBrief"></div>
       <div id="intentCard"></div>
+      </div>
+      <div data-tsec="acts">
       <div id="tdActs" style="margin-top:14px"></div>
-      <button class="btn sm ghost" id="tdQuickBtn" style="margin-top:14px">＋ Add something unscheduled</button>
+      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+        <button class="btn sm ghost" id="tdQuickBtn">＋ Add activity</button>
+        <button class="btn sm ghost" id="tdArrange">🖐 Rearrange</button>
+        <button class="btn sm ghost" id="layOpen">🎛 Screen layout</button>
+      </div>
       <div class="chips" id="tdQuick" style="display:none; margin-top:10px"></div>
+      </div>
+      <div data-tsec="rings">
       <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
       <div class="rings4" id="rings4"></div></div>
-      <div id="streakCard"></div>
+      </div>
+      <div data-tsec="streak"><div id="streakCard"></div></div>
+      <div data-tsec="life">
       <div class="sec-label">Life score</div>
       <div id="lifeCard"></div>
+      </div>
+      <div data-tsec="health">
       <div class="sec-label">Health signals</div>
       <div id="healthCard"></div>
+      </div>
+      <div data-tsec="fuel">
       <div class="sec-label">Fuel today</div>
       <div id="fuelCard"></div>
-      <div id="recapCard"></div>
+      </div>
+      <div data-tsec="recap"><div id="recapCard"></div></div>
+      <div data-tsec="habits">
       <div class="sec-label">Today's habits</div>
       <div id="habitList"></div>
+      </div>
+      <div data-tsec="checkin">
       <div class="sec-label">Quick check-in</div>
       <div id="checkinCard"></div>
       <div id="adaptCard"></div>
+      </div>
+      <div data-tsec="evening">
       <div class="sec-label">Evening close</div>
       <div id="eveningCard"></div>
+      </div>
+      <div data-tsec="journal">
       <div id="otdCard"></div>
       <div class="sec-label">Journal & voice notes</div>
       <div class="card">
@@ -562,6 +596,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
         </div>
       </div>
       <div id="jrnList"></div>
+      </div>
     </div>
   </section>
 
@@ -769,6 +804,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 <div class="sheet" id="recapSheet"><div class="sheet-card tall" id="rcBody"></div></div>
 <div class="sheet" id="codexSheet"><div class="sheet-card tall" id="cdxBody"></div></div>
 <div class="sheet" id="heroSheet"><div class="sheet-card tall" id="hvBody"></div></div>
+<div class="sheet" id="laySheet"><div class="sheet-card tall" id="layBody"></div></div>
 <div class="tour-ov" id="tourOv"><div class="tourc">
   <div class="tourc-step"></div>
   <h3 class="tourc-title"></h3>
@@ -3995,8 +4031,30 @@ function renderTodayPage(){
       `${full.length} ${full.length>1?"activities":"activity"}${acts.length>full.length?" + booster":""} today`;
     $("#tdSub").textContent = `Week ${pt.day.w+1} of ${Math.ceil(S.plan.days.length/7)}`;   // the coach note lives in the brief — once
   }
+  /* v15: arrange-in-place — raw order, drag handles, add button */
+  if(todayArrange && pt && acts){
+    $("#tdActs").innerHTML = `<p class="mut" style="font-size:11.5px; margin:10px 0 8px">Drag to reorder — this order wins over time-of-day sorting. ✎ to edit anything.</p>
+      <div id="tdArrList">` + acts.map((a,ai)=>`<div class="arr-act ${a.done?'done-a':''}" data-ai="${ai}">
+        <span class="drag-h">⠿</span><span style="flex:1">${DTYPES[a.type].icon} ${esc(a.label||DTYPES[a.type].t)}${a.done?" ✓":""}</span>
+        <button class="sw" data-actedit="${pt.idx}:${ai}">✎</button></div>`).join("") + `</div>
+      <div style="display:flex; gap:8px; margin-top:10px">
+        <button class="chip" data-tdadd="1">＋ Add activity</button>
+        <button class="chip" id="tdArrangeDone">✓ Done arranging</button></div>`;
+    try{ if(tdSortable) tdSortable.destroy(); }catch(e){}
+    if(typeof Sortable === "function"){
+      try{ tdSortable = new Sortable($("#tdArrList"), { animation:150, handle:".drag-h",
+        delay:120, delayOnTouchOnly:true, ghostClass:"sortable-ghost",
+        onEnd:(evt)=>{ const day = S.plan.days[pt.idx];
+          const it = day.acts.splice(evt.oldIndex,1)[0];
+          day.acts.splice(evt.newIndex,0,it); day.manual = 1;
+          save(); renderTodayPage(); renderPlan(); } }); }catch(e){}
+    }
+    renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
+    renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
+    return;
+  }
   $("#tdActs").innerHTML = (acts && acts.length) ? acts.map((a,ai)=>({a,ai}))
-    .sort((x,y)=>winOrd(x.a)-winOrd(y.a))   // morning work floats to the top; unscheduled sinks
+    .sort((x,y)=> pt && pt.day.manual ? 0 : winOrd(x.a)-winOrd(y.a))   // manual order wins once you've arranged
     .map(({a,ai})=>{
     const D = DTYPES[a.type];
     const W = winOf(a);
@@ -4033,7 +4091,8 @@ function renderTodayPage(){
     .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy)
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
   renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
-  renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel();
+  renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
+  const arrBtn = $("#tdArrange"); if(arrBtn) arrBtn.style.display = (pt && acts && acts.length>1) ? "" : "none";
 }
 function renderHabits(){
   const today = dayKey(); const log = S.habitLog[today] || {};
@@ -4363,6 +4422,75 @@ function importBackup(file){
   rd.readAsText(file);
 }
 
+/* ================= v15: YOUR DAY, YOUR LAYOUT =================
+   The Today screen is rearrangeable — reorder sections, hide the ones you
+   don't use. Activities reorder in place, and adding one asks what it is
+   and opens the editor instead of assuming. */
+const TSECS = [
+  ["brief","☀️ Brief & intention"],["acts","✅ Activities"],["rings","⭕ Rings"],["streak","🔥 Streak"],
+  ["life","📊 Life score"],["health","🩺 Health signals"],["fuel","💧 Fuel"],["recap","📜 Saga recap"],
+  ["habits","🔁 Habits"],["checkin","⚡ Check-in"],["evening","🌙 Evening close"],["journal","📓 Journal"]
+];
+function todayOrder(){
+  const def = TSECS.map(t=>t[0]);
+  const cur = (S.settings.todayOrder||[]).filter(k=>def.includes(k));
+  def.forEach(k=>{ if(!cur.includes(k)) cur.push(k); });
+  return cur;
+}
+function applyTodayOrder(){
+  const pad = $("#todayPad"); if(!pad) return;
+  const hide = S.settings.todayHide||{};
+  todayOrder().forEach(k=>{
+    const el = pad.querySelector(`[data-tsec="${k}"]`);
+    if(el){ pad.appendChild(el); el.style.display = hide[k] ? "none" : ""; }
+  });
+}
+function openLaySheet(){
+  const hide = S.settings.todayHide||{};
+  const ord = todayOrder();
+  $("#layBody").innerHTML = `<h3>🎛 Your day, your order</h3>
+    <p class="mut" style="margin-top:4px; font-size:11.5px">Move sections up or down, hide the ones you don't use. Changes stick.</p>
+    ${ord.map((k,i)=>{ const T = TSECS.find(t=>t[0]===k);
+      return `<div class="as-move" style="align-items:center">${T?T[1]:k}
+        <span style="display:flex; gap:6px">
+          <button class="sw" data-layup="${k}" ${i===0?"disabled":""}>↑</button>
+          <button class="sw" data-laydown="${k}" ${i===ord.length-1?"disabled":""}>↓</button>
+          ${k==="acts"?"":`<button class="sw" data-layhide="${k}">${hide[k]?"🙈 show":"👁 hide"}</button>`}
+        </span></div>`; }).join("")}
+    <div class="sheet-foot"><button class="btn ghost sm" id="layReset">↺ Default</button>
+      <button class="btn" id="layClose" style="flex:1">Done</button></div>`;
+  $("#laySheet").classList.add("show");
+}
+/* small hero up top on Today — the big version lives on Stats */
+function renderTodayAva(){
+  const img = $("#tdAva"), fb = $("#tdAvaFb"), lv = $("#tdAvaLvl");
+  if(!img) return;
+  const L = levelFromXp(S.xp);
+  if(lv) lv.textContent = L.lvl;
+  const id = avatarStyle().id, stage = heroStage(L.lvl);
+  if(fb) fb.textContent = avatarStyle().icon || "🛡️";
+  if(stage.hv || (AV_TRAITS[id] && avCustomized(id))){
+    img.src = avatarSVGURL(id, avCfg(id), L.lvl); img.style.display = "block";
+    if(fb) fb.style.display = "none"; return;
+  }
+  const vf = imgVariantFile(id, stage);
+  probeImg(vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn], u=>{
+    img.src = u; img.style.display = "block"; if(fb) fb.style.display = "none"; });
+}
+/* pick-what-you're-adding flow — no silent defaults, editor opens right after */
+function openTypePicker(dayIdx){
+  const mySports = (S.profile && S.profile.sports)||[];
+  const types = Object.entries(DTYPES).filter(([k])=>k!=="REST")
+    .filter(([k])=>k!=="SKL" || (soccerPicked() && (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball")))
+    .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy);
+  $("#pkBody").innerHTML = `<h3>＋ What are we adding?</h3>
+    <p class="mut" style="margin-top:4px">Pick a type — the editor opens next so you can shape it before it lands.</p>
+    <div class="chips" style="margin-top:10px">${types.map(([k,D])=>
+      `<button class="chip" data-tpick="${dayIdx}:${k}" style="padding:10px 14px">${D.icon} ${D.t}</button>`).join("")}</div>
+    <div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Cancel</button></div>`;
+  $("#pickSheet").classList.add("show"); SFX.play("select");
+}
+let todayArrange = false, tdSortable = null;
 /* ================= v9: MORNING INTENTION → EVENING LOOP =================
    LifeXP's best loop: say one thing in the morning, rate it honestly at night.
    Kept intentions earn XP — follow-through is a trainable skill. */
@@ -4375,7 +4503,7 @@ function renderIntent(){
     box.innerHTML = `<div class="card" style="margin-top:10px">
       <div style="font-family:'Chakra Petch'; font-weight:700; font-size:13px">🎯 ${h<12?"Morning":"Today's"} intention</div>
       <div style="display:flex; gap:8px; margin-top:8px">
-        <input id="itTxt" placeholder="One thing that would make today a win…" maxlength="90"
+        <input id="itTxt" placeholder="One thing that would make today a win…" maxlength="140"
           style="flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none">
         <button class="btn sm" id="itSet">Set</button></div>
       <p class="mut" style="font-size:11px; margin-top:6px">Tonight the evening close asks if you kept it. Kept intentions earn XP.</p></div>`;
@@ -4383,9 +4511,10 @@ function renderIntent(){
     const K = it.kept===2 ? `<span class="tag" style="color:var(--c-skill)">✓ kept</span>`
           : it.kept===1 ? `<span class="tag">◐ partly</span>`
           : it.kept===0 ? `<span class="tag">— not today, and that's data</span>` : "";
+    /* v15: full intention always visible — wraps, never clips */
     box.innerHTML = `<div class="card" style="margin-top:10px">
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-        <span style="font-family:'Chakra Petch'; font-weight:700; font-size:13px">🎯 ${esc(it.txt)}</span>${K}</div></div>`;
+      <div style="font-family:'Chakra Petch'; font-weight:700; font-size:13px; line-height:1.5; overflow-wrap:anywhere; white-space:normal">🎯 ${esc(it.txt)}</div>
+      ${K?`<div style="margin-top:6px">${K}</div>`:""}</div>`;
   }
 }
 /* ================= v9: SAGA RECAP — week in one scroll, month as a trend ===== */
@@ -5401,7 +5530,8 @@ function renderArrange(list){
     const dt = planDate(idx);
     return `
     <div class="arr-day ${idx===todayIdx?'today-hl':''}">
-      <div class="arr-head"><span>${idx===todayIdx?"Today":WDAYS[dt.getDay()]} · ${dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span><span class="w">${day.acts.length?"":"rest day"}</span></div>
+      <div class="arr-head"><span>${idx===todayIdx?"Today":WDAYS[dt.getDay()]} · ${dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span>
+        <span style="display:flex; gap:8px; align-items:center"><button class="chip" data-arradd="${idx}" style="padding:3px 10px; font-size:12px">＋</button><span class="w">${day.acts.length?"":"rest day"}</span></span></div>
       <div class="arr-acts" data-didx="${idx}">` +
       day.acts.map((a,ai)=>`<div class="arr-act ${a.done?'done-a':''}" data-ai="${ai}">
         <span class="drag-h">⠿</span><span>${DTYPES[a.type].icon} ${esc(a.label||DTYPES[a.type].t)}${a.done?" ✓":""}</span>
@@ -5956,7 +6086,7 @@ document.addEventListener("click", ev=>{
   /* ---- v9: intention ---- */
   if(t.id==="itSet"){ const inp=$("#itTxt"); const v=(inp.value||"").trim();
     if(!v){ toast("Say the one thing first"); return; }
-    S.intent = S.intent||{}; S.intent[dayKey()] = { txt:v.slice(0,90) };
+    S.intent = S.intent||{}; S.intent[dayKey()] = { txt:v.slice(0,140) };
     save(); renderIntent(); renderTodayPage(); SFX.play("select"); toast("Intention set 🎯"); return; }
   const kp = t.closest("[data-kept]");
   if(kp){ const it = todayIntent(); if(!it) return;
@@ -6109,18 +6239,52 @@ document.addEventListener("click", ev=>{
     return k ? {tpl:k, label:S.plan.templates[k].label} : {}; };
   if(t.id==="tdQuickBtn"){ const q=$("#tdQuick"); const openq = q.style.display==="none";
     q.style.display = openq ? "" : "none";
-    t.textContent = openq ? "✕ Never mind" : "＋ Add something unscheduled"; return; }
+    t.textContent = openq ? "✕ Never mind" : "＋ Add activity"; return; }
   const qa = t.closest("[data-qadd]");
   if(qa){ const typ = qa.dataset.qadd; const isMicro = !!DTYPES[typ].micro;
     const qbox = $("#tdQuick"), qbtn = $("#tdQuickBtn");   // picking one folds the drawer back down
     if(qbox) qbox.style.display = "none";
-    if(qbtn) qbtn.textContent = "＋ Add something unscheduled";
+    if(qbtn) qbtn.textContent = "＋ Add activity";
     if(!S.plan){ // no plan: just build the session freestyle
       if(buildSession({focus:DTYPES[typ].focus, time:isMicro?12:S.sel.time, micro:isMicro})){ go("train"); renderSession(); renderMusic(); } return; }
     const pt = planToday();
     if(pt){ pt.day.acts.push(Object.assign({type:typ, done:false, adhoc:true, micro:isMicro||undefined}, tplFor(typ)));
-      save(); renderTodayPage(); renderPlan(); toast(DTYPES[typ].t+" added to today"); }
+      save(); renderTodayPage(); renderPlan();
+      /* v15: nothing lands pre-shaped — the editor opens so you set time, style
+         and window before it counts */
+      openActSheet(pt.idx, pt.day.acts.length-1);
+      toast("Shape it — time, style, when"); }
     return; }
+  /* ---- v15: layout, arrange & add flows ---- */
+  if(t.id==="layOpen"){ openLaySheet(); SFX.play("select"); return; }
+  if(t.id==="layClose" || t.id==="laySheet"){ $("#laySheet").classList.remove("show"); return; }
+  if(t.id==="layReset"){ delete S.settings.todayOrder; delete S.settings.todayHide;
+    save(); applyTodayOrder(); openLaySheet(); toast("Default layout restored"); return; }
+  const lup = t.closest("[data-layup],[data-laydown]");
+  if(lup){ const k = lup.dataset.layup || lup.dataset.laydown;
+    const ord = todayOrder(); const i = ord.indexOf(k);
+    const j = lup.dataset.layup ? i-1 : i+1;
+    if(j>=0 && j<ord.length){ ord.splice(i,1); ord.splice(j,0,k);
+      S.settings.todayOrder = ord; save(); applyTodayOrder(); openLaySheet(); buzz(); }
+    return; }
+  const lh = t.closest("[data-layhide]");
+  if(lh){ const k = lh.dataset.layhide;
+    S.settings.todayHide = S.settings.todayHide||{};
+    if(S.settings.todayHide[k]) delete S.settings.todayHide[k]; else S.settings.todayHide[k] = 1;
+    save(); applyTodayOrder(); openLaySheet(); buzz(); return; }
+  if(t.closest("#tdAvaBtn")){ go("home"); SFX.play("tap"); return; }
+  if(t.id==="tdArrange"){ todayArrange = true; renderTodayPage(); SFX.play("select"); return; }
+  if(t.id==="tdArrangeDone"){ todayArrange = false; renderTodayPage(); return; }
+  if(t.closest("[data-tdadd]")){ const pt2 = planToday(); if(pt2) openTypePicker(pt2.idx); return; }
+  const arradd = t.closest("[data-arradd]");
+  if(arradd){ openTypePicker(+arradd.dataset.arradd); return; }
+  const tpick = t.closest("[data-tpick]");
+  if(tpick){ const [di, typ2] = tpick.dataset.tpick.split(":");
+    const day = S.plan && S.plan.days[+di]; if(!day) return;
+    const isM = !!DTYPES[typ2].micro;
+    day.acts.push(Object.assign({type:typ2, done:false, adhoc:true, micro:isM||undefined}, tplFor(typ2)));
+    save(); closePickSheet(); renderTodayPage(); renderPlan();
+    openActSheet(+di, day.acts.length-1); return; }
   const pd = t.closest("[data-pday]"); if(pd){ pd.closest(".pday-wrap").classList.toggle("open"); return; }
   /* (v5: type cycling replaced by the ✎ act editor sheet) */
   const adl = t.closest("[data-actdel]");
@@ -6343,7 +6507,7 @@ function applyBg(){
 if(!S.settings.tv7){ if(S.settings.theme==="ember" || !S.settings.theme) S.settings.theme = "glass"; S.settings.tv7 = 1; save(); }
 document.body.dataset.theme = S.settings.theme || "glass";
 applyBg();
-renderAll(); pushWidgets(); checkMonthChapter();
+renderAll(); pushWidgets(); checkMonthChapter(); applyTodayOrder();
 if(!S.profile){ openOnb(); }
 </script>
 </body>

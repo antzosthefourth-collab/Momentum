@@ -569,3 +569,39 @@ session needed only for the widget extension target).
   key ideas verbally next session.
 - Rad Dad Ankle Armor lineage: ankle defaults on in mobility areas; ankle moves
   carried over 1:1; ease-of-use bar = that app.
+
+## v15 handoff — Higgsfield pipeline for avatar customizations & emotes
+
+**Goal:** move avatar visuals to generated art at scale — trait combinations rendered
+in each character's original style, plus short **emote videos** that play on
+interaction: tap the hero → idle emote (wave/flex/hoot); session complete → celebration
+emote; streak milestone / level-up → epic emote in the level-up modal (the `#luVid`
+video slot already exists and autoplays when present).
+
+**Why Higgsfield:** the original character art (viking 6 stages, buddy, rose, mini,
+owlbear) was generated on Higgsfield — assets still live on its CDN
+(`d8j0ntlcm91z4.cloudfront.net`, `hf_2026*` files). Same pipeline = same style.
+
+**Blocker right now:** the connected Higgsfield account has **0 credits (free plan)**.
+Top up or connect a funded account, then:
+
+1. **Trait variants (images):** for each identity, `generate_image` edits from the
+   original renders (media_import_url → soul/edit flow), one file per trait combo the
+   UI exposes. Naming: `hero-{id}-{stage}-{variant}.png`, dropped in `momentum-deploy/`.
+   The app's `IMG_VARIANTS` registry (index.html) already maps variants → files;
+   extend `opts` per identity and ship the files — no other code needed.
+2. **Emotes (videos):** `generate_video` (image-to-video) from each character's stage
+   art. Three per identity to start: `emote-{id}-tap.mp4` (1–2s wave/bounce),
+   `emote-{id}-complete.mp4` (2–3s celebration), `emote-{id}-epic.mp4` (3–4s, for
+   level-ups → wire into `#luVid`). Keep loops subtle, transparent/cutout-style bg
+   or the character's habitat.
+3. **Wiring points in index.html:** `renderHeroScene()` (tap handler on `#heroScene`
+   → play tap emote overlay), `toggleItem()` session-complete branch (play complete
+   emote), `grantXp()` level-up branch (`#luVid` src per identity).
+4. Local-first rule stands: ship files in the repo, CDN only as fallback.
+   Pixel-recolor variants (v14, `recolor.py` in session workspace) remain the
+   zero-cost fallback for flat colorway edits.
+
+**Note:** interim v14 colorways were produced with deterministic pixel recoloring
+(preserves original art exactly). Gemini free-tier key had no image quota;
+HF Spaces invoke disabled in that session.
