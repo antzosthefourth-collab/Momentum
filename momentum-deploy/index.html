@@ -3703,7 +3703,8 @@ function scenePrev(el, opts={}){
   el.innerHTML = `<img class="ms-bg" style="display:none" alt=""><img class="ms-char" style="display:none" alt=""><img class="ms-pet" style="display:none" alt=""><span class="ms-fb">${avatarStyle().icon||"🛡️"}</span>`;
   const bg = el.querySelector(".ms-bg"), chr = el.querySelector(".ms-char"),
         pet = el.querySelector(".ms-pet"), fb = el.querySelector(".ms-fb");
-  probeImg([hab.img], u=>{ bg.src = u; bg.style.display = "block"; });
+  /* full-scene art (owlbear) carries its own world — habitat stays out of it */
+  if(!stage.scene) probeImg([hab.img], u=>{ if(!bg.dataset.scene){ bg.src = u; bg.style.display = "block"; } });
   const setChar = u => { chr.src = u; chr.style.display = "block"; fb.style.display = "none"; };
   if(typeof opts.charSrc === "string") setChar(opts.charSrc);
   else if(stage.hv || (AV_TRAITS[id] && avCustomized(id))) setChar(avatarSVGURL(id, avCfg(id), L.lvl));
@@ -3711,7 +3712,7 @@ function scenePrev(el, opts={}){
     const vf = imgVariantFile(id, stage);
     const cands = Array.isArray(opts.charSrc) ? opts.charSrc : (vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn]);
     probeImg(cands, u=>{
-      if(stage.scene){ bg.src = u; bg.style.display = "block"; fb.style.display = "none"; }  /* full-scene art (owlbear) carries its own world */
+      if(stage.scene){ bg.dataset.scene = "1"; bg.src = u; bg.style.display = "block"; fb.style.display = "none"; }
       else setChar(u);
     });
   }
@@ -4196,8 +4197,9 @@ function renderTodayPage(){
     /* one add button at a time — the static row hides while editing */
     const br = $("#tdBtnRow"); if(br) br.style.display = "none";
     const qd = $("#tdQuick"); if(qd) qd.style.display = "none";
-    renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
-    renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
+    [renderCheckin, renderStreakCard, renderJournal, renderLifeScore, renderEvening,
+     renderIntent, renderHealth, renderRecapCard, renderOTD, renderFuel, renderTodayAva]
+      .forEach(f=>{ try{ f(); }catch(e){} });
     return;
   }
   const br2 = $("#tdBtnRow"); if(br2) br2.style.display = "flex";
@@ -4238,8 +4240,9 @@ function renderTodayPage(){
     .filter(([k])=>k!=="SKL" || (soccerPicked() && (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball")))
     .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy)
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
-  renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
-  renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
+  [renderCheckin, renderStreakCard, renderJournal, renderLifeScore, renderEvening,
+   renderIntent, renderHealth, renderRecapCard, renderOTD, renderFuel, renderTodayAva]
+    .forEach(f=>{ try{ f(); }catch(e){ console.error("today card failed:", f.name, e); } });
   const arrBtn = $("#tdArrange"); if(arrBtn) arrBtn.style.display = (pt && acts && acts.length>0) ? "" : "none";
 }
 function renderHabits(){
