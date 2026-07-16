@@ -3577,17 +3577,18 @@ function renderHeroScene(){
   /* v13: any customized identity renders from its trait layers; classic art
      stays the default until the user touches a trait */
   const avId = avatarStyle().id;
-  if(stage.hv || avCustomized(avId)){
+  if(stage.hv || (AV_TRAITS[avId] && avCustomized(avId))){
     if(scene) scene.classList.remove("full");
     if(bg) bg.style.display = "";
     probeImg([hab.img], u=>{ if(bg) bg.src = u; });
     if(ch){ ch.src = avatarSVGURL(avId, avCfg(avId), L.lvl); ch.style.display = "block"; }
     if(fb) fb.style.display = "none";
-  } else probeImg([stage.img, stage.cdn], u=>{
+  } else { const vf = imgVariantFile(avId, stage);
+  probeImg(vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn], u=>{
     if(ch.getAttribute("src")===u) ch.style.display = "block";   // same art re-render: onload won't re-fire
     else ch.src = u;
     if(fb) fb.style.display = "none";
-  });
+  }); }
   if(!$("#hsBgVid")) probeVid(["hero-loop.webm","hero-loop.mp4"], src=>{
     if($("#hsBgVid")) return;
     try{
@@ -3623,9 +3624,9 @@ function renderLook(){
   $("#lookCard").innerHTML = `<div class="card">
     <div class="sec-label" style="margin-top:0">Avatar</div><div class="chips">${styles}</div>
     <div style="display:flex; gap:12px; align-items:center; margin-top:10px">
-      ${avCustomized(cur.id) ? `<img src="${avatarSVGURL(cur.id, avCfg(cur.id), L.lvl)}" alt="" style="width:64px; height:80px; flex:none">` : ""}
-      <button class="btn sm" data-avopen="${cur.id}">🎨 Customize ${esc(cur.n)} — ${cur.id==="viking"?"beard, helm, war paint":cur.id==="buddy"?"fluff, eyes, topper":cur.id==="rose"?"hair, ribbon, outfit":cur.id==="mini"?"color, mood, band":cur.id==="owlbear"?"feathers, tufts, eyes":"skin, hair, face, outfit"}</button></div>
-    ${!avCustomized(cur.id) ? `<p class="mut" style="font-size:11px; margin-top:7px">Classic art stays until you change something — and one tap brings it back.</p>` : ""}
+      ${AV_TRAITS[cur.id] && avCustomized(cur.id) ? `<img src="${avatarSVGURL(cur.id, avCfg(cur.id), L.lvl)}" alt="" style="width:64px; height:80px; flex:none">` : ""}
+      <button class="btn sm" data-avopen="${cur.id}">🎨 Customize ${esc(cur.n)} — ${cur.id==="viking"?"beard, helm, war paint":cur.id==="buddy"?"fluff, eyes, topper":cur.id==="rose"?"hair, ribbon, outfit":cur.id==="mini"?"colorways of the original":cur.id==="owlbear"?"plumage colorways":"skin, hair, face, outfit"}</button></div>
+    ${AV_TRAITS[cur.id] && !avCustomized(cur.id) ? `<p class="mut" style="font-size:11px; margin-top:7px">Classic art stays until you change something — and one tap brings it back.</p>` : ""}
     <div class="sec-label">Habitat</div><div class="chips">${habs}</div>
     <div class="sec-label">Companion</div><div class="chips">${pets}</div>
     <p class="mut" style="margin-top:8px; font-size:11.5px">Avatars are yours from day one — habitats open as you level, companions arrive on streaks (first one at just ${COMPANIONS[0].streak} days) and evolve as streaks grow.</p></div>`;
@@ -3742,12 +3743,18 @@ function todayBriefCore(){
    3. any English system voice */
 let _voices = [];
 function refreshVoices(){ try{ _voices = speechSynthesis.getVoices()||[]; }catch(e){} }
-if(typeof speechSynthesis!=="undefined"){ refreshVoices(); try{ speechSynthesis.onvoiceschanged = refreshVoices; }catch(e){} }
+if(typeof speechSynthesis!=="undefined"){ refreshVoices();
+  /* iOS hands the voice list over late — re-render the picker when it lands */
+  try{ speechSynthesis.onvoiceschanged = ()=>{ refreshVoices(); try{ renderVoice(); }catch(e){} }; }catch(e){} }
 function deviceVoices(){
   if(!_voices.length) refreshVoices();
   const en = _voices.filter(v=>/^en/i.test(v.lang||""));
-  const score = v => (/siri/i.test((v.name||"")+(v.voiceURI||""))?8:0) +
-    (/premium|enhanced|natural|neural/i.test(v.name)?4:0) + (v.localService?1:0);
+  /* iOS truth: Apple never shares Siri-branded voices with websites — but the
+     Premium/Enhanced voices downloaded from the same Settings page DO appear
+     (their voiceURI carries .premium. / .enhanced.). Front those. */
+  const sig = v => (v.name||"") + " " + (v.voiceURI||"");
+  const score = v => (/siri/i.test(sig(v))?9:0) + (/premium/i.test(sig(v))?7:0) +
+    (/enhanced|natural|neural/i.test(sig(v))?5:0) + (v.localService?1:0);
   return en.slice().sort((a,b)=>score(b)-score(a));
 }
 /* v13: Siri-first catalog — when the device exposes English Siri voices, they're
@@ -3755,10 +3762,11 @@ function deviceVoices(){
    the best English voices available get the same clean numbering. */
 function voiceCatalog(){
   const all = deviceVoices();
-  const siri = all.filter(v=>/siri/i.test((v.name||"")+(v.voiceURI||"")));
-  const pool = (siri.length ? siri : all).slice(0,8);
-  return pool.map((v,i)=>({ v, label:"Voice "+(i+1), siri:/siri/i.test((v.name||"")+(v.voiceURI||"")),
-    hq:/siri|premium|enhanced|natural|neural/i.test((v.name||"")+(v.voiceURI||"")) }));
+  const sig = v => (v.name||"") + " " + (v.voiceURI||"");
+  const hq = all.filter(v=>/siri|premium|enhanced|natural|neural/i.test(sig(v)));
+  const pool = (hq.length >= 2 ? hq : all).slice(0,8);
+  return pool.map((v,i)=>({ v, label:"Voice "+(i+1), siri:/siri/i.test(sig(v)),
+    hq:/siri|premium|enhanced|natural|neural/i.test(sig(v)) }));
 }
 function briefVoice(){
   /* v12: your picked voice, else the best one the device has. No personas. */
@@ -3859,7 +3867,7 @@ function renderVoice(){
         <span style="display:flex; gap:6px"><button class="sw" data-vprev="${esc(c.v.name)}">▶</button>
         <button class="sw" data-vpick="${esc(c.v.name)}">${chosen===c.v.name?"✓ chosen":"use"}</button></span></div>`).join("")
       : `<p class="mut" style="font-size:11.5px">Your device's voices show up here once it shares them.</p>`}
-    <p class="mut" style="font-size:10.5px; margin-top:9px">Want newer Siri voices? iPhone Settings → Accessibility → Spoken Content → Voices → English — download there and they appear here.</p>
+    <p class="mut" style="font-size:10.5px; margin-top:9px">Straight talk: Apple doesn't share Siri-branded voices with websites — downloading them won't surface them here. What DOES work: on the same page (Settings → Accessibility → Spoken Content → Voices → English), pick a name like Ava, Zoe or Evan and download its <b>Premium</b> or <b>Enhanced</b> version — those show up here automatically and sound close. Or use the HD voices below: they work everywhere, guaranteed.</p>
   </div>
   <div class="card" style="margin-top:8px">
     ${hd ? `<div style="display:flex; align-items:center; gap:8px"><b style="font-family:'Chakra Petch'; font-size:13px">✨ HD voices</b><span class="tag" style="color:var(--c-skill)">downloaded · work offline</span></div>
@@ -4763,17 +4771,40 @@ const AV_TRAITS = {
             ["ribbon","Ribbon","dots",RB_RIBB],
             ["face","Face","opts",[["bright","Bright"],["wink","Wink"],["fierce","Game face"]]],
             ["outfit","Outfit","dots",HV_OUTFIT]] },
-  mini: { render:miniSVG, def:{color:3,eyes:"dots",band:"none"},
-    groups:[["color","Color","dots",HV_OUTFIT.concat(["#F2F3F7","#2B2430"])],
-            ["eyes","Mood","opts",[["dots","Classic"],["happy","Happy"],["focus","Focused"]]],
-            ["band","Headband","opts",[["none","None"],["#C4432B","Red"],["#4C9AFF","Blue"],["#E8B44A","Gold"],["#9B7BFF","Violet"]]]] },
-  owlbear: { render:owlSVG, def:{feath:0,belly:0,eyec:0,tufts:"long",beak:0},
-    groups:[["feath","Feathers","dots",OW_FEATH],
-            ["belly","Belly","dots",OW_BELLY],
-            ["eyec","Eyes","dots",OW_EYEC],
-            ["tufts","Ear tufts","opts",[["long","Long"],["short","Short"]]],
-            ["beak","Beak & talons","opts",[[0,"Gold"],[1,"Dark"]]]] }
 };
+/* v14: Mini & Owlbear keep their ORIGINAL art — customization is a set of
+   pixel-faithful recolors of the real renders (band + body colors for Mini,
+   plumage for the Owlbear). Same art, new colorways, zero style drift. */
+const IMG_VARIANTS = {
+  mini: { base:["hero-mini-1","hero-mini-2"], ext:"png",
+    opts:[["","Classic cream"],["red","Red band"],["gold","Gold band"],["sky","Sky blue"],["blush","Blush pink"],["coal","Charcoal"]] },
+  owlbear: { base:["hero-owl-1","hero-owl-2"], ext:"jpg",
+    opts:[["","Classic brown"],["snow","Snowy"],["night","Midnight"],["moss","Forest moss"]] }
+};
+function imgVariantFile(id, stage){
+  const R = IMG_VARIANTS[id]; if(!R) return null;
+  const v = ((S.avatar||{}).imgVar||{})[id]; if(!v) return null;
+  const stages = (AVATAR_STYLES.find(a=>a.id===id)||{}).stages||[];
+  const ix = Math.max(0, stages.indexOf(stage));
+  return `${R.base[Math.min(ix, R.base.length-1)]}-${v}.${R.ext}`;
+}
+function openVarSheet(id){
+  AVI = id;
+  const R = IMG_VARIANTS[id]; if(!R) return;
+  const st = AVATAR_STYLES.find(a=>a.id===id)||{};
+  const cur = ((S.avatar||{}).imgVar||{})[id] || "";
+  const classic = (st.stages && st.stages[0] && (st.stages[0].img || st.stages[0].cdn)) || "";
+  $("#hvBody").innerHTML = `<h3>${st.icon||""} ${esc(st.n||"")}</h3>
+    <p class="mut" style="margin-top:4px; font-size:11.5px">The original art in new colorways — same renders, recolored pixel-for-pixel. Nothing else changes.</p>
+    <div class="hv-opts" style="margin-top:10px">${R.opts.map(([v,l])=>{
+      const src = v ? `${R.base[0]}-${v}.${R.ext}` : classic;
+      return `<button class="hv-opt ${cur===v?'on':''}" data-imgvar="${id}:${v}" style="width:31%">
+        <img src="${esc(src)}" alt="" style="width:100%; height:88px; object-fit:cover; border-radius:8px">
+        <div class="pl">${l}</div></button>`; }).join("")}</div>
+    <p class="mut" style="font-size:10.5px; margin-top:8px">Levels still bring their upgrades — colorways carry across every stage.</p>
+    <div class="sheet-foot"><button class="btn" id="hvClose" style="flex:1">Done</button></div>`;
+  $("#heroSheet").classList.add("show");
+}
 function avCfg(id){
   id = id || avatarStyle().id;
   const T = AV_TRAITS[id]; if(!T) return null;
@@ -5939,7 +5970,14 @@ document.addEventListener("click", ev=>{
   if(t.id==="hlSave"){ saveHealth(); return; }
   /* ---- v13: per-character customizers ---- */
   const avo = t.closest("[data-avopen]");
-  if(avo){ openAvSheet(avo.dataset.avopen); SFX.play("select"); return; }
+  if(avo){ const aid = avo.dataset.avopen;
+    if(IMG_VARIANTS[aid]) openVarSheet(aid); else openAvSheet(aid);
+    SFX.play("select"); return; }
+  const ivr = t.closest("[data-imgvar]");
+  if(ivr){ const [aid, v] = ivr.dataset.imgvar.split(":");
+    S.avatar = S.avatar||{}; S.avatar.imgVar = S.avatar.imgVar||{};
+    if(v) S.avatar.imgVar[aid] = v; else delete S.avatar.imgVar[aid];
+    buzz(); save(); openVarSheet(aid); renderHero(); return; }
   if(t.id==="hvClose" || t.id==="heroSheet"){ $("#heroSheet").classList.remove("show"); renderLook(); return; }
   if(t.id==="avReset" && AVI){ if(S.avatar && S.avatar.cfgs) delete S.avatar.cfgs[AVI];
     save(); renderHero(); openAvSheet(AVI); toast("Classic art restored ↺"); return; }
