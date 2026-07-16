@@ -1905,7 +1905,7 @@ const AVATAR_STYLES = [
      🦉 fallback until then. */
   { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",  voice:{pitch:.82, rate:.94, pref:"male"}, el:"TxGEqnHWrfWFTfGW9XjX",
     stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1.jpg", scene:true, roast:"Hoots first. Lifts eventually." },
-             { lvl:8, n:"Elder Owlbear",  img:"hero-owl-2.jpg", scene:true } ] },
+             { lvl:8, n:"Guardian Owlbear", img:"hero-owl-2.jpg", scene:true } ] },
   /* v12: the buildable hero — smooth vector art, every trait its own layer */
   { id:"custom",  n:"Custom",    icon:"🎨", d:"Built by you — skin, hair, face, the works", voice:{},
     stages:[ { lvl:1,  n:"Self-Made",     hv:true, roast:"Assembled to spec. Reps sold separately." },
@@ -5144,7 +5144,7 @@ const IMG_VARIANTS = {
   mini: { base:["hero-mini-1","hero-mini-2"], ext:"png",
     opts:[["","Classic cream"],["red","Red band"],["gold","Gold band"],["sky","Sky blue"],["blush","Blush pink"],["coal","Charcoal"]] },
   owlbear: { base:["hero-owl-1","hero-owl-2"], ext:"jpg",
-    opts:[["","Classic brown"],["snow","Snowy"],["night","Midnight"],["moss","Forest moss"]] }
+    opts:[["","Classic — the book cub"],["snow","Snowy owl × Polar"],["night","Great gray × Black bear"],["moss","Barn owl × Kodiak"]] }
 };
 function imgVariantFile(id, stage){
   const R = IMG_VARIANTS[id]; if(!R) return null;
