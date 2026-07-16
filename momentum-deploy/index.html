@@ -2458,6 +2458,7 @@ function grantXp(sysKey, amount){
     $("#levelup").classList.add("show");
     try{ const v=$("#luVid"); if(v){ v.currentTime=0; const p=v.play(); if(p&&p.catch)p.catch(()=>{}); } }catch(e){}
     SFX.play("fanfare"); bigBurst({n:150, spread:90, origin:{x:.5,y:.45}});
+    try{ popEmote("epic"); }catch(e){}
     /* v9: big moments chronicle themselves */
     try{ codexAuto("feat", "Reached Level "+after,
       tierFor(after)+" tier."+(unlocked.length?" Unlocked "+unlocked.join(", ")+".":"")); }catch(e){}
@@ -3458,7 +3459,7 @@ function toggleItem(i, fromPlayer){
         else logFreeAct(S.session.focus);   // v10: no plan? the day still lists it, by name
       }
       stopTimer(); SFX.play("complete"); bigBurst({n:90});
-      try{ notePlace(); }catch(e){}   // v18: the gym you're in becomes a Place memory
+      try{ notePlace(); popEmote("complete"); }catch(e){}   // v18/v21: place noted, emote pops
       if(!fromPlayer) toast("Session complete 💥");
     } else if(m.rest && !fromPlayer){ SFX.play("done"); startTimer(m.rest, "REST"); }
     else { SFX.play("done"); if(!fromPlayer) toast(`+${m.xp} XP · ${SYS[m.p].name}`); }
@@ -3717,6 +3718,21 @@ function scenePrev(el, opts={}){
   const comp = COMPANIONS.find(c=>c.id===A.companion);
   if(comp && unlockedCompanions().includes(comp))
     probeImg([comp.imgs[bestStreak()>=comp.evolve ? 1 : 0]], u=>{ pet.src = u; pet.style.display = "block"; });
+}
+/* v21: EMOTES — Higgsfield Sprite Creator renders. Mini first; the rest of the
+   cast (incl. the smaller, cuter storybook owlbear) lands the same way. */
+const EMOTES = { mini: { tap:"emote-mini-tap.png", complete:"emote-mini-complete.png", epic:"emote-mini-epic.png" } };
+function popEmote(kind){
+  const e = EMOTES[avatarStyle().id]; const src = e && e[kind]; if(!src) return false;
+  let el = document.getElementById("emotePop");
+  if(!el){ el = document.createElement("img"); el.id = "emotePop";
+    el.style.cssText = "position:fixed;left:50%;top:36%;transform:translate(-50%,-50%) scale(.6);width:160px;z-index:97;transition:all .25s;opacity:0;pointer-events:none;border-radius:18px;filter:drop-shadow(0 12px 26px rgba(0,0,0,.4))";
+    document.body.appendChild(el); }
+  el.src = src;
+  requestAnimationFrame(()=>{ el.style.opacity = 1; el.style.transform = "translate(-50%,-50%) scale(1)"; });
+  clearTimeout(el._h);
+  el._h = setTimeout(()=>{ el.style.opacity = 0; el.style.transform = "translate(-50%,-50%) scale(.6)"; }, 1700);
+  return true;
 }
 let LOOK_OPEN = false;
 function renderLook(){
@@ -6525,7 +6541,8 @@ document.addEventListener("click", ev=>{
     S.settings.todayHide = S.settings.todayHide||{};
     if(S.settings.todayHide[k]) delete S.settings.todayHide[k]; else S.settings.todayHide[k] = 1;
     save(); applyTodayOrder(); openLaySheet(); buzz(); return; }
-  if(t.closest("#tdAvaBtn")){ go("home"); SFX.play("tap"); return; }
+  if(t.closest("#tdAvaBtn")){ popEmote("tap"); go("home"); SFX.play("tap"); return; }
+  if(t.closest("#heroScene") && !t.closest("button")){ popEmote("tap"); return; }
   if(t.id==="tdArrange"){ todayArrange = !todayArrange; tdExpArr.clear(); renderTodayPage(); SFX.play("select"); return; }
   if(t.id==="tdArrangeDone"){ todayArrange = false; renderTodayPage(); return; }
   const texp = t.closest("[data-tdexp]");
