@@ -1,0 +1,6 @@
+{
+  "appId": "com.raddad.momentum",
+  "appName": "Momentum",
+  "webDir": "../momentum-deploy",
+  "ios": { "contentInset": "never", "backgroundColor": "#121014" }
+}

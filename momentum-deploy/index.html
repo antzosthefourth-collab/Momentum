@@ -673,8 +673,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
     <div class="pad">
       <h2 style="font-size:20px; margin-top:6px">Build a session</h2>
       <p class="mut">Time + gear + focus. Momentum handles the rest.</p>
-      <div class="sec-label">Quick starts</div>
-      <div class="chips" id="recipeChips"></div>
+      <button class="sec-label" id="qsToggle" style="width:100%; background:none; border:none; padding:0; cursor:pointer"></button>
+      <div class="chips" id="recipeChips" style="display:none"></div>
       <div class="sec-label">Time</div>
       <div class="chips" id="timeChips"></div>
       <div class="sec-label">Equipment</div>
@@ -758,7 +758,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <p class="mut" style="margin-bottom:10px">Taps, transitions, completions and celebrations — all generated on-device.</p>
       <div class="chips" id="soundChips"></div>
       <div class="sec-label">Ambience</div>
-      <p class="mut" style="margin-bottom:10px">Bundled loops — lofi beats, rain, surf. They play offline, no streaming. The floating 🔊 pill lowers or pauses from anywhere.</p>
+      <p class="mut" style="margin-bottom:10px">Bundled loops — lofi beats. They play offline, no streaming. The floating 🔊 pill lowers or pauses from anywhere.</p>
       <div class="chips" id="ambChips"></div>
       <div class="sec-label">Music</div>
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
@@ -1803,9 +1803,7 @@ function probeVid(candidates, ok){
    ambiences broadband synthesis genuinely nails */
 const AMBIENCE = [
   { id:"lofi", n:"🎧 Lofi Flow",     file:"amb-lofi-1.mp3" },
-  { id:"tape", n:"📼 Midnight Tape", file:"amb-lofi-2.mp3" },
-  { id:"rain", n:"🌧️ Rainfall",      file:"amb-rain.mp3" },
-  { id:"tide", n:"🌊 Slow Tide",     file:"amb-tide.mp3" }
+  { id:"tape", n:"📼 Midnight Tape", file:"amb-lofi-2.mp3" }
 ];
 let _amb = null, _ambLevel = "full";   // full → low → paused (the 🔊 pill cycles)
 function ambPillSync(){
@@ -3854,8 +3852,19 @@ function todayBriefCore(){
 let _voices = [];
 function refreshVoices(){ try{ _voices = speechSynthesis.getVoices()||[]; }catch(e){} }
 if(typeof speechSynthesis!=="undefined"){ refreshVoices();
-  /* iOS hands the voice list over late — re-render the picker when it lands */
-  try{ speechSynthesis.onvoiceschanged = ()=>{ refreshVoices(); try{ renderVoice(); }catch(e){} }; }catch(e){} }
+  /* iOS hands the voice list over late — and sometimes not until speech has
+     been poked once from a user gesture. Poll early, kick on first touch,
+     re-render the picker whenever the list lands or grows. */
+  try{ speechSynthesis.onvoiceschanged = ()=>{ refreshVoices(); try{ renderVoice(); }catch(e){} }; }catch(e){}
+  [400, 1200, 3000].forEach(ms=>setTimeout(()=>{ const n=_voices.length; refreshVoices();
+    if(_voices.length!==n){ try{ renderVoice(); }catch(e){} } }, ms));
+  let _vkick = false;
+  document.addEventListener("touchstart", function vk(){
+    if(_vkick) return; _vkick = true;
+    try{ if(!_voices.length){ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); speechSynthesis.cancel(); } }catch(e){}
+    setTimeout(()=>{ refreshVoices(); try{ renderVoice(); }catch(e){} }, 400);
+  }, {once:true, passive:true});
+}
 function deviceVoices(){
   if(!_voices.length) refreshVoices();
   const en = _voices.filter(v=>/^en/i.test(v.lang||""));
@@ -3977,7 +3986,10 @@ function renderVoice(){
         <span style="display:flex; gap:6px"><button class="sw" data-vprev="${esc(c.v.name)}">▶</button>
         <button class="sw" data-vpick="${esc(c.v.name)}">${chosen===c.v.name?"✓ chosen":"use"}</button></span></div>`).join("")
       : `<p class="mut" style="font-size:11.5px">Your device's voices show up here once it shares them.</p>`}
-    <p class="mut" style="font-size:10.5px; margin-top:9px">Straight talk: Apple doesn't share Siri-branded voices with websites — downloading them won't surface them here. What DOES work: on the same page (Settings → Accessibility → Spoken Content → Voices → English), pick a name like Ava, Zoe or Evan and download its <b>Premium</b> or <b>Enhanced</b> version — those show up here automatically and sound close. Or use the HD voices below: they work everywhere, guaranteed.</p>
+    <div style="display:flex; gap:8px; align-items:center; margin-top:9px">
+      <button class="btn sm ghost" id="vRescan">↻ Rescan voices</button>
+      <span class="mut" style="font-size:10.5px">device shared ${deviceVoices().length} English voice${deviceVoices().length===1?"":"s"}</span></div>
+    <p class="mut" style="font-size:10.5px; margin-top:8px">Straight talk: Apple doesn't share Siri-branded voices with websites. What DOES work: same Settings page → pick a name like Ava, Zoe or Evan → download its <b>Premium</b>/<b>Enhanced</b> version. Just downloaded one and it's not here? Fully close and reopen ${"Safari"} (or restart the phone) — iOS refreshes its voice list on relaunch, then tap Rescan. The HD voices below skip all of this.</p>
   </div>
   <div class="card" style="margin-top:8px">
     ${hd ? `<div style="display:flex; align-items:center; gap:8px"><b style="font-family:'Chakra Petch'; font-size:13px">✨ HD voices</b><span class="tag" style="color:var(--c-skill)">downloaded · work offline</span></div>
@@ -5208,6 +5220,8 @@ const CDX_TYPES = {
   ground: { n:"Place",     pn:"Places",     icon:"📍", c:"#57c793" },
   feat:   { n:"Milestone", pn:"Milestones", icon:"🏅", c:"#e8b44a" },
   gear:   { n:"Gear",      pn:"Gear",       icon:"⚔️", c:"#9fb2c8" },
+  food:   { n:"Food",      pn:"Food",       icon:"🍽️", c:"#d96aa8" },
+  activity:{ n:"Activity", pn:"Activities", icon:"🏃", c:"#4cc58a" },
   chapter:{ n:"Chapter",   pn:"Chapters",   icon:"📖", c:"#e0574b" }
 };
 let cdxFilter = "all", CDXI = null;
@@ -5284,7 +5298,7 @@ function openCodexNew(){
   $("#cdxBody").innerHTML = `<h3>New memory</h3>
     <div class="chips" style="margin-top:10px" id="cdxTypeChips">${Object.entries(CDX_TYPES).map(([k,T],i)=>
       `<button class="chip ${i===0?'on':''}" data-cdxtype="${k}">${T.icon} ${T.n}</button>`).join("")}</div>
-    <div class="field" style="margin-top:10px"><label>Name</label><input id="cdxName" placeholder="Marcus · Riverside trail · First pull-up…" maxlength="40"></div>
+    <div class="field" style="margin-top:10px"><label>Name</label><input id="cdxName" placeholder="Marcus · Riverside trail · First pull-up · Post-lift burrito…" maxlength="40"></div>
     <div class="field"><label>The story (optional)</label><textarea id="cdxNote"></textarea></div>
     <div class="field"><label>Photo (optional)</label><input type="file" id="cdxPhotoFile" accept="image/*"></div>
     <div class="sheet-foot"><button class="btn ghost" id="cdxCancel" style="flex:1">Cancel</button>
@@ -5391,10 +5405,14 @@ function lifeCredits(t, entry){
 
 /* ================= RENDER: TRAIN ================= */
 function renderPickers(){
-  $("#recipeChips").innerHTML = RECIPES
+  const recipes = RECIPES
     .filter(r=>r.id!=="soc" || S.sel.eq.includes("Soccer Ball"))
-    .filter(r=>!r.o.eqOnly || r.o.eqOnly==="Bodyweight" || S.sel.eq.includes(r.o.eqOnly))
-    .map(r=>`<button class="chip" data-recipe="${r.id}">${r.n}</button>`).join("")
+    .filter(r=>!r.o.eqOnly || r.o.eqOnly==="Bodyweight" || S.sel.eq.includes(r.o.eqOnly));
+  const qsOpen = !!S.settings.qsOpen;
+  const qs = $("#qsToggle");
+  if(qs) qs.innerHTML = `<span style="pointer-events:none">${qsOpen?"▾":"▸"} Quick starts · ${recipes.length}</span>`;
+  $("#recipeChips").style.display = qsOpen ? "" : "none";
+  $("#recipeChips").innerHTML = recipes.map(r=>`<button class="chip" data-recipe="${r.id}">${r.n}</button>`).join("")
     || `<span class="mut">Pick some gear below to unlock quick starts.</span>`;
   $("#timeChips").innerHTML = [15,20,30,45,60].map(t=>`<button class="chip alt ${S.sel.time===t?'on':''}" data-t="${t}">${t} min</button>`).join("");
   $("#eqGroups").innerHTML = Object.entries(EQ_GROUPS).map(([g,items])=>`<div class="eq-group"><div class="g">${g}</div><div class="chips">`+
@@ -6301,6 +6319,9 @@ document.addEventListener("click", ev=>{
   const vv = t.closest("[data-vprev]");
   if(vv){ speakSys("Good morning. Week two, day three. On deck: push day, about thirty minutes.", vv.dataset.vprev); return; }
   if(t.id==="hdGet"){ hdDownload(); return; }
+  if(t.id==="vRescan"){ try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); speechSynthesis.cancel(); }catch(e){}
+    setTimeout(()=>{ refreshVoices(); renderVoice(); toast(`Found ${deviceVoices().length} English voices`); }, 450); return; }
+  if(t.id==="qsToggle"){ S.settings.qsOpen = S.settings.qsOpen ? 0 : 1; save(); renderPickers(); buzz(); return; }
   if(t.id==="hdOff"){ delete S.settings.hdOn; save(); renderVoice(); toast("Back to device voices — the HD download stays cached"); return; }
   const hp = t.closest("[data-hdpick]");
   if(hp){ S.settings.hdVoice = hp.dataset.hdpick; buzz(); save(); renderVoice(); return; }

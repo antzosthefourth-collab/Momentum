@@ -1,0 +1,6 @@
+<!-- Merge into the app target's Info.plist -->
+<key>NSHealthShareUsageDescription</key>
+<string>Momentum reads your steps, sleep, daylight time and walking distance to fill your day automatically. Nothing leaves your device.</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Momentum notes the gym or trail you finish a workout at so it can appear in your Memories. Location is never uploaded.</string>
+<!-- Capabilities to add in Xcode: HealthKit; App Groups (group.com.raddad.momentum) on app + widget targets -->
