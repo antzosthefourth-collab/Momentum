@@ -511,6 +511,12 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 .hl-item label{display:block; font-size:10px; font-family:'Chakra Petch'; letter-spacing:.07em; color:var(--dim); text-transform:uppercase}
 .hl-item input{width:100%; background:none; border:none; outline:none; font-size:16px; font-weight:600; padding:3px 0 0}
 .hl-item .u{font-size:10.5px; color:var(--faint)}
+/* ===== v17: MINI SCENE PREVIEW — hero + habitat + companion together ===== */
+.mini-scene{position:relative; height:158px; border-radius:14px; overflow:hidden; background:var(--bg); border:1px solid var(--line)}
+.mini-scene .ms-bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.mini-scene .ms-char{position:absolute; left:50%; bottom:0; transform:translateX(-50%); height:88%; max-width:70%; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}
+.mini-scene .ms-pet{position:absolute; left:7%; bottom:3%; height:36%; object-fit:contain; filter:drop-shadow(0 4px 6px rgba(0,0,0,.3))}
+.mini-scene .ms-fb{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:42px}
 /* ===== v12: HERO CUSTOMIZER ===== */
 .hv-prev{display:flex; justify-content:center; padding:12px; background:var(--bg); border:1px solid var(--line); border-radius:14px}
 .hv-prev img{width:132px; height:165px}
@@ -559,7 +565,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
         <button class="sw" id="tdArrange" title="Edit & rearrange" aria-label="Edit activities" style="font-size:15px; padding:6px 12px">✎</button>
       </div>
       <div id="tdActs" style="margin-top:10px"></div>
-      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+      <div id="tdBtnRow" style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
         <button class="btn sm ghost" id="tdQuickBtn">＋ Add activity</button>
         <button class="btn sm ghost" id="layOpen">🎛 Screen layout</button>
       </div>
@@ -3656,10 +3662,55 @@ function renderHeroScene(){
     probeImg([comp.imgs[bestStreak()>=comp.evolve ? 1 : 0]], u=>{ pet.src = u; pet.style.display = "block"; });
   } else if(pet){ pet.style.display = "none"; }
 }
+/* v17: the whole look in one glance — hero, habitat and companion composed
+   live. Fills any .mini-scene container; charSrc overrides the hero image
+   (string = final URL, array = candidates to probe). */
+function scenePrev(el, opts={}){
+  if(!el) return;
+  const L = levelFromXp(S.xp);
+  const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const hab = unlockedHabitats(L.lvl).find(h=>h.id===A.habitat) || HABITATS[0];
+  const stage = heroStage(L.lvl);
+  const id = avatarStyle().id;
+  el.innerHTML = `<img class="ms-bg" style="display:none" alt=""><img class="ms-char" style="display:none" alt=""><img class="ms-pet" style="display:none" alt=""><span class="ms-fb">${avatarStyle().icon||"🛡️"}</span>`;
+  const bg = el.querySelector(".ms-bg"), chr = el.querySelector(".ms-char"),
+        pet = el.querySelector(".ms-pet"), fb = el.querySelector(".ms-fb");
+  probeImg([hab.img], u=>{ bg.src = u; bg.style.display = "block"; });
+  const setChar = u => { chr.src = u; chr.style.display = "block"; fb.style.display = "none"; };
+  if(typeof opts.charSrc === "string") setChar(opts.charSrc);
+  else if(stage.hv || (AV_TRAITS[id] && avCustomized(id))) setChar(avatarSVGURL(id, avCfg(id), L.lvl));
+  else {
+    const vf = imgVariantFile(id, stage);
+    const cands = Array.isArray(opts.charSrc) ? opts.charSrc : (vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn]);
+    probeImg(cands, u=>{
+      if(stage.scene){ bg.src = u; bg.style.display = "block"; fb.style.display = "none"; }  /* full-scene art (owlbear) carries its own world */
+      else setChar(u);
+    });
+  }
+  const comp = COMPANIONS.find(c=>c.id===A.companion);
+  if(comp && unlockedCompanions().includes(comp))
+    probeImg([comp.imgs[bestStreak()>=comp.evolve ? 1 : 0]], u=>{ pet.src = u; pet.style.display = "block"; });
+}
+let LOOK_OPEN = false;
 function renderLook(){
   const L = levelFromXp(S.xp);
   const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
   const cur = avatarStyle();
+  const stage = heroStage(L.lvl);
+  /* collapsed by default: the composed preview + a pencil. Options unfold on ✎. */
+  if(!LOOK_OPEN){
+    $("#lookCard").innerHTML = `<div class="card">
+      <div class="mini-scene" id="msLook"></div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:10px">
+        <div style="flex:1; min-width:0">
+          <b style="font-family:'Chakra Petch'; font-size:13.5px">${cur.icon} ${esc(cur.n)} · ${esc(stage.n)}</b>
+          <div class="mut" style="font-size:11px">LVL ${L.lvl} · ${esc((HABITATS.find(h=>h.id===A.habitat)||HABITATS[0]).n)}${A.companion?` · ${esc((COMPANIONS.find(c=>c.id===A.companion)||{}).n||"")}`:""}</div>
+        </div>
+        <button class="sw" id="lookEdit" title="Customize" style="font-size:15px; padding:7px 13px">✎</button>
+      </div></div>`;
+    scenePrev($("#msLook"));
+    return;
+  }
   const styles = AVATAR_STYLES.map(s=>
     `<button class="chip ${cur.id===s.id?'on':''}" data-avstyle="${s.id}" title="${esc(s.d)}">${s.icon} ${s.n}</button>`).join("");
   const habs = HABITATS.map(h=>{ const un = L.lvl>=h.lvl;
@@ -3669,14 +3720,17 @@ function renderLook(){
     COMPANIONS.map(c=>{ const un = st>=c.streak;
       return `<button class="chip ${A.companion===c.id?'on':''}" data-avpet="${c.id}" ${un?"":"disabled"}>${un?c.n:`🔒 ${c.n} · ${st}/${c.streak}d`}</button>`; })).join("");
   $("#lookCard").innerHTML = `<div class="card">
-    <div class="sec-label" style="margin-top:0">Avatar</div><div class="chips">${styles}</div>
+    <div class="mini-scene" id="msLook"></div>
+    <p class="mut" style="font-size:10.5px; margin:7px 0 0">Live preview — every pick below updates it.</p>
+    <div class="sec-label">Avatar</div><div class="chips">${styles}</div>
     <div style="display:flex; gap:12px; align-items:center; margin-top:10px">
-      ${AV_TRAITS[cur.id] && avCustomized(cur.id) ? `<img src="${avatarSVGURL(cur.id, avCfg(cur.id), L.lvl)}" alt="" style="width:64px; height:80px; flex:none">` : ""}
       <button class="btn sm" data-avopen="${cur.id}">🎨 Customize ${esc(cur.n)} — ${cur.id==="viking"?"beard, helm, war paint":cur.id==="buddy"?"fluff, eyes, topper":cur.id==="rose"?"hair, ribbon, outfit":cur.id==="mini"?"colorways of the original":cur.id==="owlbear"?"plumage colorways":"skin, hair, face, outfit"}</button></div>
     ${AV_TRAITS[cur.id] && !avCustomized(cur.id) ? `<p class="mut" style="font-size:11px; margin-top:7px">Classic art stays until you change something — and one tap brings it back.</p>` : ""}
     <div class="sec-label">Habitat</div><div class="chips">${habs}</div>
     <div class="sec-label">Companion</div><div class="chips">${pets}</div>
-    <p class="mut" style="margin-top:8px; font-size:11.5px">Avatars are yours from day one — habitats open as you level, companions arrive on streaks (first one at just ${COMPANIONS[0].streak} days) and evolve as streaks grow.</p></div>`;
+    <p class="mut" style="margin-top:8px; font-size:11.5px">Avatars are yours from day one — habitats open as you level, companions arrive on streaks (first one at just ${COMPANIONS[0].streak} days) and evolve as streaks grow.</p>
+    <button class="btn sm ghost" id="lookEdit" style="margin-top:10px">✓ Done customizing</button></div>`;
+  scenePrev($("#msLook"));
 }
 function renderRewards(){
   const rws = nextRewards();
@@ -4082,10 +4136,14 @@ function renderTodayPage(){
             save(); renderTodayPage(); toast("Order saved"); } })); }catch(e){}
       });
     }
+    /* one add button at a time — the static row hides while editing */
+    const br = $("#tdBtnRow"); if(br) br.style.display = "none";
+    const qd = $("#tdQuick"); if(qd) qd.style.display = "none";
     renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
     renderIntent(); renderHealth(); renderRecapCard(); renderOTD(); renderFuel(); renderTodayAva();
     return;
   }
+  const br2 = $("#tdBtnRow"); if(br2) br2.style.display = "flex";
   $("#tdActs").innerHTML = (acts && acts.length) ? acts.map((a,ai)=>({a,ai}))
     .sort((x,y)=> pt && pt.day.manual ? 0 : winOrd(x.a)-winOrd(y.a))   // manual order wins once you've arranged
     .map(({a,ai})=>{
@@ -4997,7 +5055,8 @@ function openVarSheet(id){
   const cur = ((S.avatar||{}).imgVar||{})[id] || "";
   const classic = (st.stages && st.stages[0] && (st.stages[0].img || st.stages[0].cdn)) || "";
   $("#hvBody").innerHTML = `<h3>${st.icon||""} ${esc(st.n||"")}</h3>
-    <p class="mut" style="margin-top:4px; font-size:11.5px">The original art in new colorways — same renders, recolored pixel-for-pixel. Nothing else changes.</p>
+    <div class="mini-scene" id="msSheet" style="margin-top:10px"></div>
+    <p class="mut" style="margin-top:7px; font-size:11.5px">Previewed with your habitat and companion. The original art in new colorways — recolored pixel-for-pixel.</p>
     <div class="hv-opts" style="margin-top:10px">${R.opts.map(([v,l])=>{
       const src = v ? `${R.base[0]}-${v}.${R.ext}` : classic;
       return `<button class="hv-opt ${cur===v?'on':''}" data-imgvar="${id}:${v}" style="width:31%">
@@ -5005,6 +5064,7 @@ function openVarSheet(id){
         <div class="pl">${l}</div></button>`; }).join("")}</div>
     <p class="mut" style="font-size:10.5px; margin-top:8px">Levels still bring their upgrades — colorways carry across every stage.</p>
     <div class="sheet-foot"><button class="btn" id="hvClose" style="flex:1">Done</button></div>`;
+  scenePrev($("#msSheet"), { charSrc: cur ? [`${R.base[0]}-${cur}.${R.ext}`, classic] : [classic] });
   $("#heroSheet").classList.add("show");
 }
 function avCfg(id){
@@ -5029,12 +5089,13 @@ function openAvSheet(id){
         <img src="${avatarSVGURL(id, c2, L.lvl)}" alt=""><div class="pl">${l}</div></button>`; }).join("")}</div>`;
   }).join("");
   $("#hvBody").innerHTML = `<h3>${st.icon||"🎨"} ${esc(st.n||"Your hero")}</h3>
-    <div class="hv-prev" style="margin-top:10px"><img src="${avatarSVGURL(id, cfg, L.lvl)}" alt=""></div>
-    <p class="mut" style="font-size:11px; margin-top:6px; text-align:center">Change one thing, one thing changes. Gold at LVL 8, cape at LVL 15 — earned, not picked.</p>
+    <div class="mini-scene" id="msSheet" style="margin-top:10px"></div>
+    <p class="mut" style="font-size:11px; margin-top:6px; text-align:center">Previewed with your habitat and companion. Gold at LVL 8, cape at LVL 15 — earned, not picked.</p>
     ${parts}
     <div class="sheet-foot" style="flex-wrap:wrap">
       ${id!=="custom" && avCustomized(id) ? `<button class="btn ghost sm" id="avReset">↺ Classic look</button>` : ""}
       <button class="btn" id="hvClose" style="flex:1">Done</button></div>`;
+  scenePrev($("#msSheet"), { charSrc: avatarSVGURL(id, cfg, L.lvl) });
   $("#heroSheet").classList.add("show");
 }
 /* ================= v12: FUEL GOALS — water & protein from YOUR stats =================
@@ -6172,6 +6233,7 @@ document.addEventListener("click", ev=>{
   if(t.id==="rcClose" || t.id==="recapSheet"){ $("#recapSheet").classList.remove("show"); return; }
   if(t.id==="hlSave"){ saveHealth(); return; }
   /* ---- v13: per-character customizers ---- */
+  if(t.id==="lookEdit"){ LOOK_OPEN = !LOOK_OPEN; renderLook(); SFX.play("select"); return; }
   const avo = t.closest("[data-avopen]");
   if(avo){ const aid = avo.dataset.avopen;
     if(IMG_VARIANTS[aid]) openVarSheet(aid); else openAvSheet(aid);
