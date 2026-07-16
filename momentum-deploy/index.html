@@ -471,6 +471,44 @@ a{color:var(--accent)}
 .empty{text-align:center; color:var(--faint); padding:30px 16px; font-size:14px}
 button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+/* ===== v8: LIFE SCORE (pixel-segment bars, baseline ticks, delta chips) ===== */
+.ls-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.ls-num{font-family:'Chakra Petch'; font-weight:700; font-size:34px; line-height:1}
+.ls-chips{display:flex; gap:6px; flex-wrap:wrap}
+.ls-row{display:flex; align-items:center; gap:8px; margin-top:9px}
+.ls-name{width:86px; flex:none; font-size:10.5px; font-family:'Chakra Petch'; letter-spacing:.06em; color:var(--dim)}
+.ls-cells{display:flex; gap:3px; flex:1; min-width:0}
+.ls-cell{flex:1; height:12px; max-width:14px; border-radius:2.5px; background:var(--line); position:relative}
+.ls-cell.on{background:currentColor; box-shadow:0 0 7px color-mix(in srgb, currentColor 45%, transparent)}
+.ls-cell.tick:after{content:""; position:absolute; left:50%; top:-4px; bottom:-4px; width:1.5px; background:var(--faint); opacity:.8}
+.ls-val{width:56px; flex:none; text-align:right; font-size:11.5px; font-variant-numeric:tabular-nums; color:var(--dim)}
+.ls-val b{color:var(--text); font-size:13px}
+.ls-note{margin-top:10px; font-size:11.5px; color:var(--faint); line-height:1.5}
+/* ===== v8: EVENING CLOSE (vibe dots, cold to warm) ===== */
+.ev-dots{display:flex; gap:5px; margin-top:10px}
+.ev-dot{flex:1; max-width:30px; aspect-ratio:1; border-radius:50%; border:2px solid transparent; opacity:.45; transition:transform .12s, opacity .12s; min-width:0}
+.ev-dot.on{opacity:1; transform:scale(1.18); border-color:var(--text); box-shadow:0 0 12px color-mix(in srgb, currentColor 55%, transparent)}
+.ev-dot:active{transform:scale(1.25)}
+.ev-strip{display:flex; gap:5px; margin-top:12px; align-items:center}
+.ev-day{width:16px; height:16px; border-radius:4px; background:var(--line); flex:none}
+.ev-lab{font-size:10.5px; color:var(--faint); margin-left:6px}
+/* ===== v8: PRIVACY CHECKLIST ===== */
+.pv-row{display:flex; gap:9px; margin-top:9px; font-size:12.5px; line-height:1.5}
+.pv-row .ic{flex:none}
+/* ===== v9: HEALTH SIGNALS ===== */
+.hl-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px}
+.hl-item{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:9px 11px}
+.hl-item label{display:block; font-size:10px; font-family:'Chakra Petch'; letter-spacing:.07em; color:var(--dim); text-transform:uppercase}
+.hl-item input{width:100%; background:none; border:none; outline:none; font-size:16px; font-weight:600; padding:3px 0 0}
+.hl-item .u{font-size:10.5px; color:var(--faint)}
+/* ===== v9: CODEX ===== */
+.cdx-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px}
+.cdx-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; position:relative; overflow:hidden}
+.cdx-card .ph{width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:9px; display:block; margin-bottom:7px}
+.cdx-card .nm{font-family:'Chakra Petch'; font-weight:700; font-size:13px; line-height:1.25}
+.cdx-card .sb{font-size:11px; color:var(--dim); margin-top:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.cdx-type{display:inline-block; font-size:9.5px; font-family:'Chakra Petch'; letter-spacing:.06em; padding:2px 7px; border-radius:99px; border:1px solid currentColor; margin-bottom:6px}
+.cdx-mention{font-weight:600; cursor:pointer}
 </style>
 </head>
 <body data-theme="glass">
@@ -483,23 +521,32 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <h2 style="font-size:22px; margin:4px 0 2px" id="tdTitle">Today</h2>
       <p class="mut" id="tdSub"></p>
       <div id="tdBrief"></div>
+      <div id="intentCard"></div>
       <div id="tdActs" style="margin-top:14px"></div>
       <button class="btn sm ghost" id="tdQuickBtn" style="margin-top:14px">＋ Add something unscheduled</button>
       <div class="chips" id="tdQuick" style="display:none; margin-top:10px"></div>
       <div class="rings-card"><div class="rings-head"><span class="t">Today's rings</span><span class="c" id="ringsClosed">0/4 closed</span></div>
       <div class="rings4" id="rings4"></div></div>
       <div id="streakCard"></div>
+      <div class="sec-label">Life score</div>
+      <div id="lifeCard"></div>
+      <div class="sec-label">Health signals</div>
+      <div id="healthCard"></div>
+      <div id="recapCard"></div>
       <div class="sec-label">Today's habits</div>
       <div id="habitList"></div>
       <div class="sec-label">Quick check-in</div>
       <div id="checkinCard"></div>
       <div id="adaptCard"></div>
+      <div class="sec-label">Evening close</div>
+      <div id="eveningCard"></div>
+      <div id="otdCard"></div>
       <div class="sec-label">Journal & voice notes</div>
       <div class="card">
         <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="Type — or tap the mic on your keyboard and just talk. &quot;Did a 25 minute kettlebell workout, mostly swings and presses…&quot;"></textarea>
         <div style="display:flex; gap:8px; margin-top:10px; align-items:center">
           <button class="btn sm" id="jrnSave">📓 Log it</button>
-          <span class="mut" style="font-size:11.5px">Auto-tags activity, duration & effort — completed work counts toward your streak.</span>
+          <span class="mut" style="font-size:11.5px">Auto-tags activity, duration & effort — completed work counts toward your streak. @mention people or places and they become memory cards.</span>
         </div>
       </div>
       <div id="jrnList"></div>
@@ -546,6 +593,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div id="armorCard"></div>
       <div class="sec-label">Your saga</div>
       <div id="sagaCard"></div>
+      <div class="sec-label">Memories</div>
+      <div id="codexBox"></div>
     </div>
   </section>
 
@@ -564,6 +613,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="chips" id="focusChips"></div>
       <div id="subChips"></div>
       <button class="btn big" id="buildBtn">BUILD SESSION</button>
+      <div id="quickTimer"></div>
       <div id="musicBox" style="margin-top:16px"></div>
       <div id="session" style="margin-top:20px"></div>
     </div>
@@ -617,6 +667,19 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <h2 style="font-size:20px; margin:6px 0 12px">Profile & settings</h2>
       <div class="sec-label">Theme</div>
       <div class="theme-grid" id="themeGrid"></div>
+      <div class="sec-label">Private by design</div>
+      <div class="card">
+        <div class="pv-row"><span class="ic">🔒</span><span><b>100% on this device.</b> No server, no account, no analytics. There is no copy of you anywhere else — your saga lives here.</span></div>
+        <div class="pv-row"><span class="ic">📴</span><span><b>Works offline.</b> Plans, XP, sounds and celebrations are all generated locally.</span></div>
+        <div class="pv-row"><span class="ic">🗣️</span><span><b>The exceptions, named:</b> fonts &amp; fallback avatar art load from a CDN; Spotify/YouTube embeds load only if you add links; the optional HD voice downloads its model once from a public CDN, then speaks entirely on your device — nothing you read or write ever leaves it. ElevenLabs is called only if you add your own key.</span></div>
+        <div class="pv-row"><span class="ic">⚠️</span><span><b>One honest warning:</b> browser storage can be cleared by your device. Export a backup now and then — it's one tap.</span></div>
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+          <button class="btn sm" id="expBackup">⬇️ Export backup</button>
+          <button class="btn sm ghost" id="impBackup">⬆️ Restore backup</button>
+          <button class="btn sm ghost" id="eraseAll" style="color:var(--c-fuel)">🗑 Erase everything</button>
+          <input type="file" id="impFile" accept=".json,application/json" style="display:none">
+        </div>
+      </div>
       <div class="sec-label">Sound</div>
       <p class="mut" style="margin-bottom:10px">Taps, transitions, completions and celebrations — all generated on-device.</p>
       <div class="chips" id="soundChips"></div>
@@ -628,7 +691,8 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
       <button class="btn sm" id="saveMusic">Save music</button>
       <div class="sec-label">Brief voice</div>
-      <p class="mut" style="margin-bottom:10px">Optional: paste an ElevenLabs API key and the daily brief speaks in a studio-grade voice matched to your avatar. Without it, the best voice on your device is used.</p>
+      <div id="voiceCard"></div>
+      <p class="mut" style="margin:12px 0 10px">Pro option: paste an ElevenLabs API key and the brief uses their voices instead. Completely optional — the voices above need no account and no key.</p>
       <div class="field"><label>ElevenLabs API key</label><input id="elKey" placeholder="sk_…" autocomplete="off"></div>
       <button class="btn sm" id="saveElKey">Save voice key</button>
       <div class="sec-label">Tours</div>
@@ -690,6 +754,9 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
 </div></div>
 <div class="sheet" id="actSheet"><div class="sheet-card tall" id="asBody"></div></div>
 <div class="sheet" id="pickSheet"><div class="sheet-card tall" id="pkBody"></div></div>
+<div class="sheet" id="lifeSheet"><div class="sheet-card tall" id="lsBody"></div></div>
+<div class="sheet" id="recapSheet"><div class="sheet-card tall" id="rcBody"></div></div>
+<div class="sheet" id="codexSheet"><div class="sheet-card tall" id="cdxBody"></div></div>
 <div class="tour-ov" id="tourOv"><div class="tourc">
   <div class="tourc-step"></div>
   <h3 class="tourc-title"></h3>
@@ -1760,6 +1827,18 @@ const AVATAR_STYLES = [
     stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1.jpg", scene:true, roast:"Hoots first. Lifts eventually." },
              { lvl:8, n:"Elder Owlbear",  img:"hero-owl-2.jpg", scene:true } ] }
 ];
+/* v10: one-tap look tints — quick customization for every avatar identity.
+   CSS filters over the existing art: zero new files, instant, reversible. */
+const TINTS = [
+  ["",        "Original", ""],
+  ["gold",    "Gold",     "sepia(.35) saturate(1.6) hue-rotate(-12deg) brightness(1.05)"],
+  ["ember",   "Ember",    "hue-rotate(-28deg) saturate(1.35)"],
+  ["emerald", "Emerald",  "hue-rotate(95deg) saturate(1.15)"],
+  ["azure",   "Azure",    "hue-rotate(185deg) saturate(1.2)"],
+  ["violet",  "Violet",   "hue-rotate(255deg) saturate(1.25)"],
+  ["shadow",  "Shadow",   "grayscale(.85) contrast(1.1) brightness(.92)"]
+];
+function tintFilter(){ const t = TINTS.find(x=>x[0]===((S.avatar&&S.avatar.tint)||"")); return t ? t[2] : ""; }
 function avatarStyle(){ const id = (S.avatar && S.avatar.style) || "viking";
   return AVATAR_STYLES.find(a=>a.id===id) || AVATAR_STYLES[0]; }
 const HABITATS = [
@@ -2161,6 +2240,7 @@ function whyFor(m, p){
 const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0,recharge:0},
   done:0, sessions:0, microDone:0, minutes:0, streak:0, lastDay:"", custom:[], media:[], logs:{}, dayXP:{}, dayMin:{}, moveMeta:{},
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
+  daySys:{}, evening:{}, intent:{}, health:{}, codex:[],
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
   session:null, plan:null, habitLog:{}, settings:{theme:"glass", spotify:"", yt:"", sound:"low", amb:"off"} };
@@ -2288,6 +2368,9 @@ function grantXp(sysKey, amount){
   const before = levelFromXp(S.xp).lvl;
   S.xp += amount; S.sys[sysKey] = (S.sys[sysKey]||0) + amount;
   S.dayXP = S.dayXP||{}; const dk0 = dayKey(); S.dayXP[dk0] = (S.dayXP[dk0]||0) + amount;
+  /* v8: per-system per-day ledger — feeds the Life Score bars & baselines */
+  S.daySys = S.daySys||{}; const _ds = S.daySys[dk0] = S.daySys[dk0]||{};
+  _ds[sysKey] = (_ds[sysKey]||0) + amount;
   const after = levelFromXp(S.xp).lvl;
   if(after > before){
     /* level-ups reveal what they unlocked — forms, habitats, weapons, armor */
@@ -2302,6 +2385,9 @@ function grantXp(sysKey, amount){
     $("#levelup").classList.add("show");
     try{ const v=$("#luVid"); if(v){ v.currentTime=0; const p=v.play(); if(p&&p.catch)p.catch(()=>{}); } }catch(e){}
     SFX.play("fanfare"); bigBurst({n:150, spread:90, origin:{x:.5,y:.45}});
+    /* v9: big moments chronicle themselves */
+    try{ codexAuto("feat", "Reached Level "+after,
+      tierFor(after)+" tier."+(unlocked.length?" Unlocked "+unlocked.join(", ")+".":"")); }catch(e){}
   }
 }
 /* Streak 2.0 — guilt-free by design: freezes auto-granted BEFORE they're needed,
@@ -2328,6 +2414,7 @@ function touchStreak(){
     S.streak2.freezes = Math.min(3, S.streak2.freezes + 1);
     SFX.play("fanfare"); bigBurst({n:170, spread:100, origin:{x:.5,y:.4}});
     toast(`🔥 ${S.streak}-day streak! Freeze earned (${S.streak2.freezes} banked)`);
+    try{ codexAuto("feat", S.streak+"-day streak", "Milestone reached — freeze banked."); }catch(e){}
   }
   if(S.streak2.comeback && S.streak >= S.streak2.comeback){ S.streak2.comeback = 0; }  // fully back
 }
@@ -2964,6 +3051,7 @@ const RECIPES = [
  {id:"kb40",   n:"🔥 40-min KB HIIT",        o:{ focus:"Conditioning", style:"kbflow", time:40, eqOnly:"Kettlebells", focusLabel:"40-min KB HIIT" }},
  {id:"hiit20", n:"⚡ 20-min HIIT (no gear)", o:{ focus:"Conditioning", style:"hiit", time:20, eqOnly:"Bodyweight", focusLabel:"20-min bodyweight HIIT" }},
  {id:"hiitnr", n:"🔁 30-min no-repeat HIIT", o:{ focus:"Conditioning", style:"hiit", time:30, noRepeat:true, focusLabel:"No-repeat HIIT · every move once" }},
+ {id:"hiitall",n:"⚡ 30-min HIIT · all your gear", o:{ focus:"Conditioning", style:"hiit", time:30 }},
  {id:"desk",   n:"🧑‍💻 Desk posture reset",   o:{ focus:"Mobility", time:15, areas:["neck","back","shoulder"], focusLabel:"Desk posture reset" }},
  {id:"heart",  n:"❤️ Heart health starter",  o:{ focus:"Cardio", time:30, maxLvl:1, focusLabel:"Zone-2 starter" }},
  {id:"mob",    n:"🛡️ Your problem areas",    o:{ focus:"Mobility", time:20, focusLabel:"Mobility for your areas" }},
@@ -3001,16 +3089,47 @@ function wPick(arr,n){ const pool = arr.slice(), out = [];
     out.push(pool.splice(i,1)[0]);
   } return out; }
 
+/* v10: gym-culture session names — the workout is named for what it IS.
+   Chest Day, Push Day, Back & Bis, 30-min KB HIIT, Full Body Workout… */
+const capW = s => String(s).charAt(0).toUpperCase()+String(s).slice(1);
+function sessionName(focus, style, mgSel, opts, time){
+  opts = opts||{}; mgSel = mgSel||[];
+  if(style && STYLES[style] && STYLES[style].circuit){
+    if(style==="kbflow") return `${time}-min KB HIIT`;
+    const eqw = opts.eqOnly==="Bodyweight" ? "Bodyweight " : opts.eqOnly ? opts.eqOnly+" " : "";
+    if(mgSel.length===1) return `${time}-min ${capW(mgSel[0])} HIIT`;
+    return `${time}-min ${eqw}HIIT`;
+  }
+  const mg = mgSel.slice().sort().join("+");
+  const MGN = { "chest":"Chest Day", "back":"Back Day", "shoulders":"Shoulder Day", "arms":"Arm Day",
+    "core":"Core Day", "legs":"Leg Day", "glutes":"Glute Day", "glutes+legs":"Leg Day",
+    "arms+chest":"Push Day", "chest+shoulders":"Push Day", "arms+chest+shoulders":"Push Day",
+    "arms+back":"Back & Bis", "back+shoulders":"Pull Day", "arms+back+shoulders":"Pull Day",
+    "core+legs":"Legs & Core" };
+  if(focus==="Strength"){
+    if(MGN[mg]) return MGN[mg];
+    if(mgSel.length) return mgSel.map(capW).join(" & ") + " Day";
+    const SN = { hypertrophy:"Hypertrophy Day", strength:"Strength Day", power:"Power Day", functional:"Functional Strength" };
+    return SN[style] || "Full Body Strength";
+  }
+  if(focus==="Full Body") return "Full Body Workout";
+  if(focus==="Mobility") return "Mobility Reset";
+  if(focus==="Cardio") return "Zone 2 Cardio";
+  return focus;
+}
 function buildSession(opts={}){
   const focus = opts.focus || S.sel.focus;
   const time = opts.time || S.sel.time;
+  /* v10: a circuit style picked on the Train screen (HIIT / KB circuit) rides
+     along — and HIIT pulls from ALL the gear you've selected, not one family. */
+  if(!opts.style && STYLES[S.sel.style] && STYLES[S.sel.style].circuit &&
+     ["Strength","Conditioning","Full Body"].includes(focus)) opts.style = S.sel.style;
   /* Conditioning is ALWAYS a timed circuit, never sets×reps — the gear on hand
      decides the flavor (KB flow vs bodyweight HIIT). This is what separates a
      conditioning day from a strength day. */
   if(focus==="Conditioning" && !(opts.style && STYLES[opts.style] && STYLES[opts.style].circuit)){
     const kbIn = opts.eqOnly ? opts.eqOnly==="Kettlebells" : S.sel.eq.includes("Kettlebells");
     opts.style = kbIn ? "kbflow" : "hiit";
-    if(!opts.focusLabel) opts.focusLabel = kbIn ? "Conditioning · KB circuit" : "Conditioning · HIIT";
   }
   /* bodyweight is always available — it's not selectable gear */
   const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq);
@@ -3027,9 +3146,9 @@ function buildSession(opts={}){
     if(items.length >= 2){
       if(opts.style && STYLES[opts.style] && STYLES[opts.style].circuit){
         const c = circuitize(items, opts.style, time, opts);   // circuit templates keep the follow-along player
-        S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style:c.style, flow:c.flow, items:c.items };
+        S.session = { time, focus:opts.focusLabel||focus, baseFocus:focus, micro:!!opts.micro, style:c.style, flow:c.flow, items:c.items };
       } else {
-        S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style:opts.style||null,
+        S.session = { time, focus:opts.focusLabel||focus, baseFocus:focus, micro:!!opts.micro, style:opts.style||null,
           items:applyStyle(items, opts.style).map(m=>({...m, done:false})) };
       }
       save(); return true;
@@ -3056,7 +3175,8 @@ function buildSession(opts={}){
     const picks = wPick(pool, blocks*perBlock);
     if(picks.length < 3){ toast("No moves match — check your equipment"); return false; }
     const warm = wPick(moves.filter(m=>m.b==="warmup"), 2);
-    S.session = { time, focus:opts.focusLabel||STYLES[opts.style].n, micro:!!opts.micro, style:opts.style,
+    S.session = { time, focus:opts.focusLabel||sessionName(focus, opts.style, opts.mg||(focus==="Strength"?S.sel.mg:[]), opts, time),
+      baseFocus:focus, micro:!!opts.micro, style:opts.style,
       flow:{ work:tw.work, rest:tw.rest, rounds, perBlock, blockRest:30 },
       items:[...warm, ...picks].map(m=>({...m, d:`${tw.work}s on / ${tw.rest}s off`, done:false})) };
     save(); return true;
@@ -3130,7 +3250,8 @@ function buildSession(opts={}){
   let fin = opts.micro ? [] : wPick(moves.filter(m=>m.b==="finisher" && (focus==="Full Body"||sysWanted.includes(m.p))), 1);
   if(!mains.length){ toast("No moves match — check your equipment"); return false; }
   const style = opts.style || (focus==="Strength" ? S.sel.style : null) || null;
-  S.session = { time, focus:opts.focusLabel||focus, micro:!!opts.micro, style,
+  S.session = { time, focus:opts.focusLabel||sessionName(focus, style, mgSel, opts, time),
+    baseFocus:focus, micro:!!opts.micro, style,
     items:applyStyle([...warm,...mains,...fin], style).map(m=>({...m, done:false})) };
   save(); return true;
 }
@@ -3241,14 +3362,15 @@ function toggleItem(i, fromPlayer){
       if(S.session.micro) S.microDone = (S.microDone||0)+1; else S.sessions++;
       S.minutes += S.session.time;
       S.dayMin = S.dayMin||{}; const dk1 = dayKey(); S.dayMin[dk1] = (S.dayMin[dk1]||0) + S.session.time;
-      grantXp((FOCUS_SYS[S.session.focus]||["motor"])[0], Math.round(it.length*(S.session.micro?2:4)));
+      grantXp((FOCUS_SYS[S.session.baseFocus||S.session.focus]||["motor"])[0], Math.round(it.length*(S.session.micro?2:4)));
       const ref = S.session.actRef;
       if(ref && S.plan && S.plan.days[ref.idx] && S.plan.days[ref.idx].acts[ref.ai]){
         S.plan.days[ref.idx].acts[ref.ai].done = true;
       } else {
         const pt = planToday();   // freestyle work still shows up on your day
-        if(pt){ const typ = Object.keys(DTYPES).find(k=>DTYPES[k].t===S.session.focus) || "MOT";
-          pt.day.acts.push({type:typ, done:true, adhoc:true}); }
+        if(pt){ const typ = Object.keys(DTYPES).find(k=>DTYPES[k].t===(S.session.baseFocus||S.session.focus)) || "MOT";
+          pt.day.acts.push({type:typ, done:true, adhoc:true, label:S.session.focus}); }
+        else logFreeAct(S.session.focus);   // v10: no plan? the day still lists it, by name
       }
       stopTimer(); SFX.play("complete"); bigBurst({n:90});
       if(!fromPlayer) toast("Session complete 💥");
@@ -3445,6 +3567,7 @@ function renderHeroScene(){
   const ch = $("#hsChar"), fb = $("#hsFallback");
   if(ch) ch.style.display = "none";
   if(fb){ fb.textContent = avatarStyle().icon || "🛡️"; fb.style.display = ""; }
+  if(ch) ch.style.filter = tintFilter();   /* v10: one-tap look tints */
   probeImg([stage.img, stage.cdn], u=>{
     if(ch.getAttribute("src")===u) ch.style.display = "block";   // same art re-render: onload won't re-fire
     else ch.src = u;
@@ -3484,6 +3607,8 @@ function renderLook(){
       return `<button class="chip ${A.companion===c.id?'on':''}" data-avpet="${c.id}" ${un?"":"disabled"}>${un?c.n:`🔒 ${c.n} · ${st}/${c.streak}d`}</button>`; })).join("");
   $("#lookCard").innerHTML = `<div class="card">
     <div class="sec-label" style="margin-top:0">Avatar</div><div class="chips">${styles}</div>
+    <div class="sec-label">Look tint</div><div class="chips">${TINTS.map(([k,l])=>
+      `<button class="chip ${((S.avatar&&S.avatar.tint)||"")===k?'on':''}" data-tint="${k}">${l}</button>`).join("")}</div>
     <div class="sec-label">Habitat</div><div class="chips">${habs}</div>
     <div class="sec-label">Companion</div><div class="chips">${pets}</div>
     <p class="mut" style="margin-top:8px; font-size:11.5px">Avatars are yours from day one — habitats open as you level, companions arrive on streaks (first one at just ${COMPANIONS[0].streak} days) and evolve as streaks grow.</p></div>`;
@@ -3513,6 +3638,8 @@ function renderSaga(){
 function renderHero(){
   const L = levelFromXp(S.xp);
   renderHeroScene(); renderLook(); renderRewards(); renderSaga();
+  try{ renderLifeScore(); }catch(e){}   // v8: every XP grant routes through here — keep the bars live
+  try{ renderCodex(); }catch(e){}       // v9: new feats appear the moment they're minted
   $("#heroName").textContent = (S.profile && S.profile.name) || "You";
   $("#heroLvl").textContent = "LVL " + L.lvl;
   $("#heroRank").textContent = tierFor(L.lvl);
@@ -3555,6 +3682,14 @@ function renderHero(){
 /* The Jarvis brief: greet → date → workouts by name → one useful beat. Short,
    informative, flows like a person — never a settings dump. */
 function todayBrief(){
+  /* v9: the brief closes with your intention and, on Sundays, the recap nudge */
+  let text = todayBriefCore();
+  const it = todayIntent();
+  if(it && it.txt && it.kept===undefined) text += ` Your intention: ${it.txt}.`;
+  if(new Date().getDay()===0) text += " It's Sunday — your saga recap is ready below.";
+  return text;
+}
+function todayBriefCore(){
   const now = new Date(), h = now.getHours();
   const greet = h<5 ? "Burning the midnight oil" : h<12 ? "Good morning" : h<17 ? "Good afternoon" : "Good evening";
   const name = (S.profile && S.profile.name && S.profile.name!=="You") ? ", "+S.profile.name : "";
@@ -3591,7 +3726,19 @@ function todayBrief(){
 let _voices = [];
 function refreshVoices(){ try{ _voices = speechSynthesis.getVoices()||[]; }catch(e){} }
 if(typeof speechSynthesis!=="undefined"){ refreshVoices(); try{ speechSynthesis.onvoiceschanged = refreshVoices; }catch(e){} }
+function deviceVoices(){
+  if(!_voices.length) refreshVoices();
+  const en = _voices.filter(v=>/^en/i.test(v.lang||""));
+  const score = v => (/premium|enhanced|natural|neural|siri/i.test(v.name)?4:0) + (v.localService?1:0);
+  return en.slice().sort((a,b)=>score(b)-score(a));
+}
 function briefVoice(){
+  /* v11: an explicitly picked device voice always wins */
+  if(S.settings.voiceMode==="pick" && S.settings.voiceName){
+    const hit = _voices.find(v=>v.name===S.settings.voiceName) ||
+      (refreshVoices(), _voices.find(v=>v.name===S.settings.voiceName));
+    if(hit) return hit;
+  }
   const pref = (avatarStyle().voice||{}).pref;
   if(!_voices.length) refreshVoices();
   const en = _voices.filter(v=>/^en/i.test(v.lang||""));
@@ -3625,20 +3772,137 @@ async function speakEleven(text){
     return true;
   }catch(e){ return false; }
 }
+/* ================= v11: HD VOICE — free, no account, on-device =================
+   Kokoro-82M (Apache-2.0) running locally via WASM/WebGPU. One ~90 MB download,
+   cached by the browser, then it speaks offline forever. No key, no signup,
+   nothing you read or write leaves the device. */
+const HD_VOICES = [
+  ["auto",       "🎭 Match my avatar", ""],
+  ["af_heart",   "Heart",   "warm & real"],
+  ["af_bella",   "Bella",   "bright & upbeat"],
+  ["af_nicole",  "Nicole",  "soft, close-mic"],
+  ["af_sky",     "Sky",     "easy & clear"],
+  ["am_fenrir",  "Fenrir",  "bold — born for the Viking"],
+  ["am_michael", "Michael", "steady coach"],
+  ["am_onyx",    "Onyx",    "deep & calm"],
+  ["bm_george",  "George",  "British, unbothered"]
+];
+const HD_AVATAR = { viking:"am_fenrir", buddy:"af_bella", rose:"af_heart", mini:"af_sky", owlbear:"am_onyx" };
+function hdVoiceFor(){
+  const v = S.settings.hdVoice;
+  if(v && v!=="auto") return v;
+  return HD_AVATAR[avatarStyle().id] || "af_heart";
+}
+let KOKORO = null, KOKORO_LOADING = null;
+function loadKokoro(onProgress){
+  if(KOKORO) return Promise.resolve(KOKORO);
+  if(KOKORO_LOADING) return KOKORO_LOADING;
+  KOKORO_LOADING = (async ()=>{
+    const mod = await import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm");
+    const tts = await mod.KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",
+      { dtype:"q8", device:"wasm", progress_callback:onProgress });   // q8+wasm: ~90 MB, runs on every phone
+    KOKORO = tts; return tts;
+  })();
+  return KOKORO_LOADING.catch(e=>{ KOKORO_LOADING = null; throw e; });
+}
+async function speakHD(text, voice){
+  try{
+    if(_briefAudio){ _briefAudio.pause(); _briefAudio = null; return true; }   // tap again = stop
+    if(!KOKORO && !S.settings.hdOn) return false;
+    if(!KOKORO) toast("HD voice warming up…");
+    const tts = await loadKokoro();
+    /* sentence-chunk + pipeline: chunk N plays while N+1 synthesizes */
+    const sents = String(text).match(/[^.!?]+[.!?]*\s*/g) || [String(text)];
+    const parts = []; let cur = "";
+    sents.forEach(sn=>{ if((cur+sn).length > 260){ if(cur) parts.push(cur); cur = sn; } else cur += sn; });
+    if(cur.trim()) parts.push(cur);
+    const v = voice || hdVoiceFor();
+    let next = tts.generate(parts[0], { voice:v });
+    for(let i=0; i<parts.length; i++){
+      const audio = await next;
+      if(i+1 < parts.length) next = tts.generate(parts[i+1], { voice:v });
+      const stopped = await new Promise(res=>{
+        const a = _briefAudio = new Audio(URL.createObjectURL(audio.toBlob()));
+        a.onended = ()=>{ if(_briefAudio===a) _briefAudio = null; res(false); };
+        a.onpause = ()=>{ if(!a.ended && a.currentTime>0) res(true); };
+        const p = a.play(); if(p && p.catch) p.catch(()=>res(true));
+      });
+      if(stopped) break;
+    }
+    return true;
+  }catch(e){ return false; }
+}
+function speakSys(text, voiceName){
+  try{
+    if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
+    if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    const picked = voiceName && _voices.find(v=>v.name===voiceName);
+    if(!picked){ const vc = avatarStyle().voice||{}; u.rate = vc.rate||1.02; u.pitch = vc.pitch||1; }
+    const v = picked || briefVoice(); if(v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
 function speakBrief(){
   const text = todayBrief().replace(/[·✓]/g,"");
-  speakEleven(text).then(ok=>{
-    if(ok) return;
-    try{
-      if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
-      if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
-      const u = new SpeechSynthesisUtterance(text);
-      const vc = avatarStyle().voice||{};
-      u.rate = vc.rate||1.02; u.pitch = vc.pitch||1;
-      const v = briefVoice(); if(v) u.voice = v;
-      speechSynthesis.speak(u);
-    }catch(e){}
+  speakEleven(text).then(async ok=>{
+    if(ok) return;                                       // pro key, if the user added one
+    if(S.settings.hdOn && await speakHD(text)) return;   // free HD voice, on-device
+    speakSys(text);                                      // best device voice, avatar-matched
   });
+}
+/* ---- voice picker (More → Brief voice) ---- */
+function renderVoice(){
+  const box = $("#voiceCard"); if(!box) return;
+  const mode = S.settings.voiceMode==="pick" ? "pick" : "avatar";
+  const hd = !!S.settings.hdOn;
+  const sysList = deviceVoices().slice(0,6);
+  const shortName = n => esc(String(n).replace(/\s*\(.*\)\s*/g," ").trim());
+  box.innerHTML = `<div class="card">
+    <p class="mut" style="font-size:11.5px; margin-bottom:9px">No setup needed — pick a voice, or let it follow your avatar. ▶ to hear a sample.</p>
+    <div class="chips">
+      <button class="chip ${mode==="avatar"?'on':''}" data-vmode="avatar">🎭 Match my avatar</button>
+      <button class="chip ${mode==="pick"?'on':''}" data-vmode="pick">🎙 Pick a voice</button></div>
+    ${mode==="pick" ? (sysList.length ? sysList.map(v=>`
+      <div class="as-move">${shortName(v.name)}<span class="mut" style="font-size:11px">${/premium|enhanced|natural|neural|siri/i.test(v.name)?" · ✨ high quality":""}</span>
+        <span style="display:flex; gap:6px"><button class="sw" data-vprev="${esc(v.name)}">▶</button>
+        <button class="sw" data-vpick="${esc(v.name)}">${S.settings.voiceName===v.name?"✓ chosen":"use"}</button></span></div>`).join("")
+      : `<p class="mut" style="margin-top:9px; font-size:11.5px">Your device's voices show up here once it shares them — on iPhone the Siri-class ones are already excellent.</p>`)
+      : `<p class="mut" style="margin-top:9px; font-size:11.5px">${esc(avatarStyle().n)} is on the mic — every avatar has its own voice character.</p>`}
+  </div>
+  <div class="card" style="margin-top:8px">
+    ${hd ? `<div style="display:flex; align-items:center; gap:8px"><b style="font-family:'Chakra Petch'; font-size:13px">✨ HD voice</b><span class="tag" style="color:var(--c-skill)">on · works offline</span></div>
+      <div class="chips" style="margin-top:9px">${HD_VOICES.map(([id,n,d])=>`
+        <button class="chip ${((S.settings.hdVoice||"auto")===id)?'on':''}" data-hdpick="${id}" title="${esc(d)}">${n}</button>`).join("")}</div>
+      <div style="display:flex; gap:8px; margin-top:9px; flex-wrap:wrap">
+        <button class="btn sm ghost" data-hdprev="1">▶ Preview</button>
+        <button class="btn sm ghost" id="hdOff">Turn off HD</button></div>
+      <p class="mut" style="font-size:10.5px; margin-top:7px">Runs 100% on this device. ${esc((HD_VOICES.find(x=>x[0]===(S.settings.hdVoice||"auto"))||[])[2]||"")}</p>`
+    : `<b style="font-family:'Chakra Petch'; font-size:13px">✨ HD voice — free, no account</b>
+      <p class="mut" style="font-size:11.5px; margin-top:5px">Studio-grade neural voice that runs on your phone. One ~90 MB download, cached forever, works offline. Nothing you read or write leaves the device.</p>
+      <button class="btn sm" id="hdGet" style="margin-top:9px">⬇️ Get the HD voice</button>
+      <div id="hdProg" class="mut" style="font-size:11px; margin-top:7px"></div>`}
+  </div>`;
+}
+async function hdDownload(){
+  const btn = $("#hdGet"), prog = $("#hdProg");
+  if(btn){ btn.disabled = true; btn.textContent = "Downloading…"; }
+  const seen = {};
+  try{
+    await loadKokoro(ev=>{
+      try{
+        if(ev && ev.file && ev.total){ seen[ev.file] = (ev.loaded||0)/ev.total; }
+        const big = Object.entries(seen).sort((a,b)=>b[1]-a[1]);
+        const pct = Math.round(Math.min(1, Object.values(seen).reduce((s,x)=>s+x,0)/Math.max(1,Object.keys(seen).length))*100);
+        if(prog) prog.textContent = `Downloading — ${pct}% · one time only, cached after`;
+      }catch(e){}
+    });
+    S.settings.hdOn = 1; save(); renderVoice();
+    SFX.play("complete"); toast("HD voice ready — yours forever, offline ✨");
+  }catch(e){
+    if(btn){ btn.disabled = false; btn.textContent = "⬇️ Get the HD voice"; }
+    if(prog) prog.textContent = "Download didn't finish — check your connection and tap again.";
+  }
 }
 /* build (or reuse) the session behind a plan act — Today check-offs and Start share this */
 function ensureActSession(idx, ai, force){
@@ -3740,15 +4004,20 @@ function renderTodayPage(){
     const list = actMoveList(a, pt.idx, ai);
     const open = list && !a.micro && !a.done;   // today's real work arrives expanded — zero taps to see it
     return `<div class="pday ${a.done?'done-hl':''}" style="cursor:default; display:block">
-      <div style="display:flex; align-items:center; gap:12px">
+      <div ${list?'data-texpand="1"':''} style="display:flex; align-items:center; gap:12px${list?'; cursor:pointer':''}">
       <div class="dico">${D.icon}</div>
-      <div class="ex-meta" ${list?`data-texpand="1" style="cursor:pointer"`:""}><div class="ex-name">${a.label||D.t}${a.done?" ✓":""}${a.adhoc?" <span class='tag' style='margin-left:4px'>added</span>":""}</div>
+      <div class="ex-meta"><div class="ex-name">${a.label||D.t}${a.done?" ✓":""}${a.adhoc?" <span class='tag' style='margin-left:4px'>added</span>":""}</div>
       <div class="ex-sub">${a.done?"In the books.":W?`${W.icon} ${W.n} works best.`:"Any time today counts."}${list?` <span class="mut">${open?"▾":"▸"}</span>`:""}</div></div>
       ${D.life ? `<button class="btn sm ${a.done?'ghost':''}" data-actdone="${pt.idx}:${ai}">${a.done?"Undo":"Done ✓"}</button>`
         : !a.done ? `<button class="btn sm" data-startact="${pt.idx}:${ai}">Start</button>`
         : `<button class="btn sm ghost" data-startact="${pt.idx}:${ai}">Again</button>`}</div>
       ${list?`<div class="td-body" style="display:${open?'block':'none'}">${list}</div>`:""}</div>`;
   }).join("") : (S.plan && pt ? "" : "");
+  /* v10: freestyle sessions from today, when no plan is carrying them */
+  const fl = (S.freeLog||{})[dk]||[];
+  if(fl.length) $("#tdActs").innerHTML += fl.map(l=>`<div class="pday done-hl" style="cursor:default">
+    <div class="dico">💥</div><div class="ex-meta"><div class="ex-name">${esc(l)} ✓</div>
+    <div class="ex-sub">Freestyle — banked from Train.</div></div></div>`).join("");
   /* day fully banked → seed tomorrow: knowing what's next is what brings you back */
   if(pt && acts && acts.length && acts.every(a=>a.done)){
     const nx = S.plan.days[pt.idx+1];
@@ -3764,7 +4033,8 @@ function renderTodayPage(){
     .filter(([k])=>k!=="SKL" || (soccerPicked() && (S.profile? S.profile.eq: S.sel.eq).includes("Soccer Ball")))
     .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy)
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
-  renderCheckin(); renderStreakCard(); renderJournal();
+  renderCheckin(); renderStreakCard(); renderJournal(); renderLifeScore(); renderEvening();
+  renderIntent(); renderHealth(); renderRecapCard(); renderOTD();
 }
 function renderHabits(){
   const today = dayKey(); const log = S.habitLog[today] || {};
@@ -3871,6 +4141,12 @@ function saveJournal(txt){
   const m = tagJournal(txt);
   S.journal = S.journal||[];
   const entry = { d:dayKey(), txt:txt.trim(), tags:m.tags.slice(), dur:m.dur, act:m.act };
+  /* v9: @mentions build the codex — a new name becomes an Ally card on the spot */
+  const mentions = [...txt.matchAll(/@([A-Za-z][A-Za-z0-9_-]{1,20})/g)].map(x=>x[1]);
+  mentions.forEach(nm=>{ if(!codexFind(nm)){ codexAdd("ally", nm, {note:"Met in the journal."}); toast("🤝 "+nm+" added to your memories"); } });
+  if(mentions.length) entry.mentions = mentions;
+  /* v9: whole-life credits — sleep, fuel, connection notes earn small honest XP */
+  lifeCredits(txt.toLowerCase(), entry);
   if(m.completed && m.act){
     const pt = planToday();
     const typ = DTYPES[m.typ] ? m.typ : "MOT";
@@ -3890,10 +4166,519 @@ function saveJournal(txt){
 function renderJournal(){
   const box = $("#jrnList"); if(!box) return;
   const list = (S.journal||[]).slice(0,3);
+  const hi = txt => esc(txt).replace(/@([A-Za-z][A-Za-z0-9_-]{1,20})/g, (mm,nm)=>{
+    const c = codexFind(nm); const T = c && CDX_TYPES[c.type];
+    return `<span class="cdx-mention" data-cdxname="${esc(nm)}" style="color:${T?T.c:"var(--accent)"}">@${esc(nm)}</span>`; });
   box.innerHTML = list.map(e=>`<div class="card" style="margin-top:8px">
     <div class="mut" style="font-size:11px">${esc(e.d)}</div>
-    <div style="font-size:14px; margin-top:3px">${esc(e.txt)}</div>
+    <div style="font-size:14px; margin-top:3px">${hi(e.txt)}</div>
     <div class="ex-tags" style="margin-top:8px">${e.tags.map(tg=>`<span class="tag">${esc(tg)}</span>`).join("")}</div></div>`).join("");
+}
+
+/* ================= v8: LIFE SCORE =================
+   The honest layer. Bars measure TODAY against YOUR 28-day normal — never a
+   stranger's number. 50 = right at your normal, 100 = double it. The score is
+   the unweighted average of the six bars. No black box: tap "show the math".
+   Until 3 days of history exist we say "learning your normal" instead of guessing. */
+function sysDayXP(dk, sys){ return ((S.daySys||{})[dk]||{})[sys]||0; }
+function lifeHistoryDays(){
+  const ds = S.daySys||{}; const keys = Object.keys(ds).filter(k=>k!==dayKey());
+  return keys.length;
+}
+function sysBaseline(sys){
+  /* mean XP/day over the last 28 days, excluding today; zero-days inside the
+     window count as zeros — honesty over flattery. Needs 3+ days of history. */
+  if(lifeHistoryDays() < 3) return null;
+  const ds = S.daySys||{};
+  const first = Math.min(...Object.keys(ds).map(k=>+new Date(k)).filter(n=>!isNaN(n)));
+  let sum=0, days=0;
+  for(let i=1;i<=28;i++){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    if(+d < first - 43200000) break;              // don't judge days before Momentum existed
+    sum += sysDayXP(dayKey(d), sys); days++;
+  }
+  return days ? sum/days : null;
+}
+function lifeBars(dk){
+  dk = dk || dayKey();
+  const learning = lifeHistoryDays() < 3;
+  return Object.keys(SYS).map(sys=>{
+    const xp = sysDayXP(dk, sys);
+    const base = learning ? null : sysBaseline(sys);
+    const val = learning || base===null
+      ? Math.min(100, Math.round(xp*2.5))                       // learning: 40 XP fills the bar
+      : Math.min(100, Math.round(50*xp/Math.max(base,5)));      // normal: 50 = your normal
+    return { sys, xp, base, val, learning };
+  });
+}
+function lifeScore(dk){
+  const bars = lifeBars(dk);
+  return { score: Math.round(bars.reduce((a,b)=>a+b.val,0)/bars.length), bars };
+}
+function lifeFeeders(sys){
+  /* plain-sentence receipts: what actually fed this bar today */
+  const bits = [];
+  const log = S.habitLog[dayKey()]||{};
+  const nh = habitSet().filter(h=>h.sys===sys && log[h.id]).length;
+  if(nh) bits.push(nh+" habit"+(nh>1?"s":""));
+  const pt = planToday();
+  const ACT_SYS = {STR:"strength",RUNF:"motor",RUNL:"motor",MOT:"motor",ARM:"armor",BST:"armor",SKL:"skill"};
+  if(pt){ const nd = pt.day.acts.filter(a=>a.done && ((DTYPES[a.type].life||ACT_SYS[a.type])===sys)).length;
+    if(nd) bits.push(nd+" plan item"+(nd>1?"s":"")); }
+  const j = (S.journal||[]).filter(e=>e.d===dayKey() && e.tags && e.tags.includes("streak credit")).length;
+  if(j && (sys==="motor"||sys==="strength"||sys==="armor"||sys==="skill")) bits.push("journal-logged work");
+  const ci = todayCI();
+  if(sys==="recharge" && ci.rested) bits.push("rest credited");
+  if(sys==="recharge" && (S.evening||{})[dayKey()]) bits.push("day closed");
+  return bits.join(" + ");
+}
+function renderLifeScore(){
+  const box = $("#lifeCard"); if(!box) return;
+  const dk = dayKey();
+  const { score, bars } = lifeScore(dk);
+  const learning = bars[0] && bars[0].learning;
+  const quiet = bars.every(b=>b.xp===0);
+  /* yesterday, for the delta chip */
+  const y = new Date(); y.setDate(y.getDate()-1);
+  const ys = lifeScore(dayKey(y)).score;
+  const dY = score - ys;
+  const chips = learning
+    ? `<span class="tag">📐 learning your normal — ${3-lifeHistoryDays()} more day${3-lifeHistoryDays()>1?"s":""}</span>`
+    : `<span class="tag">vs yesterday ${dY>=0?"+":""}${dY}</span><span class="tag">vs your normal ${score-50>=0?"+":""}${score-50}</span>`;
+  box.innerHTML = `<div class="card">
+    <div class="ls-head"><span class="ls-num">${score}</span><span class="ls-chips">${chips}</span></div>
+    ${bars.map(b=>{
+      const cells = Array.from({length:10},(_,i)=>{
+        const on = b.val >= (i+1)*10 - 5;
+        const tick = !b.learning && i===4;               // the 50-mark: your normal
+        return `<span class="ls-cell ${on?'on':''} ${tick?'tick':''}"></span>`;
+      }).join("");
+      return `<div class="ls-row" style="color:${sysColor(b.sys)}">
+        <span class="ls-name">${SYS[b.sys].icon} ${SYS[b.sys].name}</span>
+        <span class="ls-cells">${cells}</span>
+        <span class="ls-val"><b>${b.val}</b></span></div>`;
+    }).join("")}
+    <div class="ls-note">${quiet
+      ? "Quiet day so far — the bars only say what they saw. Small still counts."
+      : learning ? "Bars fill on raw effort while Momentum learns what a normal day looks like for you."
+      : "50 is right at your 28-day normal. The tick marks it. Some days run high and some run low — seeing that honestly is the point."}</div>
+    <button class="btn sm ghost" data-lsopen="1" style="margin-top:10px">🧮 Show the math</button>
+  </div>`;
+}
+function openLifeSheet(){
+  const { score, bars } = lifeScore();
+  const learning = bars[0] && bars[0].learning;
+  $("#lsBody").innerHTML = `<h3>Life score — the math</h3>
+    <p class="mut" style="margin-top:6px">The score is the unweighted average of your six bars: <b>(${bars.map(b=>b.val).join(" + ")}) ÷ 6 = ${score}</b>. ${learning
+      ? "Right now every bar fills on raw effort (40 XP fills a bar) while your personal baseline is being learned — no guessing before there's data."
+      : "Each bar compares today's earned XP in that system to your own 28-day average. 50 means right at your normal; 100 means double it. Nobody else's normal is in the math."}</p>
+    ${bars.map(b=>`<div class="card" style="margin-top:8px">
+      <div style="display:flex; justify-content:space-between; align-items:baseline">
+        <b style="color:${sysColor(b.sys)}; font-family:'Chakra Petch'; font-size:13px">${SYS[b.sys].icon} ${SYS[b.sys].name}</b>
+        <span style="font-family:'Chakra Petch'; font-size:16px">${b.val}</span></div>
+      <div class="mut" style="font-size:12px; margin-top:4px">
+        ${b.xp} XP today${b.base!==null?` · your normal ≈ ${Math.round(b.base)} XP/day`:""}${lifeFeeders(b.sys)?` · fed by ${lifeFeeders(b.sys)}`:b.xp===0?" · nothing yet — and that's allowed":""}</div>
+    </div>`).join("")}
+    <p class="mut" style="font-size:11.5px; margin-top:10px">Baselines are yours alone, recomputed daily, stored on this device. Rest days lower a bar — they never touch your level. XP and levels never reset and never decay.</p>
+    <div class="sheet-foot"><button class="btn" id="lsClose" style="flex:1">Got it</button></div>`;
+  $("#lifeSheet").classList.add("show");
+}
+/* ================= v8: EVENING CLOSE =================
+   Close the loop: one tap on how the day felt, cold to warm. First close of the
+   day credits a little RECHARGE — reflection is recovery. Never required. */
+const vibeColor = v => `hsl(${Math.round(210 - (v-1)*22)}, 78%, 56%)`;
+function renderEvening(){
+  const box = $("#eveningCard"); if(!box) return;
+  const dk = dayKey();
+  const ev = (S.evening||{})[dk];
+  const h = new Date().getHours();
+  const dots = Array.from({length:10},(_,i)=>{ const v=i+1;
+    return `<button class="ev-dot ${ev&&ev.vibe===v?'on':''}" data-vibe="${v}" aria-label="Vibe ${v} of 10" style="color:${vibeColor(v)}; background:${vibeColor(v)}"></button>`;
+  }).join("");
+  /* last-7-days mood strip */
+  const strip = Array.from({length:7},(_,i)=>{
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    const e = (S.evening||{})[dayKey(d)];
+    return `<span class="ev-day" title="${dayKey(d)}" style="${e?`background:${vibeColor(e.vibe)}`:""}"></span>`;
+  }).join("");
+  box.innerHTML = `<div class="card">
+    <div style="font-family:'Chakra Petch'; font-weight:700; font-size:14px">How did today feel?</div>
+    <p class="mut" style="font-size:11.5px; margin-top:3px">${ev
+      ? `Closed at <b style="color:${vibeColor(ev.vibe)}">${ev.vibe}/10</b> — tap again any time to change it.`
+      : h<17 ? "Come back tonight — or close it now if your day's done. Cold to warm."
+      : "One tap, cold to warm. Closing the day counts as recovery."}</p>
+    <div class="ev-dots">${dots}</div>
+    ${(function(){ const it = todayIntent();
+      if(!(ev && it && it.txt)) return "";
+      if(it.kept!==undefined) return `<p class="mut" style="font-size:11.5px; margin-top:9px">🎯 Loop closed — ${it.kept===2?"kept it":it.kept===1?"partly":"not today, and that's honest data"}.</p>`;
+      return `<div style="margin-top:10px"><div class="mut" style="font-size:11.5px">🎯 Did today match your intention — "${esc(it.txt)}"?</div>
+        <div class="chips" style="gap:6px; margin-top:7px">
+          <button class="chip" data-kept="2">✓ Kept it</button>
+          <button class="chip" data-kept="1">◐ Partly</button>
+          <button class="chip" data-kept="0">Not today</button></div></div>`; })()}
+    ${ev && ev.note ? `<p style="font-size:13px; margin-top:10px">"${esc(ev.note)}"</p>` : `
+    <div style="display:flex; gap:8px; margin-top:10px">
+      <input id="evNote" placeholder="One line about today (optional)" style="flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none" value="${ev&&ev.note?esc(ev.note):""}">
+      <button class="btn sm ghost" id="evNoteSave">Save</button></div>`}
+    <div class="ev-strip">${strip}<span class="ev-lab">last 7 days</span></div>
+  </div>`;
+}
+function setVibe(v){
+  S.evening = S.evening||{};
+  const dk = dayKey();
+  const ev = S.evening[dk] = S.evening[dk]||{};
+  ev.vibe = v;
+  if(!ev.credited){ ev.credited = 1; grantXp("recharge", 5); toast("Day closed — +5 RECHARGE 🌙"); SFX.play("done"); }
+  else buzz();
+  save(); renderEvening(); renderLifeScore(); renderHero();
+}
+/* ================= v8: BACKUP — export / restore / erase =================
+   LocalStorage is honest but fragile. The backup is a single JSON file that
+   belongs to the user — no server, no format lock-in. */
+function exportBackup(){
+  try{
+    const payload = { app:"momentum", fmt:1, exported:new Date().toISOString(), state:S };
+    const blob = new Blob([JSON.stringify(payload)], {type:"application/json"});
+    const a = document.createElement("a");
+    const d = new Date(), pad = n=>String(n).padStart(2,"0");
+    a.href = URL.createObjectURL(blob);
+    a.download = `momentum-backup-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    toast("Backup exported — keep it somewhere safe 📦");
+  }catch(e){ toast("Export failed — try again"); }
+}
+function importBackup(file){
+  const rd = new FileReader();
+  rd.onload = () => {
+    try{
+      const data = JSON.parse(rd.result);
+      const st = (data && data.app==="momentum" && data.state) ? data.state
+               : (data && typeof data.xp==="number") ? data : null;   // accept a raw state too
+      if(!st) { toast("That doesn't look like a Momentum backup"); return; }
+      askConfirm("Restore this backup?",
+        `Replaces everything on this device with the backup${data.exported ? " from "+new Date(data.exported).toLocaleDateString() : ""} — level ${levelFromXp(st.xp||0).lvl}, ${st.streak||0}-day streak. This can't be merged, only swapped.`,
+        "Restore", ()=>{ store.set("mo_state", st); location.reload(); });
+    }catch(e){ toast("Couldn't read that file"); }
+  };
+  rd.readAsText(file);
+}
+
+/* ================= v9: MORNING INTENTION → EVENING LOOP =================
+   LifeXP's best loop: say one thing in the morning, rate it honestly at night.
+   Kept intentions earn XP — follow-through is a trainable skill. */
+function todayIntent(){ return (S.intent||{})[dayKey()]; }
+function renderIntent(){
+  const box = $("#intentCard"); if(!box) return;
+  const it = todayIntent();
+  const h = new Date().getHours();
+  if(!it || !it.txt){
+    box.innerHTML = `<div class="card" style="margin-top:10px">
+      <div style="font-family:'Chakra Petch'; font-weight:700; font-size:13px">🎯 ${h<12?"Morning":"Today's"} intention</div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <input id="itTxt" placeholder="One thing that would make today a win…" maxlength="90"
+          style="flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px; outline:none">
+        <button class="btn sm" id="itSet">Set</button></div>
+      <p class="mut" style="font-size:11px; margin-top:6px">Tonight the evening close asks if you kept it. Kept intentions earn XP.</p></div>`;
+  } else {
+    const K = it.kept===2 ? `<span class="tag" style="color:var(--c-skill)">✓ kept</span>`
+          : it.kept===1 ? `<span class="tag">◐ partly</span>`
+          : it.kept===0 ? `<span class="tag">— not today, and that's data</span>` : "";
+    box.innerHTML = `<div class="card" style="margin-top:10px">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+        <span style="font-family:'Chakra Petch'; font-weight:700; font-size:13px">🎯 ${esc(it.txt)}</span>${K}</div></div>`;
+  }
+}
+/* ================= v9: SAGA RECAP — week in one scroll, month as a trend ===== */
+function daysOfWeek(off){
+  const now = new Date(); const mon = new Date(now);
+  mon.setDate(now.getDate() - ((now.getDay()+6)%7) - off*7); mon.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+}
+function recapData(off){
+  const days = daysOfWeek(off);
+  const sys = {}; Object.keys(SYS).forEach(k=>sys[k]=0);
+  let minutes=0, active=0, habits=0, vibes=[], best={k:null,xp:0}, xp=0;
+  days.forEach(d=>{ const k = dayKey(d);
+    const ds = (S.daySys||{})[k]||{}; let dayTot=0;
+    Object.keys(SYS).forEach(s=>{ sys[s]+=ds[s]||0; dayTot+=ds[s]||0; });
+    xp += dayTot;
+    minutes += (S.dayMin||{})[k]||0;
+    if(((S.dayXP||{})[k]||0) > 0) active++;
+    habits += Object.keys((S.habitLog||{})[k]||{}).length;
+    const ev = (S.evening||{})[k]; if(ev && ev.vibe) vibes.push(ev.vibe);
+    if(dayTot > best.xp) best = { k:d.toLocaleDateString(undefined,{weekday:"long"}), xp:dayTot };
+  });
+  return { sys, minutes, active, habits, xp,
+    vibe: vibes.length ? Math.round(vibes.reduce((a,b)=>a+b,0)/vibes.length*10)/10 : null, best };
+}
+function monthTrend(){
+  /* your normal, trending: mean daily XP per system, last 28d vs the 28 before */
+  const cur={}, prev={}; Object.keys(SYS).forEach(k=>{cur[k]=0; prev[k]=0;});
+  for(let i=1;i<=56;i++){ const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=(S.daySys||{})[dayKey(d)]||{};
+    Object.keys(SYS).forEach(k=>{ (i<=28?cur:prev)[k]+=ds[k]||0; }); }
+  return Object.keys(SYS).map(k=>({ k, cur:cur[k]/28, prev:prev[k]/28 }));
+}
+function openRecap(){
+  const tw = recapData(0), lw = recapData(1);
+  const d = (a,b)=>{ const v=a-b; return `<span class="tag">${v>=0?"+":""}${Math.round(v)} vs last wk</span>`; };
+  const trend = monthTrend();
+  const hasPrev = trend.some(t=>t.prev>0);
+  $("#rcBody").innerHTML = `<h3>📜 Saga recap</h3>
+    <p class="mut" style="margin-top:4px">This week, honestly told. Days you showed up beat perfect days.</p>
+    <div class="card" style="margin-top:10px">
+      <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px">
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">${tw.active}</b> <span class="mut">days active</span></span>
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">${tw.minutes}</b> <span class="mut">min</span></span>
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">${tw.xp}</b> <span class="mut">XP</span></span>
+        <span><b style="font-size:17px; font-family:'Chakra Petch'">${tw.habits}</b> <span class="mut">habits</span></span>
+        ${tw.vibe?`<span><b style="font-size:17px; font-family:'Chakra Petch'">${tw.vibe}</b> <span class="mut">avg vibe</span></span>`:""}
+      </div>
+      ${tw.best.k?`<p class="mut" style="font-size:11.5px; margin-top:8px">Biggest day: ${tw.best.k} (${tw.best.xp} XP).</p>`:""}
+      <div style="margin-top:6px">${d(tw.xp, lw.xp)} ${d(tw.minutes, lw.minutes)}</div></div>
+    ${Object.keys(SYS).map(k=>{ const a=tw.sys[k], b=lw.sys[k]; const v=a-b;
+      return `<div style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12px">
+        <span style="width:96px; color:${sysColor(k)}; font-family:'Chakra Petch'; font-size:11px">${SYS[k].icon} ${SYS[k].name}</span>
+        <span style="flex:1; height:7px; border-radius:99px; background:var(--line); overflow:hidden">
+          <i style="display:block; height:100%; width:${Math.min(100, Math.round(a/(Math.max(a,b,60))*100))}%; background:${sysColor(k)}"></i></span>
+        <span class="mut" style="width:104px; text-align:right">${a} XP · ${v>=0?"+":""}${Math.round(v)}</span></div>`; }).join("")}
+    <div class="sec-label">Your normal, trending</div>
+    ${hasPrev ? monthTrend().map(t=>{ const df=t.cur-t.prev;
+      const arrow = Math.abs(df)<0.75 ? "→ holding" : df>0 ? `▲ +${Math.round(df*10)/10} XP/day` : `▼ ${Math.round(df*10)/10} XP/day`;
+      return `<div style="display:flex; justify-content:space-between; font-size:12px; margin-top:6px">
+        <span style="color:${sysColor(t.k)}">${SYS[t.k].name}</span><span class="mut">${arrow}</span></div>`; }).join("")
+      : `<p class="mut" style="font-size:12px">Needs about a month of history — your normal is still being written.</p>`}
+    <p class="mut" style="font-size:11.5px; margin-top:10px">A quiet week reads quiet. That's the deal — the level never goes down.</p>
+    <div class="sheet-foot"><button class="btn" id="rcClose" style="flex:1">Done</button></div>`;
+  $("#recapSheet").classList.add("show");
+}
+function renderRecapCard(){
+  const box = $("#recapCard"); if(!box) return;
+  const sun = new Date().getDay()===0;
+  box.innerHTML = sun
+    ? `<div class="today-card" style="margin-top:10px"><div class="today-eyebrow">It's Sunday</div>
+       <div class="today-title" style="font-size:15px">Your week in one scroll is ready.</div>
+       <button class="btn sm" data-recapopen="1" style="margin-top:10px">📜 Open the saga recap</button></div>`
+    : `<button class="btn sm ghost" data-recapopen="1" style="margin-top:10px">📜 Saga recap — week & trend</button>`;
+}
+/* ================= v9: HEALTH SIGNALS =================
+   The web-honest version of LifeXP's passive capture: four quick numbers,
+   honest caps, no guessing. In the iOS wrapper these fill themselves from
+   HealthKit (steps · sleep · daylight · distance — the same reads LifeXP asks for). */
+function todayHealth(){ return (S.health||{})[dayKey()] || {}; }
+const HL_RULES = {
+  steps:   { sys:"motor",    calc:v=>Math.min(8, Math.floor(v/1500)), why:"1 XP / 1,500 steps · cap 8" },
+  sleepH:  { sys:"recharge", calc:v=>v>=7?8:v>=6?4:0,                 why:"7h+ = 8 XP · 6h = 4" },
+  daylight:{ sys:"recharge", calc:v=>v>=20?4:0,                       why:"20+ min outside = 4 XP" },
+  dist:    { sys:"motor",    calc:v=>Math.min(6, Math.round(v)),      why:"1 XP / mile · cap 6" }
+};
+function renderHealth(){
+  const box = $("#healthCard"); if(!box) return;
+  const h = todayHealth();
+  const F = [["steps","Steps","", "e.g. 8500"],["sleepH","Sleep","h","e.g. 7.5"],["daylight","Daylight","min","e.g. 30"],["dist","Walk + run","mi","e.g. 2.4"]];
+  box.innerHTML = `<div class="card">
+    <div class="hl-grid">${F.map(([k,l,u,ph])=>`<div class="hl-item"><label>${l}${u?` <span class="u">(${u})</span>`:""}</label>
+      <input type="number" step="any" inputmode="decimal" id="hl_${k}" placeholder="${ph}" value="${h[k]??""}"></div>`).join("")}</div>
+    <div style="display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap">
+      <button class="btn sm" id="hlSave">Credit signals</button>
+      <span class="mut" style="font-size:11px">Honest caps: ${HL_RULES.steps.why} · sleep ${HL_RULES.sleepH.why}. Edits add, never claw back.</span></div>
+    <p class="mut" style="font-size:10.5px; margin-top:7px">📱 In the iOS app build these fill themselves from Apple Health — same reads, zero typing. On the web, thirty seconds of honesty does the job.</p></div>`;
+}
+function saveHealth(){
+  S.health = S.health||{}; const dk = dayKey();
+  const h = S.health[dk] = S.health[dk]||{}; h.cr = h.cr||{};
+  let granted = 0;
+  Object.keys(HL_RULES).forEach(k=>{
+    const inp = $("#hl_"+k); if(!inp || inp.value==="") return;
+    const v = Math.max(0, parseFloat(inp.value)||0);
+    h[k] = v;
+    const due = HL_RULES[k].calc(v), had = h.cr[k]||0;
+    if(due > had){ grantXp(HL_RULES[k].sys, due-had); granted += due-had; h.cr[k] = due; }
+  });
+  save(); renderHealth(); renderHero(); renderTodayPage();
+  toast(granted>0 ? `Signals credited — +${granted} XP` : "Signals noted — nothing new to credit");
+  if(granted>0) SFX.play("done");
+}
+/* ================= v10: MEMORIES =================
+   How it connects to everything else: the JOURNAL feeds it (@mention a person
+   or place and a card appears), TRAINING feeds it (level-ups, streak milestones
+   and PRs save themselves), and each card points back at every journal entry
+   it appears in. People · Places · Milestones · Gear · Chapters. */
+const CDX_TYPES = {
+  ally:   { n:"Person",    pn:"People",     icon:"🤝", c:"#8e97e8" },
+  ground: { n:"Place",     pn:"Places",     icon:"📍", c:"#57c793" },
+  feat:   { n:"Milestone", pn:"Milestones", icon:"🏅", c:"#e8b44a" },
+  gear:   { n:"Gear",      pn:"Gear",       icon:"⚔️", c:"#9fb2c8" },
+  chapter:{ n:"Chapter",   pn:"Chapters",   icon:"📖", c:"#e0574b" }
+};
+let cdxFilter = "all", CDXI = null;
+function codexFind(name){ return (S.codex||[]).find(c=>c.name.toLowerCase()===String(name).toLowerCase()); }
+function codexAdd(type, name, extra){
+  S.codex = S.codex||[];
+  const card = Object.assign({ id:"c"+Math.random().toString(36).slice(2,9), type, name:String(name).slice(0,40),
+    note:"", vibe:0, photo:null, d:dayKey() }, extra||{});
+  S.codex.unshift(card); save(); return card;
+}
+function codexAuto(type, name, note){
+  if(codexFind(name)) return null;
+  const c = codexAdd(type, name, { note:note||"", auto:1 });
+  toast("📜 Saved to memories: " + name); return c;
+}
+function codexLinked(card){
+  const needle = "@"+card.name.toLowerCase();
+  return (S.journal||[]).filter(e=>e.txt.toLowerCase().includes(needle)).slice(0,6);
+}
+function renderCodex(){
+  const box = $("#codexBox"); if(!box) return;
+  const all = S.codex||[];
+  const list = cdxFilter==="all" ? all : all.filter(c=>c.type===cdxFilter);
+  const chips = [`<button class="chip ${cdxFilter==="all"?'on':''}" data-cdxfilter="all">All</button>`]
+    .concat(Object.entries(CDX_TYPES).map(([k,T])=>{
+      const n = all.filter(c=>c.type===k).length;
+      return `<button class="chip ${cdxFilter===k?'on':''}" data-cdxfilter="${k}">${T.icon} ${T.pn}${n?` · ${n}`:""}</button>`; })).join("");
+  box.innerHTML = `<p class="mut" style="font-size:11.5px; margin-bottom:8px">Built automatically from your journal @mentions and big training moments — level-ups, streaks and PRs save themselves. Tap a card to see every entry it appears in.</p>
+    <div class="chips">${chips}</div>
+    ${list.length ? `<div class="cdx-grid">${list.map(c=>{ const T = CDX_TYPES[c.type]||CDX_TYPES.feat;
+      return `<div class="cdx-card" data-cdxopen="${c.id}" style="cursor:pointer">
+        ${c.photo?`<img class="ph" src="${c.photo}" alt="">`:""}
+        <span class="cdx-type" style="color:${T.c}">${T.icon} ${T.n}</span>
+        <div class="nm">${esc(c.name)}</div>
+        ${c.note?`<div class="sb">${esc(c.note)}</div>`:""}
+        ${c.vibe?`<div class="mut" style="font-size:10.5px; margin-top:5px"><span style="color:${vibeColor(c.vibe)}">●</span> ${c.vibe}/10</div>`:""}
+      </div>`; }).join("")}</div>`
+    : `<div class="empty">Nothing here yet. Mention someone in the journal — <b>@Marcus crushed hill sprints with me</b> — or add one below. Level-ups, streaks and PRs save themselves as milestones.</div>`}
+    <button class="btn sm ghost" data-cdxnew="1" style="margin-top:10px">＋ Add a memory</button>
+    <p class="mut" style="font-size:11px; margin-top:8px">One photo and a sentence beats a perfect record. Memories never punish missed days.</p>`;
+}
+let CDX_PHOTO = null;
+function openCodexCard(id){
+  const c = (S.codex||[]).find(x=>x.id===id); if(!c) return;
+  CDXI = id; CDX_PHOTO = undefined;
+  const T = CDX_TYPES[c.type]||CDX_TYPES.feat;
+  const linked = codexLinked(c);
+  $("#cdxBody").innerHTML = `
+    <span class="cdx-type" style="color:${T.c}">${T.icon} ${T.n}${c.auto?" · saved automatically":""}</span>
+    ${c.photo?`<img src="${c.photo}" style="width:100%; border-radius:12px; margin-top:8px" alt="">`:""}
+    <div class="field" style="margin-top:10px"><label>Name</label><input id="cdxName" value="${esc(c.name)}" maxlength="40"></div>
+    <div class="field"><label>The story</label><textarea id="cdxNote" placeholder="Why this matters…">${esc(c.note||"")}</textarea></div>
+    <div class="sec-label" style="margin-top:2px">Vibe</div>
+    <div class="ev-dots">${Array.from({length:10},(_,i)=>{ const v=i+1;
+      return `<button class="ev-dot ${c.vibe===v?'on':''}" data-cdxvibe="${v}" style="color:${vibeColor(v)}; background:${vibeColor(v)}"></button>`; }).join("")}</div>
+    <div class="field" style="margin-top:12px"><label>${c.photo?"Replace photo":"Add a photo"}</label>
+      <input type="file" id="cdxPhotoFile" accept="image/*"></div>
+    ${linked.length?`<div class="sec-label">In the journal</div>${linked.map(e=>
+      `<div class="card" style="margin-top:6px"><div class="mut" style="font-size:10.5px">${esc(e.d)}</div>
+       <div style="font-size:12.5px; margin-top:2px">${esc(e.txt.slice(0,120))}${e.txt.length>120?"…":""}</div></div>`).join("")}`:""}
+    <div class="sheet-foot" style="flex-wrap:wrap">
+      <button class="btn ghost sm" id="cdxDel" style="color:var(--c-fuel)">Delete</button>
+      <button class="btn ghost sm" id="cdxShare">📸 Share card</button>
+      <button class="btn sm" id="cdxSave" style="flex:1">Save</button></div>`;
+  $("#codexSheet").classList.add("show");
+}
+function openCodexNew(){
+  CDXI = null; CDX_PHOTO = undefined;
+  $("#cdxBody").innerHTML = `<h3>New memory</h3>
+    <div class="chips" style="margin-top:10px" id="cdxTypeChips">${Object.entries(CDX_TYPES).map(([k,T],i)=>
+      `<button class="chip ${i===0?'on':''}" data-cdxtype="${k}">${T.icon} ${T.n}</button>`).join("")}</div>
+    <div class="field" style="margin-top:10px"><label>Name</label><input id="cdxName" placeholder="Marcus · Riverside trail · First pull-up…" maxlength="40"></div>
+    <div class="field"><label>The story (optional)</label><textarea id="cdxNote"></textarea></div>
+    <div class="field"><label>Photo (optional)</label><input type="file" id="cdxPhotoFile" accept="image/*"></div>
+    <div class="sheet-foot"><button class="btn ghost" id="cdxCancel" style="flex:1">Cancel</button>
+      <button class="btn" id="cdxCreate" style="flex:1">Add card</button></div>`;
+  $("#codexSheet").classList.add("show");
+}
+function shrinkImage(file, cb){
+  const rd = new FileReader();
+  rd.onload = () => { const img = new Image();
+    img.onload = () => { const mx = 560, sc = Math.min(1, mx/Math.max(img.width, img.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      cb(cv.toDataURL("image/jpeg", .78)); };
+    img.src = rd.result; };
+  rd.readAsDataURL(file);
+}
+/* ================= v9: POLAROID SHARE CARD =================
+   Share the feat, never the archive. One canvas-rendered polaroid — photo,
+   torn date banner, stat line — saved as an image you own. */
+function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
+async function shareCodexCard(c){
+  const cv = document.createElement("canvas"); cv.width = 1000; cv.height = 1250;
+  const x = cv.getContext("2d");
+  x.fillStyle = "#efe6d5"; x.fillRect(0,0,1000,1250);                     /* parchment */
+  x.save(); x.translate(500,625); x.rotate(-.012); x.translate(-500,-625);
+  x.fillStyle = "#fbf7ef"; x.shadowColor="rgba(60,40,20,.28)"; x.shadowBlur=38; x.shadowOffsetY=14;
+  x.fillRect(80,90,840,1020); x.restore();                                /* polaroid */
+  const img = c.photo ? await loadImg(c.photo) : null;
+  x.save(); x.beginPath(); x.rect(120,130,760,640); x.clip();
+  if(img){
+    const s = Math.max(760/img.width, 640/img.height);
+    x.drawImage(img, 500-img.width*s/2, 450-img.height*s/2, img.width*s, img.height*s); }
+  else { x.fillStyle="#1c1a20"; x.fillRect(120,130,760,640);
+    x.font="200px system-ui"; x.textAlign="center"; x.fillText((CDX_TYPES[c.type]||{}).icon||"🏅", 500, 520); }
+  x.restore();
+  x.save(); x.translate(500,150); x.rotate(-.05);                          /* torn date banner */
+  x.fillStyle = "#e0574b"; x.fillRect(-190,-34,380,62);
+  x.fillStyle = "#fbf7ef"; x.font = "600 30px 'Chakra Petch', monospace"; x.textAlign="center";
+  x.fillText(c.d || dayKey(), 0, 8); x.restore();
+  x.fillStyle = "#26221e"; x.textAlign = "center";
+  x.font = "700 58px 'Chakra Petch', monospace";
+  x.fillText(String(c.name).slice(0,24), 500, 870);
+  x.font = "26px 'Inter', system-ui"; x.fillStyle = "#6e6558";
+  const note = (c.note||"").slice(0,64);
+  if(note) x.fillText(note, 500, 920);
+  const L = levelFromXp(S.xp);
+  x.font = "600 30px 'Chakra Petch', monospace"; x.fillStyle = "#26221e";
+  x.fillText(`LVL ${L.lvl} · 🔥 ${S.streak||0}-DAY STREAK`, 500, 1010);
+  x.font = "600 34px 'Chakra Petch', monospace"; x.fillStyle = "#a3927b";
+  x.fillText("M O M E N T U M", 500, 1190);
+  cv.toBlob(async blob=>{
+    const fname = "momentum-" + String(c.name).toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,30) + ".png";
+    try{
+      const f = new File([blob], fname, {type:"image/png"});
+      if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], title:c.name}); return; }
+    }catch(e){}
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("Share card saved 📸");
+  }, "image/png");
+}
+/* ================= v9: ON THIS DAY ================= */
+function renderOTD(){
+  const box = $("#otdCard"); if(!box) return;
+  const today = new Date(); let hit = null, ago = "";
+  const scan = (list, getD, getTxt) => { for(const it of list){
+    const d = new Date(getD(it)); if(isNaN(d)) continue;
+    const mAgo = (today.getFullYear()-d.getFullYear())*12 + (today.getMonth()-d.getMonth());
+    if(d.getDate()===today.getDate() && mAgo>=1 && !hit){
+      hit = getTxt(it); ago = mAgo>=12 ? Math.floor(mAgo/12)+" year"+(mAgo>=24?"s":"") : mAgo+" month"+(mAgo>1?"s":""); } } };
+  scan(S.codex||[], c=>c.d, c=>"🏅 "+c.name);
+  scan(S.journal||[], e=>e.d, e=>'"'+e.txt.slice(0,90)+(e.txt.length>90?"…":"")+'"');
+  box.innerHTML = hit ? `<div class="card" style="margin-top:10px">
+    <div class="mut" style="font-size:10.5px; font-family:'Chakra Petch'; letter-spacing:.07em">📜 ON THIS DAY — ${ago.toUpperCase()} AGO</div>
+    <div style="font-size:13.5px; margin-top:5px">${esc(hit)}</div></div>` : "";
+}
+/* ================= v9: WIDER JOURNAL VOCABULARY =================
+   The whole-life credits: sleep, fuel and connection notes earn small honest XP
+   — once per category per day. "Slept 8 hours" is training too. */
+function lifeCredits(t, entry){
+  S.health = S.health||{}; const dk = dayKey();
+  const h = S.health[dk] = S.health[dk]||{}; const nl = h.nlp = h.nlp||{};
+  let hits = 0;
+  const slp = t.match(/slept\s*(?:about |around )?(\d{1,2}(?:\.\d)?)\s*(?:h|hour|hr)/);
+  if(!nl.slp && (slp || /slept (really )?well|early night|full night'?s sleep/.test(t))){
+    const hrs = slp ? parseFloat(slp[1]) : 7;
+    const xp = hrs>=7?8:hrs>=6?4:0;
+    if(xp){ grantXp("recharge", xp); nl.slp=1; entry.tags.push("sleep credited"); hits++; }
+  }
+  if(!nl.fuel && /ate (well|clean|healthy)|meal prep|protein goal|hydrat|cooked (dinner|at home)|no junk/.test(t)){
+    grantXp("fuel", 6); nl.fuel=1; entry.tags.push("fuel credited"); hits++;
+  }
+  if(!nl.soc && /(with @|hung out|caught up with|called (my )?(mom|dad|friend|brother|sister)|coffee with|dinner with)/.test(t)){
+    grantXp("recharge", 4); nl.soc=1; entry.tags.push("connection credited"); hits++;
+  }
+  return hits;
 }
 
 /* ================= RENDER: TRAIN ================= */
@@ -3903,7 +4688,7 @@ function renderPickers(){
     .filter(r=>!r.o.eqOnly || r.o.eqOnly==="Bodyweight" || S.sel.eq.includes(r.o.eqOnly))
     .map(r=>`<button class="chip" data-recipe="${r.id}">${r.n}</button>`).join("")
     || `<span class="mut">Pick some gear below to unlock quick starts.</span>`;
-  $("#timeChips").innerHTML = [15,30,45,60].map(t=>`<button class="chip alt ${S.sel.time===t?'on':''}" data-t="${t}">${t} min</button>`).join("");
+  $("#timeChips").innerHTML = [15,20,30,45,60].map(t=>`<button class="chip alt ${S.sel.time===t?'on':''}" data-t="${t}">${t} min</button>`).join("");
   $("#eqGroups").innerHTML = Object.entries(EQ_GROUPS).map(([g,items])=>`<div class="eq-group"><div class="g">${g}</div><div class="chips">`+
     items.map(e=>`<button class="chip ${S.sel.eq.includes(e)?'on':''}" data-e="${e}">${e}</button>`).join("")+`</div></div>`).join("");
   const soccerOn = soccerPicked() && S.sel.eq.includes("Soccer Ball");
@@ -3913,9 +4698,14 @@ function renderPickers(){
   }).join("");
   const MGS = [["legs","Legs"],["glutes","Glutes"],["chest","Chest"],["back","Back"],["shoulders","Shoulders"],["arms","Arms"],["core","Core"]];
   let sub = "";
+  if(S.sel.focus==="Conditioning")
+    sub = `<div class="sec-label">Circuit style</div><div class="chips">` +
+      [["","Auto"],["hiit","🔥 HIIT · all your gear"],["kbflow","🔔 KB circuit"]]
+        .map(([k,l])=>`<button class="chip alt ${(S.sel.style||"")===k?'on':''}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
+      `<p class="mut" style="font-size:11px; margin-top:6px">HIIT pulls from every piece of gear you've selected above — not just kettlebells or bodyweight.</p>`;
   if(S.sel.focus==="Strength")
     sub = `<div class="sec-label">Training style</div><div class="chips">` +
-      [["","Balanced"],["hypertrophy","Hypertrophy"],["strength","Strength"],["power","Power"],["functional","Functional"]]
+      [["","Balanced"],["hypertrophy","Hypertrophy"],["strength","Strength"],["power","Power"],["functional","Functional"],["hiit","🔥 HIIT circuit"]]
         .map(([k,l])=>`<button class="chip alt ${(S.sel.style||"")===k?'on':''}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
       `<div class="sec-label">Target muscles <span style="letter-spacing:0; text-transform:none; font-weight:500">(empty = balanced)</span></div><div class="chips">` +
       MGS.map(([k,l])=>`<button class="chip ${S.sel.mg.includes(k)?'on':''}" data-mg="${k}">${l}</button>`).join("") + `</div>`;
@@ -3971,15 +4761,35 @@ function exCard(m,i){
 }
 /* ---- in-session editing: swap / choose / remove / add without a random rebuild.
    Plan-launched sessions write every edit back to the act (act.names) — your plan is yours. */
-function editPool(block){
+function editPool(block, like){
   const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) ||
     (S.profile && S.profile.eq.includes(m.eq));
   const info = (S.profile && S.profile.areaInfo)||{};
   const avoid = Object.keys(info).filter(k=>info[k].mode==="avoid");
   const cur = S.session.items.map(m=>m.n);
-  return allMoves().filter(m=>m.b===block).filter(eqOk)
+  let pool = allMoves().filter(m=>m.b===block).filter(eqOk)
     .filter(m=>!m.area || !m.area.some(a=>avoid.includes(a)))
     .filter(m=>!cur.includes(m.n));
+  /* v10: swapping a normal exercise never offers a 20–30 min steady-state block
+     ("30-min walk" inside a 30-min session is not a swap, it's a takeover).
+     Long/run moves only appear when the move being replaced is itself one. */
+  const likeLong = like && ((like.dur||0) >= 900 || like.run);
+  if(!likeLong) pool = pool.filter(m=>(m.dur||0) < 900 && !m.run);
+  return pool;
+}
+/* v10: swap recommendations — scored by muscles shared, system, gear on hand */
+function swapRecs(target, pool){
+  const ov = (a,b)=>(a||[]).filter(x=>(b||[]).includes(x)).length;
+  return pool.map(m=>{
+    let sc = ov(m.mg, target.mg)*3 + ov(m.mgf, target.mgf)*2 + (m.p===target.p?2:0);
+    sc += m.eq===target.eq ? 1.5 : (m.eq==="Bodyweight"||S.sel.eq.includes(m.eq)) ? .5 : 0;
+    sc += moveScore(m)*.3;
+    const why = [];
+    if(ov(m.mg, target.mg)||ov(m.mgf, target.mgf)) why.push("same muscles");
+    if(m.eq===target.eq) why.push("same gear");
+    else if(m.p===target.p) why.push("same system");
+    return { m, sc, why: why.join(" · ") || "fits your gear" };
+  }).sort((a,b)=>b.sc-a.sc).slice(0,4);
 }
 function styledItem(nm, block){
   const item = {...nm, done:false};
@@ -3999,10 +4809,11 @@ function replaceSessionMove(i, nm){
 }
 function swapSessionMove(i){
   const m = S.session.items[i]; if(!m || m.done) return;
-  let pool = editPool(m.b).filter(x=>x.p===m.p);
-  if(!pool.length) pool = editPool(m.b);
+  /* v10: dice-swap picks from the top recommendations, not the whole library */
+  const pool = editPool(m.b, m);
   if(!pool.length){ toast("No alternatives fit your gear"); return; }
-  replaceSessionMove(i, wPick(pool,1)[0]);
+  const recs = swapRecs(m, pool);
+  replaceSessionMove(i, wPick(recs.map(r=>r.m), 1)[0]);
   SFX.play("select");
 }
 function removeSessionMove(i){
@@ -4026,11 +4837,19 @@ function addSessionMove(block, nm){
 let PK = null;
 function openPickSheet(mode, i, block){
   PK = { mode, i, block: block || (S.session.items[i]&&S.session.items[i].b) || "main" };
-  const pool = editPool(PK.block);
+  const target = mode==="swap" ? S.session.items[i] : null;
+  const pool = editPool(PK.block, target);
   if(!pool.length){ toast("Nothing else fits your gear here"); PK=null; return; }
   let h = `<h3>${PK.mode==="add" ? "＋ Add a movement" : "☰ Choose a replacement"}</h3>
-    <p class="mut">${PK.mode==="add" ? "Filtered to your gear." : `Swapping out <b>${esc(S.session.items[i].n)}</b>.`}</p>
-    <input id="pkSearch" placeholder="🔍 Search ${pool.length} movements…" style="width:100%; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px">
+    <p class="mut">${PK.mode==="add" ? "Filtered to your gear." : `Swapping out <b>${esc(S.session.items[i].n)}</b>.`}</p>`;
+  /* v10: best swaps first — same muscles, your gear, this session's type */
+  if(target){
+    const recs = swapRecs(target, pool);
+    if(recs.length) h += `<div class="block-label">⭐ Best swaps</div>` + recs.map(r=>
+      `<div class="as-move">${esc(r.m.n)}<span class="mut" style="font-size:11px"> · ${esc(r.m.d)} · ${esc(r.m.eq)} · ${esc(r.why)}</span>
+        <button class="sw" data-pickmove="${esc(r.m.n)}">⟳ use</button></div>`).join("");
+  }
+  h += `<input id="pkSearch" placeholder="🔍 Search ${pool.length} movements…" style="width:100%; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px">
     <div style="max-height:48vh; overflow-y:auto; margin-top:6px">`;
   for(const [k,P] of Object.entries(SYS)){
     const rows = pool.filter(m=>m.p===k);
@@ -4064,10 +4883,10 @@ function sessionMedia(){
 }
 function renderSession(){
   const box = $("#session");
-  if(!S.session){ box.innerHTML=""; return; }
+  if(!S.session){ box.innerHTML=""; renderQuickTimer(); return; }
   const it = S.session.items, done = it.filter(m=>m.done).length;
   const blocks = { warmup:"Warm-up", main:"Main work", finisher:"Finisher" };
-  let html = `<div class="session-head"><h2>${esc(S.session.focus)} · ${S.session.time} min</h2><span class="mut">${done}/${it.length}</span></div>`;
+  let html = `<div class="session-head"><h2>${esc(S.session.focus)}${/-min /.test(S.session.focus)?"":" · "+S.session.time+" min"}</h2><span class="mut">${done}/${it.length}</span></div>`;
   /* quick-start sessions carry your saved edits — offer a clean reroll */
   if(S.session.recipeId && S.recipePrefs && S.recipePrefs[S.session.recipeId])
     html += `<p class="mut" style="margin:2px 0 8px">Your saved version of this quick start. <button class="btn sm ghost" id="recipeFresh">🎲 Fresh version</button></p>`;
@@ -4080,8 +4899,60 @@ function renderSession(){
       + `<div class="ex-actions" style="margin:2px 0 10px"><button class="chip" data-addmove="${b}">＋ Add a movement</button></div>`;
   }
   if(done===it.length && it.length) html += `<div class="complete-card"><h3>Session complete 💥</h3><p class="mut">+${Math.round(it.length*4)} bonus XP banked. See you tomorrow.</p></div>`;
+  /* v10: life happens — finish any time and bank what's done, zero penalty */
+  if(done>0 && done<it.length) html += `<button class="btn big ghost" id="finishEarly" style="margin-top:12px">🏁 FINISH SESSION — bank ${done} of ${it.length}</button>`;
   html += sessionMedia();
   box.innerHTML = html;
+  renderQuickTimer();
+}
+function finishSessionEarly(){
+  const it = S.session.items, done = it.filter(m=>m.done).length, total = it.length;
+  const mins = Math.max(5, Math.round(S.session.time * done/total));
+  if(S.session.micro) S.microDone = (S.microDone||0)+1; else S.sessions++;
+  S.minutes += mins; S.dayMin = S.dayMin||{}; S.dayMin[dayKey()] = (S.dayMin[dayKey()]||0) + mins;
+  grantXp((FOCUS_SYS[S.session.baseFocus||S.session.focus]||["motor"])[0], Math.round(done*3));
+  const ref = S.session.actRef;
+  if(ref && S.plan && S.plan.days[ref.idx] && S.plan.days[ref.idx].acts[ref.ai]){
+    S.plan.days[ref.idx].acts[ref.ai].done = true;
+  } else {
+    const pt = planToday();
+    if(pt){ const typ = Object.keys(DTYPES).find(k=>DTYPES[k].t===(S.session.baseFocus||S.session.focus)) || "MOT";
+      pt.day.acts.push({type:typ, done:true, adhoc:true, label:S.session.focus}); }
+    else logFreeAct(S.session.focus);
+  }
+  stopTimer(); SFX.play("complete"); bigBurst({n:70});
+  S.session = null; save();
+  renderSession(); renderTodayPage(); renderHero(); renderPlan();
+  toast(`Banked ${done}/${total} — ${mins} min credited 🏁`);
+}
+/* v10: freestyle sessions (no plan running) still land on Today — named for
+   what they were: Push Day, 30-min KB HIIT, Full Body Workout. */
+function logFreeAct(label){
+  S.freeLog = S.freeLog||{};
+  (S.freeLog[dayKey()] = S.freeLog[dayKey()]||[]).push(label);
+}
+/* v10: one-tap rest timer, always available on Train — defaults to the rest
+   the current workout actually calls for. */
+function restDefault(){
+  if(S.session){
+    if(S.session.flow) return S.session.flow.rest;
+    const nd = S.session.items.find(x=>!x.done && x.rest); if(nd) return nd.rest;
+    const st = STYLES[S.session.style]; if(st && st.rest) return st.rest;
+  }
+  return 60;
+}
+function renderQuickTimer(){
+  const box = $("#quickTimer"); if(!box) return;
+  const d = restDefault();
+  box.innerHTML = `<div class="card" style="margin-top:14px">
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+      <span style="font-family:'Chakra Petch'; font-weight:700; font-size:13px">⏱ Rest timer</span>
+      <span class="mut" style="font-size:11px">${S.session?"default matches this workout's rest":"one tap, any time"}</span></div>
+    <div class="chips" style="margin-top:9px">
+      <button class="chip on" data-qtstart="${d}">▶ ${d}s${S.session?" · session rest":""}</button>
+      ${[30,45,60,90,120].filter(x=>x!==d).map(sx=>`<button class="chip" data-qtstart="${sx}">${sx>=60?(sx%60?sx+"s":(sx/60)+" min"):sx+"s"}</button>`).join("")}
+      <input id="qtSec" type="number" inputmode="numeric" placeholder="custom" style="width:78px; background:var(--bg); border:1px solid var(--line); border-radius:99px; padding:7px 12px; outline:none">
+      <button class="chip" id="qtGo">Start</button></div></div>`;
 }
 
 /* ================= RENDER: PLAN ================= */
@@ -4359,6 +5230,7 @@ function renderMore(){
   $("#wPress").value=p.lifts.press||""; $("#wDb").value=p.caps.db||""; $("#wKb").value=p.caps.kb||"";
   $("#fEq").innerHTML = ALL_EQ.map(e=>`<option>${e}</option>`).join("");
   $("#fSys").innerHTML = Object.entries(SYS).filter(([k])=>!["fuel","recharge"].includes(k)).map(([k,P])=>`<option value="${k}">${P.icon} ${P.name}</option>`).join("");
+  renderVoice();
   const c = S.custom||[];
   $("#customList").innerHTML = c.length ? c.map((m,i)=>`<div class="lib-item"><div class="lib-ico">${SYS[m.p].icon}</div>
     <div class="ex-meta"><div class="ex-name">${esc(m.n)}</div><div class="ex-sub">${esc(m.d)} · ${esc(m.eq)}</div></div>
@@ -4393,7 +5265,9 @@ function widgetPayload(){
       return { key:k, name:SYS[k].name, lvl:pl.lvl, pct:Math.round(pl.into/pl.next*100) }; }),
     timer: T.iv ? { label:T.label, endsAt: Date.now()+T.left*1000 } : null,
     habits: (function(){ const log=S.habitLog[dayKey()]||{}; const hs=habitSet();
-      return { done:hs.filter(h=>log[h.id]).length, total:hs.length }; })()
+      return { done:hs.filter(h=>log[h.id]).length, total:hs.length }; })(),
+    life: (function(){ try{ const L2=lifeScore(); return { score:L2.score,
+      bars:L2.bars.map(b=>({sys:b.sys, val:b.val})), learning:!!(L2.bars[0]&&L2.bars[0].learning) }; }catch(e){ return null; } })()
   };
 }
 function pushWidgets(){
@@ -4483,7 +5357,9 @@ document.addEventListener("click", ev=>{
     i>=0?S.sel.eq.splice(i,1):S.sel.eq.push(e);   // empty is fine — bodyweight is always in
     if(!S.sel.eq.includes("Soccer Ball")&&S.sel.focus==="Soccer")S.sel.focus="Full Body";
     save(); renderPickers(); return; }
-  if(chip && chip.dataset.f){ S.sel.focus=chip.dataset.f; save(); renderPickers(); return; }
+  if(chip && chip.dataset.f){
+    if(S.sel.focus !== chip.dataset.f) S.sel.style = "";   // v10: styles don't leak across focus switches
+    S.sel.focus=chip.dataset.f; save(); renderPickers(); return; }
   if(chip && chip.dataset.mg){ const k=chip.dataset.mg, i=S.sel.mg.indexOf(k);
     i>=0?S.sel.mg.splice(i,1):S.sel.mg.push(k); save(); renderPickers(); return; }
   if(chip && chip.dataset.ar){ const k=chip.dataset.ar, i=S.sel.areas.indexOf(k);
@@ -4562,10 +5438,12 @@ document.addEventListener("click", ev=>{
   if(lw){ const name = lw.dataset.logw;
     const inp = lw.closest(".ex-actions").querySelector("[data-winput]");
     const v = +inp.value;
-    if(v>0){ S.logs[name] = v;
+    if(v>0){ const prev = S.logs[name]; S.logs[name] = v;
       const mv = allMoves().find(m=>m.n===name);
       if(mv && mv.lift){ if(!S.profile) S.profile={lifts:{},caps:{},goals:[],eq:S.sel.eq.slice()}; S.profile.lifts=S.profile.lifts||{}; S.profile.lifts[mv.lift]=v; }
       save(); toast("Logged "+v+" lb — hints updated");
+      /* v9: a beaten number is a Feat — chronicle it */
+      if(prev && v > prev){ try{ codexAuto("feat", "PR — "+name+" "+v+" lb", "Up from "+prev+" lb."); }catch(e){} }
     } else toast("Enter a weight first");
     return; }
 
@@ -4578,7 +5456,7 @@ document.addEventListener("click", ev=>{
 
   if(t.id==="briefSpeak"){ speakBrief(); return; }
   const tex = t.closest("[data-texpand]");
-  if(tex){ const card = tex.closest(".pday"), body = card && card.querySelector(".td-body");
+  if(tex && !t.closest("button")){ const card = tex.closest(".pday"), body = card && card.querySelector(".td-body");
     if(body){ body.style.display = body.style.display==="none" ? "block" : "none";
       const ar = tex.querySelector(".mut"); if(ar) ar.textContent = body.style.display==="none" ? "▸" : "▾"; } return; }
   const thw = t.closest("[data-thow]");
@@ -4630,6 +5508,96 @@ document.addEventListener("click", ev=>{
     touchStreak(); grantXp("recharge", 12);
     markAdapted({rested:1}); renderTodayPage(); renderHero();
     toast("Recovery credited — streak safe 🌙"); return; }
+  /* ---- v8: life score + evening close ---- */
+  if(t.closest("[data-lsopen]")){ openLifeSheet(); SFX.play("select"); return; }
+  if(t.id==="lsClose" || t.id==="lifeSheet"){ $("#lifeSheet").classList.remove("show"); return; }
+  const vb = t.closest("[data-vibe]");
+  if(vb){ setVibe(+vb.dataset.vibe); return; }
+  if(t.id==="evNoteSave"){ const inp=$("#evNote"); const dk=dayKey();
+    S.evening = S.evening||{}; const ev = S.evening[dk] = S.evening[dk]||{};
+    if(!ev.vibe){ toast("Tap a vibe dot first — cold to warm"); return; }
+    ev.note = (inp.value||"").trim().slice(0,140);
+    save(); renderEvening(); toast("Noted 🌙"); return; }
+  /* ---- v9: intention ---- */
+  if(t.id==="itSet"){ const inp=$("#itTxt"); const v=(inp.value||"").trim();
+    if(!v){ toast("Say the one thing first"); return; }
+    S.intent = S.intent||{}; S.intent[dayKey()] = { txt:v.slice(0,90) };
+    save(); renderIntent(); renderTodayPage(); SFX.play("select"); toast("Intention set 🎯"); return; }
+  const kp = t.closest("[data-kept]");
+  if(kp){ const it = todayIntent(); if(!it) return;
+    it.kept = +kp.dataset.kept;
+    if(it.kept===2 && !it.cr){ it.cr=1; grantXp("recharge", 8); toast("Loop closed — +8 RECHARGE 🎯"); SFX.play("done"); }
+    else buzz();
+    save(); renderEvening(); renderIntent(); return; }
+  /* ---- v9: recap + health ---- */
+  if(t.closest("[data-recapopen]")){ openRecap(); SFX.play("select"); return; }
+  if(t.id==="rcClose" || t.id==="recapSheet"){ $("#recapSheet").classList.remove("show"); return; }
+  if(t.id==="hlSave"){ saveHealth(); return; }
+  /* ---- v11: voice picker ---- */
+  const vm = t.closest("[data-vmode]");
+  if(vm){ S.settings.voiceMode = vm.dataset.vmode;
+    if(vm.dataset.vmode==="avatar") delete S.settings.voiceName;
+    buzz(); save(); renderVoice(); return; }
+  const vp = t.closest("[data-vpick]");
+  if(vp){ S.settings.voiceName = vp.dataset.vpick; S.settings.voiceMode = "pick";
+    save(); renderVoice(); speakSys("This is how your brief will sound. Let's bank an easy win today.", vp.dataset.vpick); return; }
+  const vv = t.closest("[data-vprev]");
+  if(vv){ speakSys("Good morning. Week two, day three. On deck: push day, about thirty minutes.", vv.dataset.vprev); return; }
+  if(t.id==="hdGet"){ hdDownload(); return; }
+  if(t.id==="hdOff"){ delete S.settings.hdOn; save(); renderVoice(); toast("HD voice off — the download stays cached if you turn it back on"); return; }
+  const hp = t.closest("[data-hdpick]");
+  if(hp){ S.settings.hdVoice = hp.dataset.hdpick; buzz(); save(); renderVoice(); return; }
+  if(t.closest("[data-hdprev]")){
+    speakHD("Good morning. Week two, day three. On deck: push day, about thirty minutes. Let's bank an easy win.",
+      null).then(ok=>{ if(!ok) toast("Get the HD voice first — one tap above"); });
+    return; }
+  /* ---- v10: quick rest timer + finish early ---- */
+  const qt = t.closest("[data-qtstart]");
+  if(qt){ startTimer(+qt.dataset.qtstart, "REST"); SFX.play("select"); return; }
+  if(t.id==="qtGo"){ const v = Math.round(+($("#qtSec").value||0));
+    if(v>=5 && v<=1800){ startTimer(v, "REST"); SFX.play("select"); }
+    else toast("5–1800 seconds"); return; }
+  if(t.id==="finishEarly" && S.session){
+    const done = S.session.items.filter(m=>m.done).length, total = S.session.items.length;
+    askConfirm(`Finish with ${done}/${total} done?`,
+      "Everything you finished is banked — XP, minutes and streak credit scale to what you did. The rest just disappears, no penalty.",
+      "Finish", finishSessionEarly); return; }
+  /* ---- v10: look tint ---- */
+  const tn = t.closest("[data-tint]");
+  if(tn){ S.avatar = S.avatar||{}; S.avatar.tint = tn.dataset.tint;
+    buzz(); save(); renderHero(); return; }
+  /* ---- v9: codex ---- */
+  const cdo = t.closest("[data-cdxopen]");
+  if(cdo){ openCodexCard(cdo.dataset.cdxopen); return; }
+  const cdn2 = t.closest("[data-cdxname]");
+  if(cdn2){ const c = codexFind(cdn2.dataset.cdxname); if(c){ go("home"); openCodexCard(c.id); } return; }
+  if(t.closest("[data-cdxnew]")){ openCodexNew(); return; }
+  const cdf = t.closest("[data-cdxfilter]");
+  if(cdf){ cdxFilter = cdf.dataset.cdxfilter; renderCodex(); return; }
+  if(t.id==="codexSheet"){ $("#codexSheet").classList.remove("show"); return; }
+  const cdt = t.closest("[data-cdxtype]");
+  if(cdt && $("#codexSheet").classList.contains("show")){
+    $$("#cdxTypeChips .chip").forEach(x=>x.classList.toggle("on", x===cdt)); buzz(); return; }
+  const cdv = t.closest("[data-cdxvibe]");
+  if(cdv && CDXI){ const c = (S.codex||[]).find(x=>x.id===CDXI);
+    if(c){ c.vibe = +cdv.dataset.cdxvibe; save(); openCodexCard(CDXI); buzz(); } return; }
+  if(t.id==="cdxSave" && CDXI){ const c = (S.codex||[]).find(x=>x.id===CDXI);
+    if(c){ c.name = ($("#cdxName").value||c.name).trim().slice(0,40) || c.name;
+      c.note = ($("#cdxNote").value||"").trim().slice(0,300);
+      if(CDX_PHOTO !== undefined) c.photo = CDX_PHOTO;
+      save(); renderCodex(); $("#codexSheet").classList.remove("show"); toast("Saved 📜"); } return; }
+  if(t.id==="cdxDel" && CDXI){ askConfirm("Remove this memory?",
+    "Journal entries that mention it stay exactly as written.","Remove",
+    ()=>{ S.codex = (S.codex||[]).filter(x=>x.id!==CDXI); CDXI=null;
+      save(); renderCodex(); $("#codexSheet").classList.remove("show"); }); return; }
+  if(t.id==="cdxShare" && CDXI){ const c = (S.codex||[]).find(x=>x.id===CDXI);
+    if(c) shareCodexCard(c); return; }
+  if(t.id==="cdxCancel"){ $("#codexSheet").classList.remove("show"); return; }
+  if(t.id==="cdxCreate"){ const nm = ($("#cdxName").value||"").trim();
+    if(!nm){ toast("Give it a name first"); return; }
+    const ty = ($("#cdxTypeChips .chip.on")||{}).dataset ? $("#cdxTypeChips .chip.on").dataset.cdxtype : "ally";
+    const c = codexAdd(ty, nm, { note:($("#cdxNote").value||"").trim().slice(0,300), photo:CDX_PHOTO||null });
+    renderCodex(); $("#codexSheet").classList.remove("show"); SFX.play("done"); toast("Added to memories 📜"); return; }
   /* ---- act editor sheet interactions ---- */
   if(AS && $("#actSheet").classList.contains("show")){
     const act = S.plan.days[AS.idx] && S.plan.days[AS.idx].acts[AS.ai];
@@ -4746,6 +5714,36 @@ $("#jrnSave").addEventListener("click", ()=>{ const ta = $("#jrnText");
   if(saveJournal(ta.value)){ ta.value = "";
     renderTodayPage(); renderHero();   // a logged note credits XP/minutes — rings update on the spot
   } });
+/* v10: months close themselves as Chapters — the saga writes its own eras */
+function checkMonthChapter(){
+  try{
+    const now = new Date(); const pm = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const nm = pm.toLocaleDateString(undefined, {month:"long", year:"numeric"});
+    if(codexFind(nm)) return;
+    let xp = 0, act = 0;
+    const dim = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+    for(let d2=1; d2<=dim; d2++){
+      const v = (S.dayXP||{})[dayKey(new Date(pm.getFullYear(), pm.getMonth(), d2))]||0;
+      if(v>0){ act++; xp += v; }
+    }
+    if(act >= 3) codexAdd("chapter", nm, { note:`${act} active days · ${xp} XP earned.`, auto:1 });
+  }catch(e){}
+}
+/* v9: codex photo picker lives inside a re-rendered sheet — delegate the change */
+document.addEventListener("change", ev=>{
+  if(ev.target && ev.target.id==="cdxPhotoFile" && ev.target.files && ev.target.files[0]){
+    shrinkImage(ev.target.files[0], url=>{ CDX_PHOTO = url;
+      if(CDXI){ const c=(S.codex||[]).find(x=>x.id===CDXI); if(c){ c.photo=url; save(); openCodexCard(CDXI); } }
+      toast("Photo pressed in 📷"); });
+  }
+});
+/* v8: backup + erase (More → Private by design) */
+$("#expBackup").addEventListener("click", exportBackup);
+$("#impBackup").addEventListener("click", ()=>$("#impFile").click());
+$("#impFile").addEventListener("change", ev=>{ const f=ev.target.files && ev.target.files[0]; if(f) importBackup(f); ev.target.value=""; });
+$("#eraseAll").addEventListener("click", ()=>askConfirm("Erase everything?",
+  "All local data — profile, XP, plan, journal, life score history — is deleted from this device. There is no server copy to fall back on. Export a backup first if you want a way back.",
+  "Erase", ()=>{ try{ localStorage.removeItem("mo_state"); localStorage.removeItem("momentum_widgets"); }catch(e){} location.reload(); }));
 $("#buildBtn").addEventListener("click", ()=>{ if(buildSession()){ renderSession(); renderMusic();
   const el=$("#session"); if(el.scrollIntoView) el.scrollIntoView({behavior:"smooth"}); } });
 $("#libSearch").addEventListener("input", renderLib);
@@ -4877,7 +5875,7 @@ function applyBg(){
 if(!S.settings.tv7){ if(S.settings.theme==="ember" || !S.settings.theme) S.settings.theme = "glass"; S.settings.tv7 = 1; save(); }
 document.body.dataset.theme = S.settings.theme || "glass";
 applyBg();
-renderAll(); pushWidgets();
+renderAll(); pushWidgets(); checkMonthChapter();
 if(!S.profile){ openOnb(); }
 </script>
 </body>
