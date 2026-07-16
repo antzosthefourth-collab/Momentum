@@ -45,6 +45,27 @@ struct MomentumWidget: Widget {
         StaticConfiguration(kind: "MomentumWidget", provider: Provider()) { MomentumWidgetView(entry: $0) }
             .configurationDisplayName("Momentum")
             .description("Streak, level and habits at a glance.")
-            .supportedFamilies([.systemSmall, .systemMedium])
+            // accessory families = iPhone Lock Screen + StandBy for free.
+            .supportedFamilies([.systemSmall, .systemMedium,
+                                .accessoryCircular, .accessoryRectangular, .accessoryInline])
+    }
+}
+
+// Accessory rendering (Lock Screen / StandBy). WidgetKit picks via environment.
+struct AccessoryView: View {
+    let p: Payload?
+    @Environment(\.widgetFamily) var family
+    var body: some View {
+        switch family {
+        case .accessoryCircular:
+            VStack(spacing: 0) { Text("🔥").font(.caption2); Text("\(p?.hero.streak ?? 0)").font(.headline).bold() }
+        case .accessoryInline:
+            Text("🔥 \(p?.hero.streak ?? 0) · LVL \(p?.hero.lvl ?? 1)")
+        default:
+            VStack(alignment: .leading) {
+                Text("🔥 \(p?.hero.streak ?? 0) · LVL \(p?.hero.lvl ?? 1)").font(.headline)
+                if let h = p?.habits { Text("habits \(h.done)/\(h.total)").font(.caption2) }
+            }
+        }
     }
 }

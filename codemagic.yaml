@@ -1,0 +1,42 @@
+# Momentum — cloud iOS builds (Codemagic free tier: 500 macOS min/month)
+# Path documented in momentum-deploy/WIDGETS.md: Capacitor + Codemagic, no local Mac.
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: momentum_asc_key   # create in Codemagic → Teams → Integrations
+    environment:
+      xcode: latest
+      node: 20
+      vars:
+        BUNDLE_ID: com.raddad.momentum
+        XCODE_WORKSPACE: native/ios/App/App.xcworkspace
+        XCODE_SCHEME: App
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.raddad.momentum
+    scripts:
+      - name: Install Capacitor + create iOS project
+        script: |
+          cd native
+          npm i @capacitor/core @capacitor/cli @capacitor/ios @capacitor/haptics capacitor-widgetsbridge-plugin
+          npx cap add ios || true
+          cp ios-src/native-bridge.js ../momentum-deploy/native-bridge.js
+          npx cap sync ios
+      - name: Inject native plugin sources
+        script: |
+          cp native/ios-src/MomentumNativePlugin.swift native/ios/App/App/
+          # Widget + Watch targets: added once via Xcode (or ruby xcodeproj script),
+          # committed to the repo — cap sync preserves them on every build after.
+      - name: Build signed IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
