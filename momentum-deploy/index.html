@@ -2830,7 +2830,13 @@ function applyOnboarding(skip){
      the tour teaches where to change or mute (More → Ambience, or the 🔊 pill) */
   if(!skip && (!S.settings.amb || S.settings.amb==="off")) S.settings.amb = "lofi";
   S.sel.eq = a.eq.slice(); S.sel.time = [15,30,45,60].includes(a.len)?a.len:45;
-  S.plan = (!skip && S.profile.style==="coach") ? makePlan(S.profile) : null;
+  /* v22.3: plan creation is crash-proof — if makePlan ever hiccups, the boot
+     self-heal below rebuilds it, so the survey never ends in an empty Plan tab */
+  S.plan = null;
+  if(!skip && S.profile.style==="coach"){
+    try{ S.plan = makePlan(S.profile); }
+    catch(e){ console.error("makePlan failed after survey:", e); }
+  }
   save();
   const doClose = ()=>{
     $("#onb").classList.remove("show");
@@ -6816,6 +6822,16 @@ if(!S.settings.tv7){ if(S.settings.theme==="ember" || !S.settings.theme) S.setti
 document.body.dataset.theme = S.settings.theme || "glass";
 applyBg();
 renderAll(); pushWidgets(); checkMonthChapter(); applyTodayOrder();
+/* v22.3 self-heal: survey finished in coach mode but no plan exists (a past
+   makePlan hiccup, or an interrupted onboarding) → build it automatically so
+   nobody has to discover the Regenerate button to get their plan */
+try{
+  if(S.profile && S.profile.style==="coach" && !S.plan){
+    S.plan = makePlan(S.profile); save();
+    renderPlan(); renderTodayPage();
+    toast("Plan built from your survey ✓");
+  }
+}catch(e){ console.error("plan self-heal failed:", e); }
 /* ================= v18: INSTALL + NATIVE BRIDGE =================
    Service worker → works offline, updates when online. The native bridge is
    a tiny contract the iOS wrapper fulfills (see ROLLOUT.md): when present,
