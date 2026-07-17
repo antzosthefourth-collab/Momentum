@@ -4241,8 +4241,16 @@ function renderTodayPage(){
     .filter(([k,D])=>(!D.sport || mySports.includes(D.sport)) && !D.legacy)
     .map(([k,D])=>`<button class="chip" data-qadd="${k}">${D.icon} ${D.t}</button>`).join("");
   [renderCheckin, renderStreakCard, renderJournal, renderLifeScore, renderEvening,
-   renderIntent, renderHealth, renderRecapCard, renderOTD, renderFuel, renderTodayAva]
-    .forEach(f=>{ try{ f(); }catch(e){ console.error("today card failed:", f.name, e); } });
+   renderIntent, renderHealth, renderRecapCard, renderOTD, renderFuel, renderTodayAva, renderHabits]
+    .forEach(f=>{ try{ f(); }catch(e){
+      console.error("today card failed:", f.name, e);
+      /* surface it — an empty section should say WHY, not just go quiet */
+      const ids = { renderCheckin:"checkinCard", renderEvening:"eveningCard", renderHealth:"healthCard",
+        renderFuel:"fuelCard", renderHabits:"habitList", renderIntent:"intentCard", renderLifeScore:"lifeCard",
+        renderJournal:"jrnList", renderStreakCard:"streakCard", renderRecapCard:"recapCard", renderOTD:"otdCard" };
+      const el = document.getElementById(ids[f.name]||"");
+      if(el && !el.innerHTML) el.innerHTML = `<div class="card"><p class="mut" style="font-size:11.5px">⚠️ This card hit an error (${esc(f.name)}: ${esc(String(e&&e.message||e).slice(0,90))}). Screenshot this and it's a one-line fix.</p></div>`;
+    } });
   const arrBtn = $("#tdArrange"); if(arrBtn) arrBtn.style.display = (pt && acts && acts.length>0) ? "" : "none";
 }
 function renderHabits(){
