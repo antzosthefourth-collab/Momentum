@@ -3106,13 +3106,24 @@ const STYLES = {
   hiit:      { n:"HIIT circuit", circuit:true, work:40, rest:20 },
   kbflow:    { n:"KB circuit",   circuit:true, work:40, rest:20 }
 };
+/* v22.5: accepts one style OR a mix. A mix splits schemes across the main
+   lifts in heaviness order — power/strength work first, volume after — which
+   is how a real heavy-top-set + back-off-volume day is written. */
+const STYLE_ORDER = ["power","strength","hypertrophy","functional"];
 function applyStyle(items, style){
-  const st = STYLES[style]; if(!st || st.circuit) return items;
+  const seq = (Array.isArray(style) ? style : [style])
+    .filter(k=>STYLES[k] && !STYLES[k].circuit)
+    .sort((a,b)=>STYLE_ORDER.indexOf(a)-STYLE_ORDER.indexOf(b));
+  if(!seq.length) return items;
+  let i = 0;
   return items.map(m=>{
     if(m.p!=="strength" || m.b!=="main" || m.dur) return m;
+    let st = STYLES[seq[i++ % seq.length]];
     /* low-rep strength/power schemes only make sense with a load in hand —
-       "4×5 push-ups" is nonsense, so bodyweight moves keep their high-rep dose */
-    if(st.loaded && m.eq==="Bodyweight") return m;
+       "4×5 push-ups" is nonsense, so bodyweight moves take an unloaded scheme
+       from the mix, or keep their high-rep dose */
+    if(st.loaded && m.eq==="Bodyweight") st = seq.map(k=>STYLES[k]).find(s=>!s.loaded);
+    if(!st) return m;
     return {...m, d: st.d + (/each/.test(m.d)?" each":""), rest: st.rest};
   });
 }
@@ -3219,10 +3230,16 @@ function sessionName(focus, style, mgSel, opts, time){
 function buildSession(opts={}){
   const focus = opts.focus || S.sel.focus;
   const time = opts.time || S.sel.time;
+  /* v22.5: styles are MULTI-select. Rep schemes mix across the main lifts;
+     a circuit style alone rides as before; circuit + rep schemes = strength
+     work capped with a HIIT finish. */
+  const selSt = ((S.sel.styles && S.sel.styles.length) ? S.sel.styles : (S.sel.style ? [S.sel.style] : [])).filter(k=>STYLES[k]);
+  const repSel = selSt.filter(k=>!STYLES[k].circuit);
+  const circSel = selSt.find(k=>STYLES[k].circuit);
   /* v10: a circuit style picked on the Train screen (HIIT / KB circuit) rides
      along — and HIIT pulls from ALL the gear you've selected, not one family. */
-  if(!opts.style && STYLES[S.sel.style] && STYLES[S.sel.style].circuit &&
-     ["Strength","Conditioning","Full Body"].includes(focus)) opts.style = S.sel.style;
+  if(!opts.style && circSel && !repSel.length &&
+     ["Strength","Conditioning","Full Body"].includes(focus)) opts.style = circSel;
   /* Conditioning is ALWAYS a timed circuit, never sets×reps — the gear on hand
      decides the flavor (KB flow vs bodyweight HIIT). This is what separates a
      conditioning day from a strength day. */
@@ -3348,10 +3365,24 @@ function buildSession(opts={}){
   } else mains = wPick(mainPool, mainsNeeded);
   let fin = opts.micro ? [] : wPick(moves.filter(m=>m.b==="finisher" && (focus==="Full Body"||sysWanted.includes(m.p))), 1);
   if(!mains.length){ toast("No moves match — check your equipment"); return false; }
-  const style = opts.style || (focus==="Strength" ? S.sel.style : null) || null;
-  S.session = { time, focus:opts.focusLabel||sessionName(focus, style, mgSel, opts, time),
-    baseFocus:focus, micro:!!opts.micro, style,
-    items:applyStyle([...warm,...mains,...fin], style).map(m=>({...m, done:false})) };
+  const styles = opts.styles || ((focus==="Strength" && !opts.style) ? repSel : []);
+  const style = opts.style || styles[0] || null;
+  /* circuit + rep schemes together: the day ends with a 3-move HIIT burst */
+  const hiitFin = !opts.micro && !opts.style && circSel && repSel.length>0 && focus==="Strength";
+  if(hiitFin){
+    const tw = circuitTiming(circSel, 15);
+    const hp = moves.filter(m=>m.b!=="warmup" && !m.run && !m.sport && !mains.includes(m) &&
+      (circSel!=="kbflow" || ["Kettlebells","Bodyweight"].includes(m.eq)));
+    const hf = wPick(hp, 3).map(m=>({...m, d:`${tw.work}s on / ${tw.rest}s off × 2`, b:"finisher"}));
+    if(hf.length) fin = hf;
+  }
+  let label = opts.focusLabel || sessionName(focus, style, mgSel, opts, time);
+  if(!opts.focusLabel && focus==="Strength" && !opts.style && styles.length>1 && !mgSel.length)
+    label = styles.slice().sort((a,b)=>STYLE_ORDER.indexOf(a)-STYLE_ORDER.indexOf(b)).map(k=>STYLES[k].n).join(" + ") + " Day";
+  if(hiitFin) label += " + HIIT Finish";
+  S.session = { time, focus:label,
+    baseFocus:focus, micro:!!opts.micro, style, styles: styles.length>1 ? styles.slice() : undefined,
+    items:applyStyle([...warm,...mains,...fin], styles.length ? styles : style).map(m=>({...m, done:false})) };
   save(); return true;
 }
 
@@ -3716,16 +3747,19 @@ function scenePrev(el, opts={}){
   el.innerHTML = `<img class="ms-bg" style="display:none" alt=""><img class="ms-char" style="display:none" alt=""><img class="ms-pet" style="display:none" alt=""><span class="ms-fb">${avatarStyle().icon||"🛡️"}</span>`;
   const bg = el.querySelector(".ms-bg"), chr = el.querySelector(".ms-char"),
         pet = el.querySelector(".ms-pet"), fb = el.querySelector(".ms-fb");
-  /* full-scene art (owlbear) carries its own world — habitat stays out of it */
-  if(!stage.scene) probeImg([hab.img], u=>{ if(!bg.dataset.scene){ bg.src = u; bg.style.display = "block"; } });
+  /* v22.5: scene-art heroes now ship background-free cutouts, so every
+     character composes over the habitat like the rest of the cast. The full
+     painted scene only steps in as the bg if a cutout is missing. */
+  probeImg([hab.img], u=>{ if(!bg.dataset.scene){ bg.src = u; bg.style.display = "block"; } });
   const setChar = u => { chr.src = u; chr.style.display = "block"; fb.style.display = "none"; };
   if(typeof opts.charSrc === "string") setChar(opts.charSrc);
   else if(stage.hv || (AV_TRAITS[id] && avCustomized(id))) setChar(avatarSVGURL(id, avCfg(id), L.lvl));
   else {
     const vf = imgVariantFile(id, stage);
-    const cands = Array.isArray(opts.charSrc) ? opts.charSrc : (vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn]);
+    let cands = (Array.isArray(opts.charSrc) ? opts.charSrc : (vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn])).filter(Boolean);
+    if(stage.scene) cands = cands.map(cutSrc).concat(cands);
     probeImg(cands, u=>{
-      if(stage.scene){ bg.dataset.scene = "1"; bg.src = u; bg.style.display = "block"; fb.style.display = "none"; }
+      if(stage.scene && !/-cut\.png$/i.test(u)){ bg.dataset.scene = "1"; bg.src = u; bg.style.display = "block"; fb.style.display = "none"; }
       else setChar(u);
     });
   }
@@ -4685,7 +4719,11 @@ function renderTodayAva(){
     if(fb) fb.style.display = "none"; return;
   }
   const vf = imgVariantFile(id, stage);
-  probeImg(vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn], u=>{
+  let cands = (vf ? [vf, stage.img, stage.cdn] : [stage.img, stage.cdn]).filter(Boolean);
+  /* v22.5: the corner shows the CHARACTER, not their painted world — scene-art
+     heroes (owlbear) prefer their background-free cutout here */
+  if(stage.scene) cands = cands.map(cutSrc).concat(cands);
+  probeImg(cands, u=>{
     img.src = u; img.style.display = "block"; if(fb) fb.style.display = "none"; });
 }
 /* pick-what-you're-adding flow — no silent defaults, editor opens right after */
@@ -5168,8 +5206,13 @@ const IMG_VARIANTS = {
   mini: { base:["hero-mini-1","hero-mini-2"], ext:"png",
     opts:[["","Classic cream"],["red","Red band"],["gold","Gold band"],["sky","Sky blue"],["blush","Blush pink"],["coal","Charcoal"]] },
   owlbear: { base:["hero-owl-1","hero-owl-2"], ext:"jpg",
+    d:"Different owls, different bears — new species and plumage, same storybook soul.",
     opts:[["","Classic — the book cub"],["snow","Snowy owl × Polar"],["night","Great gray × Black bear"],["moss","Barn owl × Kodiak"]] }
 };
+/* v22.5: scene-art heroes also ship a background-free cutout beside the full
+   painting — same name + "-cut.png". Corner avatar, composed previews and
+   variant thumbnails use the cutout; the big Stats card keeps the painted world. */
+function cutSrc(p){ return p ? String(p).replace(/\.(jpe?g|png)$/i, "-cut.png") : p; }
 function imgVariantFile(id, stage){
   const R = IMG_VARIANTS[id]; if(!R) return null;
   const v = ((S.avatar||{}).imgVar||{})[id]; if(!v) return null;
@@ -5185,11 +5228,12 @@ function openVarSheet(id){
   const classic = (st.stages && st.stages[0] && (st.stages[0].img || st.stages[0].cdn)) || "";
   $("#hvBody").innerHTML = `<h3>${st.icon||""} ${esc(st.n||"")}</h3>
     <div class="mini-scene" id="msSheet" style="margin-top:10px"></div>
-    <p class="mut" style="margin-top:7px; font-size:11.5px">Previewed with your habitat and companion. The original art in new colorways — recolored pixel-for-pixel.</p>
+    <p class="mut" style="margin-top:7px; font-size:11.5px">Previewed with your habitat and companion. ${esc(R.d || "The original art in new colorways — recolored pixel-for-pixel.")}</p>
     <div class="hv-opts" style="margin-top:10px">${R.opts.map(([v,l])=>{
       const src = v ? `${R.base[0]}-${v}.${R.ext}` : classic;
+      const scn = !!(st.stages && st.stages[0] && st.stages[0].scene);
       return `<button class="hv-opt ${cur===v?'on':''}" data-imgvar="${id}:${v}" style="width:31%">
-        <img src="${esc(src)}" alt="" style="width:100%; height:88px; object-fit:cover; border-radius:8px">
+        <img src="${esc(scn ? cutSrc(src) : src)}" alt="" style="width:100%; height:88px; object-fit:${scn?"contain":"cover"}; border-radius:8px" onerror="this.src='${esc(src)}';this.onerror=null">
         <div class="pl">${l}</div></button>`; }).join("")}</div>
     <p class="mut" style="font-size:10.5px; margin-top:8px">Levels still bring their upgrades — colorways carry across every stage.</p>
     <div class="sheet-foot"><button class="btn" id="hvClose" style="flex:1">Done</button></div>`;
@@ -5542,16 +5586,20 @@ function renderPickers(){
     return `<button class="chip ${S.sel.focus===f?'on':''}" data-f="${f}" ${locked?'disabled title="Add Soccer Ball to unlock"':''}>${f}${locked?" 🔒":""}</button>`;
   }).join("");
   const MGS = [["legs","Legs"],["glutes","Glutes"],["chest","Chest"],["back","Back"],["shoulders","Shoulders"],["arms","Arms"],["core","Core"]];
+  /* v22.5: styles multi-select — chip lights up per selection, "Balanced"/"Auto" = none */
+  const sSel = ((S.sel.styles && S.sel.styles.length) ? S.sel.styles : (S.sel.style ? [S.sel.style] : []));
+  const sOn = k => k ? (sSel.includes(k) ? "on" : "") : (sSel.length ? "" : "on");
   let sub = "";
   if(S.sel.focus==="Conditioning")
     sub = `<div class="sec-label">Circuit style</div><div class="chips">` +
       [["","Auto"],["hiit","🔥 HIIT · all your gear"],["kbflow","🔔 KB circuit"]]
-        .map(([k,l])=>`<button class="chip alt ${(S.sel.style||"")===k?'on':''}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
+        .map(([k,l])=>`<button class="chip alt ${sOn(k)}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
       `<p class="mut" style="font-size:11px; margin-top:6px">HIIT pulls from every piece of gear you've selected above — not just kettlebells or bodyweight.</p>`;
   if(S.sel.focus==="Strength")
-    sub = `<div class="sec-label">Training style</div><div class="chips">` +
+    sub = `<div class="sec-label">Training style <span style="letter-spacing:0; text-transform:none; font-weight:500">(pick as many as you like)</span></div><div class="chips">` +
       [["","Balanced"],["hypertrophy","Hypertrophy"],["strength","Strength"],["power","Power"],["functional","Functional"],["hiit","🔥 HIIT circuit"]]
-        .map(([k,l])=>`<button class="chip alt ${(S.sel.style||"")===k?'on':''}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
+        .map(([k,l])=>`<button class="chip alt ${sOn(k)}" data-sstyle="${k}">${l}</button>`).join("") + `</div>` +
+      (sSel.length>1 ? `<p class="mut" style="font-size:11px; margin-top:6px">Mixed day: heavy schemes lead, volume follows${sSel.includes("hiit")?", and it all caps off with a HIIT burst":""}.</p>` : "") +
       `<div class="sec-label">Target muscles <span style="letter-spacing:0; text-transform:none; font-weight:500">(empty = balanced)</span></div><div class="chips">` +
       MGS.map(([k,l])=>`<button class="chip ${S.sel.mg.includes(k)?'on':''}" data-mg="${k}">${l}</button>`).join("") + `</div>`;
   if(S.sel.focus==="Mobility")
@@ -6197,14 +6245,22 @@ document.addEventListener("click", ev=>{
 
   const chip = t.closest(".chip");
   if(chip && chip.dataset.recipe){ buzz(); applyRecipe(chip.dataset.recipe); return; }
-  if(chip && chip.dataset.sstyle!==undefined){ S.sel.style=chip.dataset.sstyle; save(); renderPickers(); return; }
+  if(chip && chip.dataset.sstyle!==undefined){
+    const k = chip.dataset.sstyle;
+    let arr = ((S.sel.styles && S.sel.styles.length) ? S.sel.styles : (S.sel.style ? [S.sel.style] : [])).slice();
+    if(!k) arr = [];                                            // Balanced / Auto clears the mix
+    else { const i = arr.indexOf(k); i>=0 ? arr.splice(i,1) : arr.push(k); }
+    /* only one circuit flavor at a time — hiit and kbflow swap, they don't stack */
+    if(k && STYLES[k] && STYLES[k].circuit && arr.includes(k)) arr = arr.filter(x=>!STYLES[x].circuit || x===k);
+    S.sel.styles = arr; S.sel.style = arr[0] || "";
+    save(); renderPickers(); return; }
   if(chip && chip.dataset.t){ S.sel.time=+chip.dataset.t; save(); renderPickers(); return; }
   if(chip && chip.dataset.e){ const e=chip.dataset.e, i=S.sel.eq.indexOf(e);
     i>=0?S.sel.eq.splice(i,1):S.sel.eq.push(e);   // empty is fine — bodyweight is always in
     if(!S.sel.eq.includes("Soccer Ball")&&S.sel.focus==="Soccer")S.sel.focus="Full Body";
     save(); renderPickers(); return; }
   if(chip && chip.dataset.f){
-    if(S.sel.focus !== chip.dataset.f) S.sel.style = "";   // v10: styles don't leak across focus switches
+    if(S.sel.focus !== chip.dataset.f){ S.sel.style = ""; S.sel.styles = []; }   // v10: styles don't leak across focus switches
     S.sel.focus=chip.dataset.f; save(); renderPickers(); return; }
   if(chip && chip.dataset.mg){ const k=chip.dataset.mg, i=S.sel.mg.indexOf(k);
     i>=0?S.sel.mg.splice(i,1):S.sel.mg.push(k); save(); renderPickers(); return; }
@@ -6848,7 +6904,7 @@ try{
    the app now announces its version, checks for updates on every open, and
    reloads itself once when a new build takes over. More → Update app nukes
    every cache layer by hand for the stubborn cases. */
-const APP_VERSION = "v22.4";
+const APP_VERSION = "v22.5";
 try{ const vs = document.getElementById("verStamp"); if(vs) vs.textContent = APP_VERSION; }catch(e){}
 try{ console.log("Momentum", APP_VERSION); }catch(e){}
 try{
