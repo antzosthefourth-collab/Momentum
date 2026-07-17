@@ -1,5 +1,5 @@
 /* Momentum service worker — offline-first shell, fresh-when-online app code */
-const V = "momentum-v19";
+const V = "momentum-v22-4";
 const CORE = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -12,8 +12,9 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
   const isDoc = e.request.mode === "navigate" || url.pathname.endsWith("index.html") || url.pathname.endsWith("/");
   if (isDoc) {
-    /* network-first: updates land immediately; cache keeps it working offline */
-    e.respondWith(fetch(e.request).then(r => { const cp = r.clone(); caches.open(V).then(c => c.put(e.request, cp)); return r; })
+    /* network-first, and revalidate past the HTTP cache too — a fix pushed to
+       the site should reach every phone on its next open, not 10 minutes later */
+    e.respondWith(fetch(e.request, { cache: "no-cache" }).then(r => { const cp = r.clone(); caches.open(V).then(c => c.put(e.request, cp)); return r; })
       .catch(() => caches.match(e.request).then(m => m || caches.match("index.html"))));
   } else {
     /* assets (art, audio): cache-first — they never change without a rename */
