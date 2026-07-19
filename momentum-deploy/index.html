@@ -614,7 +614,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div id="otdCard"></div>
       <div class="sec-label">Journal & voice notes</div>
       <div class="card">
-        <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="Type — or tap the mic on your keyboard and just talk. &quot;Did a 25 minute kettlebell workout, mostly swings and presses…&quot;"></textarea>
+        <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="Type or talk — &quot;Did a 25 min kettlebell workout&quot;. Lifter shorthand logs real sets: &quot;bench 225 - 8,8,6&quot;"></textarea>
         <div style="display:flex; gap:8px; margin-top:10px; align-items:center">
           <button class="btn sm" id="jrnSave">📓 Log it</button>
           <span class="mut" style="font-size:11.5px">Auto-tags activity, duration & effort — completed work counts toward your streak. @mention people or places and they become memory cards.</span>
@@ -2320,7 +2320,7 @@ function whyFor(m, p){
 const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0,recharge:0},
   done:0, sessions:0, microDone:0, minutes:0, streak:0, lastDay:"", custom:[], media:[], logs:{}, dayXP:{}, dayMin:{}, moveMeta:{},
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
-  daySys:{}, evening:{}, intent:{}, health:{}, codex:[], fuelLog:{},
+  daySys:{}, evening:{}, intent:{}, health:{}, codex:[], fuelLog:{}, aliases:{},
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
   avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
   session:null, plan:null, habitLog:{}, settings:{theme:"glass", spotify:"", yt:"", sound:"low", amb:"off"} };
@@ -3442,6 +3442,134 @@ function logSets(i, sets){
   return { pr };
 }
 
+/* ================= v22.6: LIFTER SHORTHAND (GymNote+ takeaway) =================
+   The journal reads real set notation — "bench 225 - 8,8,6", "squat 3x5 @ 315",
+   "pullups 10,8,6", "ohp 60kg x5/5/4" — deterministically, fully on-device.
+   Nothing lands without an inline confirm (ask-don't-guess), and choosing a
+   library move for a nickname is remembered forever in S.aliases, so the app
+   learns YOUR gym dialect one correction at a time. */
+function parseSetNotes(txt){
+  const out = [];
+  String(txt||"").split(/\n|;/).forEach(line=>{
+    const raw = line.trim().replace(/^[-•*]\s*/, "");
+    if(!raw || raw.length>80) return;
+    /* name = everything before the first standalone number */
+    const nm = raw.match(/^([A-Za-z][A-Za-z .'/&-]{1,40}?)[\s:@-]+(?=\d)/);
+    if(!nm) return;
+    const name = nm[1].trim();
+    if(/\b(min|minutes|mins|hour|hours|hrs|km|mile|miles|oz|cal|cals|steps)\b/i.test(raw)) return;   // durations & cardio prose aren't sets
+    let rest = raw.slice(nm[0].length);
+    let weight = 0, unit = "lb", reps = null;
+    /* NxM scheme: "3x8", "5×3" (optionally "3x8-12" → low end) */
+    const nx = rest.match(/\b(\d{1,2})\s*[x×]\s*(\d{1,3})(?:\s*[-–]\s*\d{1,3})?\b/);
+    if(nx && +nx[1]>=1 && +nx[1]<=10 && +nx[2]>=1 && +nx[2]<=100){
+      reps = Array.from({length:+nx[1]}, ()=>+nx[2]);
+      rest = rest.slice(0,nx.index) + " " + rest.slice(nx.index+nx[0].length);
+    } else {
+      /* rep list: "8,8,6" · "x8/8/6" · "- 10, 8, 6+" (trailing + = pushed past) */
+      const rl = rest.match(/(?:^|[\s@x×-])(\d{1,3}(?:\s*[+]?\s*[,/]\s*\d{1,3}){1,9})\s*\+?\s*(?:$|[^\d.])/);
+      if(rl){
+        reps = rl[1].split(/[,/]/).map(s=>parseInt(s,10)).filter(n=>n>=1 && n<=100);
+        rest = rest.slice(0,rl.index) + " " + rest.slice(rl.index+rl[0].length);
+      }
+    }
+    if(!reps || reps.length<1) return;
+    /* whatever number remains is the load; kg converts (setLog speaks lb) */
+    const w = rest.match(/(\d{2,4}(?:\.\d+)?)\s*(lbs?|#|kgs?)?\b/i);
+    if(w){ weight = parseFloat(w[1]); if(w[2] && /k/i.test(w[2])){ unit="kg"; weight = Math.round(weight*2.2046); } }
+    if(weight>1500) return;
+    if(reps.length===1 && !weight) return;              // one bare number isn't a workout
+    out.push({ name, w:weight, unit, reps, raw });
+  });
+  return out;
+}
+const normEx = s => String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim().replace(/s\b/,"");
+function matchMoves(name){
+  const q = normEx(name);
+  const al = (S.aliases||{})[q];
+  const lib = allMoves().filter(m=>m.p==="strength" || m.b==="main" || m.b==="finisher");
+  const qt = q.split(" ").filter(Boolean);
+  const qc = q.replace(/ /g,"");
+  const scored = lib.map(m=>{
+    const n = normEx(m.n); const nt = n.split(" ");
+    let sc = 0;
+    if(n===q) sc = 100;
+    else {
+      qt.forEach(t=>{ if(nt.includes(t)) sc += 12; else if(nt.some(x=>x.startsWith(t)||t.startsWith(x))) sc += 6; });
+      if(n.includes(q)) sc += 20;
+      /* collapsed compare catches "pullups" vs "Pull-ups", "deadlift" vs "dead lift" */
+      const nc = n.replace(/ /g,"");
+      if(qc.length>=5 && (nc.includes(qc) || qc.includes(nc))) sc += 20;
+    }
+    return { n:m.n, sc };
+  }).filter(x=>x.sc>=12).sort((a,b)=>b.sc-a.sc).slice(0,3).map(x=>x.n);
+  if(al && !scored.includes(al)) scored.unshift(al);
+  else if(al){ scored.splice(scored.indexOf(al),1); scored.unshift(al); }
+  return scored;
+}
+/* standalone version of logSets — same ledger, no live session required */
+function logSetsByName(name, sets){
+  const clean = (sets||[]).map(s=>({w:+s.w||0, r:+s.r||0})).filter(s=>s.w||s.r);
+  if(!name || !clean.length) return { pr:false };
+  const prevBest = bestSet(name);
+  S.setLog = S.setLog||{};
+  const h = S.setLog[name] = S.setLog[name]||[];
+  const d = dayKey();
+  const di = h.findIndex(e=>e.d===d); if(di>=0) h.splice(di,1);
+  h.push({ d, t:Date.now(), sets:clean });
+  if(h.length>30) h.splice(0, h.length-30);
+  const maxW = Math.max(0, ...clean.map(s=>s.w));
+  if(maxW>0){
+    S.logs[name] = maxW;
+    const lib = allMoves().find(x=>x.n===name);
+    if(lib && lib.lift && S.profile){ S.profile.lifts = S.profile.lifts||{}; S.profile.lifts[lib.lift] = maxW; }
+  }
+  return { pr: !!(prevBest && maxW > prevBest.w) };
+}
+let PENDING_SETS = null;
+function openSetConfirm(parsed){
+  PENDING_SETS = parsed;
+  $("#pkBody").innerHTML = `<h3>🏋️ I read ${parsed.length} lift${parsed.length===1?"":"s"} in that note</h3>
+    <p class="mut" style="margin-top:4px">Check the match, fix anything, and they land in your set history — PRs and all. Corrections are remembered.</p>
+    ${parsed.map((p,i)=>{
+      const cands = matchMoves(p.name);
+      const asW = p.name.replace(/\b\w/g, c=>c.toUpperCase());
+      return `<div class="card" style="margin-top:8px">
+        <div style="display:flex; justify-content:space-between; gap:8px; align-items:center">
+          <select data-setsel="${i}" style="flex:1; min-width:0; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-size:13px">
+            ${cands.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("")}
+            <option value="${esc(asW)}" ${cands.length?"":"selected"}>As written: ${esc(asW)}</option>
+          </select>
+          <label style="display:flex; align-items:center; gap:5px; font-size:11.5px" class="mut"><input type="checkbox" data-setskip="${i}">skip</label>
+        </div>
+        <div class="mut" style="font-size:12px; margin-top:6px">${p.w ? p.w+" lb"+(p.unit==="kg"?" (from kg)":"") : "bodyweight"} × ${p.reps.join(", ")}</div>
+      </div>`; }).join("")}
+    <div class="sheet-foot">
+      <button class="btn ghost" id="pkClose" style="flex:1">Not sets</button>
+      <button class="btn" id="setConfirmGo" style="flex:2">Log ${parsed.length===1?"it":"them"} 🏋️</button>
+    </div>`;
+  $("#pickSheet").classList.add("show"); SFX.play("select");
+}
+function confirmSetLog(){
+  const parsed = PENDING_SETS||[]; let logged = 0, prs = [];
+  parsed.forEach((p,i)=>{
+    if(document.querySelector(`[data-setskip="${i}"]`)?.checked) return;
+    const sel = document.querySelector(`[data-setsel="${i}"]`);
+    const name = (sel && sel.value) || p.name;
+    /* a picked library move teaches the alias — next time it matches first */
+    const q = normEx(p.name);
+    if(allMoves().some(m=>m.n===name) && normEx(name)!==q){ S.aliases = S.aliases||{}; S.aliases[q] = name; }
+    const r = logSetsByName(name, p.reps.map(rr=>({w:p.w, r:rr})));
+    logged++; if(r.pr) prs.push(name);
+  });
+  PENDING_SETS = null; $("#pickSheet").classList.remove("show");
+  if(!logged){ toast("Nothing logged"); return; }
+  grantXp("strength", Math.min(24, 6 + logged*4));
+  save(); renderTodayPage(); renderHero();
+  if(prs.length){ SFX.play("levelup"); try{ popEmote("epic"); }catch(e){} toast(`🏆 PR — ${prs.join(", ")}! Sets logged.`); }
+  else { SFX.play("done"); toast(`${logged} lift${logged===1?"":"s"} logged to set history 📈`); }
+}
+
 /* ================= LOAD SUGGESTIONS ================= */
 function loadHint(m){
   const le = lastSetEntry(m.n);
@@ -4425,6 +4553,8 @@ function saveJournal(txt){
   } else { SFX.play("tap"); toast("Saved to Memories 📖"); }
   S.journal.unshift(entry);
   save(); renderTodayPage(); renderHero(); renderPlan(); try{ renderCodex(); }catch(e){}
+  /* v22.6: lifter shorthand in the note → confirm-then-log real sets */
+  try{ const ps = parseSetNotes(txt); if(ps.length) openSetConfirm(ps); }catch(e){ console.error("set parse failed:", e); }
   return true;
 }
 function renderJournal(){
@@ -6308,7 +6438,8 @@ document.addEventListener("click", ev=>{
     const nm = allMoves().find(m=>m.n===pmv.dataset.pickmove);
     if(nm){ PK.mode==="add" ? addSessionMove(PK.block, nm) : replaceSessionMove(PK.i, nm); }
     closePickSheet(); return; }
-  if(t.id==="pkClose" || (t.id==="pickSheet" && PK)){ closePickSheet(); return; }
+  if(t.id==="setConfirmGo" || t.closest("#setConfirmGo")){ confirmSetLog(); return; }
+  if(t.id==="pkClose" || (t.id==="pickSheet" && PK)){ if(PENDING_SETS) PENDING_SETS = null; closePickSheet(); return; }
 
   if(t.closest("[data-winput],[data-sw],[data-sr]")) return;
   /* per-set logging: read the grid, fall back to last time's numbers for blank rows */
@@ -6904,7 +7035,7 @@ try{
    the app now announces its version, checks for updates on every open, and
    reloads itself once when a new build takes over. More → Update app nukes
    every cache layer by hand for the stubborn cases. */
-const APP_VERSION = "v22.5";
+const APP_VERSION = "v22.6";
 try{ const vs = document.getElementById("verStamp"); if(vs) vs.textContent = APP_VERSION; }catch(e){}
 try{ console.log("Momentum", APP_VERSION); }catch(e){}
 try{
