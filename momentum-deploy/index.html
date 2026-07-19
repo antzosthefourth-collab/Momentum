@@ -262,9 +262,14 @@ a{color:var(--accent)}
 .hs-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:64px; opacity:.5}
 .hs-streak{position:absolute; top:10px; left:12px; background:color-mix(in srgb, var(--bg) 60%, transparent); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-family:'Chakra Petch'; font-weight:700; font-size:13px}
 .hs-lvlbadge{position:absolute; top:10px; right:12px; width:38px; height:38px; border-radius:12px; background:color-mix(in srgb, var(--accent) 30%, var(--bg)); border:1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Chakra Petch'; font-weight:800; font-size:16px}
-.hs-plate{position:absolute; bottom:10px; left:12px; right:12px; display:flex; gap:6px; align-items:baseline; text-shadow:0 2px 8px rgba(0,0,0,.6)}
+/* v22.8: the nameplate reads over ANY art — quiet scrim + light ink, no guessing
+   whether the scene underneath is bright or dark */
+.hero-scene::after{content:""; position:absolute; left:0; right:0; bottom:0; height:64px; z-index:0;
+  background:linear-gradient(transparent, rgba(10,8,16,.5)); pointer-events:none}
+.hs-plate{position:absolute; bottom:10px; left:12px; right:12px; display:flex; gap:6px; align-items:baseline; z-index:1;
+  color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.65)}
 .hs-name{font-family:'Chakra Petch'; font-weight:800; font-size:20px}
-.hs-stage{font-size:12px; color:var(--dim); font-weight:600}
+.hs-stage{font-size:12px; color:rgba(255,255,255,.78); font-weight:600}
 /* reward rail */
 .rw{padding:8px 0; border-bottom:1px dashed color-mix(in srgb, var(--line) 70%, transparent)}
 .rw:last-child{border-bottom:none}
@@ -795,17 +800,6 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="sec-label">Tours</div>
       <button class="btn sm ghost" id="replayTour">↻ Replay the intro tour</button>
       <button class="btn sm ghost" id="advTour">🎓 Pro tour — tracking, custom sessions & best practices</button>
-      <div class="sec-label">Your numbers</div>
-      <p class="mut" style="margin-bottom:10px">Working weights power the load suggestions in your sessions.</p>
-      <div class="row2">
-        <div class="field"><label>Squat (lb)</label><input id="wSquat" type="number" inputmode="numeric"></div>
-        <div class="field"><label>Bench (lb)</label><input id="wBench" type="number" inputmode="numeric"></div>
-        <div class="field"><label>Deadlift (lb)</label><input id="wDead" type="number" inputmode="numeric"></div>
-        <div class="field"><label>Overhead press (lb)</label><input id="wPress" type="number" inputmode="numeric"></div>
-        <div class="field"><label>Heaviest DB (lb)</label><input id="wDb" type="number" inputmode="numeric"></div>
-        <div class="field"><label>Heaviest KB (lb)</label><input id="wKb" type="number" inputmode="numeric"></div>
-      </div>
-      <button class="btn sm" id="saveNums">Save numbers</button>
       <div class="sec-label">Add a custom movement</div>
       <div class="field"><label>Name</label><input id="fName" placeholder="e.g. Farmer carry to the mailbox"></div>
       <div class="row2">
@@ -4296,14 +4290,16 @@ function actMoveList(a, idx, ai){
       const last = lastSetEntry(n);
       const tw = today ? Math.max(0,...today.sets.map(s=>s.w||0)) : 0;
       const gw = (last ? Math.max(0,...last.sets.map(s=>s.w||0)) : 0) || (S.logs&&S.logs[n]) || "";
+      const best = bestSet(n);
+      const e1 = best && best.w>0 && best.r>0 ? Math.round(best.w*(1+best.r/30)/5)*5 : 0;   // Epley, rounded to 5
       grid = `<div class="td-setrow" data-exlog="${idx}|${ai}|${esc(n)}">
         ${bw ? `<span class="mut" style="font-size:11px; font-weight:600">bw ×</span>`
-             : `<input type="number" inputmode="decimal" class="tsw" placeholder="${gw||"lb"}" value="${tw||""}" aria-label="weight"><span class="mut" style="font-size:11px">lb ×</span>`}
+             : `<input type="number" inputmode="decimal" enterkeyhint="next" class="tsw" placeholder="${gw||"lb"}" value="${tw||""}" aria-label="weight"><span class="mut" style="font-size:11px">lb ×</span>`}
         ${Array.from({length:sp},(_,k)=>{
           const tr = today && today.sets[k] ? (today.sets[k].r||"") : "";
           const gr = last && last.sets[k] ? (last.sets[k].r||"") : (last && last.sets.length ? (last.sets[last.sets.length-1].r||"") : "");
-          return `<input type="number" inputmode="numeric" class="tsr" placeholder="${gr||"–"}" value="${tr||""}" aria-label="set ${k+1} reps">`; }).join("")}
-        ${last?`<span class="mut" style="font-size:10px; flex-basis:100%; margin-top:1px">last: ${esc(fmtSets(last.sets))}</span>`:""}
+          return `<input type="number" inputmode="numeric" enterkeyhint="${k===sp-1?"done":"next"}" class="tsr" placeholder="${gr||"–"}" value="${tr||""}" aria-label="set ${k+1} reps">`; }).join("")}
+        ${last||best?`<span class="mut" style="font-size:10px; flex-basis:100%; margin-top:1px">${last?`last ${esc(fmtSets(last.sets))}`:""}${best&&best.w?`${last?" · ":""}best ${best.w}×${best.r}${e1?` · ~1RM ${e1}`:""}`:""}</span>`:""}
       </div>`;
     }
     return `<div class="td-move ${dn?'done':''}">
@@ -4975,7 +4971,7 @@ function openExAdd(di, ai){
 }
 /* v22.7: realtime set tracking — every keystroke in a Today set row lands in
    the same ledger the session player writes, debounced, PRs announced once */
-let TSL_T = null;
+let TSL_T = null, TSL_ROW = null;
 function commitTodayRow(row){
   const parts = row.dataset.exlog.split("|");
   const name = parts.slice(2).join("|"); if(!name) return;
@@ -5011,8 +5007,19 @@ function commitTodayRow(row){
 document.addEventListener("input", ev=>{
   const row = ev.target && ev.target.closest && ev.target.closest(".td-setrow");
   if(!row) return;
+  /* moving to a DIFFERENT movement flushes the pending one — nothing is lost
+     to the debounce when you hop between exercises quickly */
+  if(TSL_ROW && TSL_ROW!==row){ clearTimeout(TSL_T); try{ commitTodayRow(TSL_ROW); }catch(e){} }
+  TSL_ROW = row;
   clearTimeout(TSL_T);
-  TSL_T = setTimeout(()=>{ try{ commitTodayRow(row); }catch(e){ console.error("set track failed:", e); } }, 450);
+  TSL_T = setTimeout(()=>{ TSL_ROW = null; try{ commitTodayRow(row); }catch(e){ console.error("set track failed:", e); } }, 450);
+});
+/* blur = instant commit (change fires when a number field loses focus) */
+document.addEventListener("change", ev=>{
+  const row = ev.target && ev.target.closest && ev.target.closest(".td-setrow");
+  if(!row) return;
+  clearTimeout(TSL_T); TSL_ROW = null;
+  try{ commitTodayRow(row); }catch(e){ console.error("set track failed:", e); }
 });
 /* ================= v9: MORNING INTENTION → EVENING LOOP =================
    LifeXP's best loop: say one thing in the morning, rate it honestly at night.
@@ -6349,9 +6356,6 @@ function renderMore(){
     .map(([k,l])=>`<button class="chip ${(S.settings.sound||"low")===k?'on':''}" data-sound="${k}">${l}</button>`).join("");
   $("#ambChips").innerHTML = ambChips();
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
-  const p = S.profile||{lifts:{},caps:{}};
-  $("#wSquat").value=p.lifts.squat||""; $("#wBench").value=p.lifts.bench||""; $("#wDead").value=p.lifts.deadlift||"";
-  $("#wPress").value=p.lifts.press||""; $("#wDb").value=p.caps.db||""; $("#wKb").value=p.caps.kb||"";
   $("#fEq").innerHTML = ALL_EQ.map(e=>`<option>${e}</option>`).join("");
   $("#fSys").innerHTML = Object.entries(SYS).filter(([k])=>!["fuel","recharge"].includes(k)).map(([k,P])=>`<option value="${k}">${P.icon} ${P.name}</option>`).join("");
   renderVoice(); renderStatsCard();
@@ -6406,6 +6410,8 @@ function pushWidgets(){
 
 /* ================= EVENTS ================= */
 function go(page){
+  /* v22.8: an unknown page id can never blank the screen */
+  if(!document.getElementById("page-"+page)) page = "today";
   $$(".nav button").forEach(x=>x.classList.toggle("on", x.dataset.page===page));
   $$(".page").forEach(p=>p.classList.toggle("on", p.id==="page-"+page));
   window.scrollTo({top:0});
@@ -7050,11 +7056,9 @@ $("#saveMusic").addEventListener("click", ()=>{ S.settings.spotify=$("#spotifyUr
   S.settings.yt=$("#ytUrl").value.trim(); save(); renderMusic(); toast("Music saved"); });
 $("#replayTour").addEventListener("click", ()=>{ runTour(); });
 $("#advTour").addEventListener("click", ()=>{ runTour(ADV_STEPS); });
-$("#saveNums").addEventListener("click", ()=>{
-  if(!S.profile) S.profile = { name:"You", goals:[], runFocus:"both", eq:S.sel.eq.slice(), lifts:{}, caps:{}, days:3, len:30, weeks:6, style:"flex" };
-  S.profile.lifts = { squat:+$("#wSquat").value||0, bench:+$("#wBench").value||0, deadlift:+$("#wDead").value||0, press:+$("#wPress").value||0 };
-  S.profile.caps = { db:+$("#wDb").value||0, kb:+$("#wKb").value||0 };
-  save(); toast("Numbers saved — load hints updated"); });
+/* v22.8: "Your numbers" retired — set tracking on Today / in sessions keeps
+   S.profile.lifts and S.logs current for EVERY movement automatically; the
+   interview still seeds starting lifts for load suggestions on day one. */
 /* ---- destructive-action protection: completed + locked work is never silently lost ---- */
 function planHasWork(){ return !!(S.plan && S.plan.days && S.plan.days.some(d=>(d.acts||[]).some(a=>a.done||a.lock))); }
 function regeneratePlan(blank){
@@ -7144,7 +7148,7 @@ try{
    the app now announces its version, checks for updates on every open, and
    reloads itself once when a new build takes over. More → Update app nukes
    every cache layer by hand for the stubborn cases. */
-const APP_VERSION = "v22.7";
+const APP_VERSION = "v22.8";
 try{ const vs = document.getElementById("verStamp"); if(vs) vs.textContent = APP_VERSION; }catch(e){}
 try{ console.log("Momentum", APP_VERSION); }catch(e){}
 try{
