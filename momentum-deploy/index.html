@@ -105,14 +105,19 @@ body.hasphoto{--panel:rgba(26,26,33,.7); --panel2:rgba(37,38,48,.76)}
 /* light themes keep light glass over a photo — the dark override above is for dark themes only */
 body[data-theme="glass"].hasphoto{--panel:rgba(255,255,255,.82); --panel2:rgba(252,250,255,.92)}
 body[data-theme="daylight"].hasphoto{--panel:rgba(255,255,255,.82); --panel2:rgba(245,244,248,.9)}
-/* v16: photo backdrops never eat the copy — every piece of text that sits
-   OUTSIDE a panel gets a halo in the theme's base color, and section rules
-   get enough ink to hold the line */
-body.hasphoto .sec-label, body.hasphoto .field>label, body.hasphoto .eq-group .g, body.hasphoto .block-label{
-  color:var(--text); text-shadow:0 0 3px var(--bg), 0 1px 10px var(--bg), 0 0 18px var(--bg)}
-body.hasphoto .sec-label::after{background:color-mix(in srgb, var(--text) 30%, transparent)}
+/* v22.7: outside-the-glass text, professional cut. Section labels become
+   slivers of the same glass the panels wear — a quiet pill, not a glow.
+   Everything else gets ONE crisp contrast shadow; the old triple halo read
+   as fuzz over photo backdrops. */
+body.hasphoto .sec-label{
+  display:inline-flex; background:var(--panel); border:1px solid var(--line);
+  border-radius:999px; padding:5px 13px; margin:20px 0 10px;
+  color:var(--text); letter-spacing:.18em; text-shadow:none}
+body.hasphoto .sec-label::after{display:none}
+body.hasphoto .field>label, body.hasphoto .eq-group .g, body.hasphoto .block-label{
+  color:var(--text); text-shadow:0 1px 2px var(--bg)}
 body.hasphoto .pad>p.mut, body.hasphoto .today-eyebrow, body.hasphoto h2, body.hasphoto .empty{
-  text-shadow:0 0 4px var(--bg), 0 1px 10px var(--bg), 0 0 16px var(--bg)}
+  text-shadow:0 1px 2px var(--bg), 0 1px 8px color-mix(in srgb, var(--bg) 60%, transparent)}
 /* real blur only on LARGE glass surfaces — blurring every chip/input multiplied
    compositor cost ~5x for near-zero visual gain (small elements sit on panels) */
 .card,.stat,.sys,.ex,.pday,.habit,.lib-item,.media-card,.today-card,.hero-card,.opt{backdrop-filter:blur(14px) saturate(1.25); -webkit-backdrop-filter:blur(14px) saturate(1.25)}
@@ -129,6 +134,12 @@ a{color:var(--accent)}
 .sec-label{font-family:'Chakra Petch'; font-size:11px; font-weight:600; letter-spacing:.22em; color:var(--faint); text-transform:uppercase; margin:22px 0 10px; display:flex; align-items:center; gap:8px}
 .sec-label::after{content:""; flex:1; height:1px; background:var(--line)}
 .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
+/* v22.7: inline set tracker under each movement on Today */
+.td-setrow{display:flex; align-items:center; gap:5px; margin:7px 0 4px 32px; flex-wrap:wrap}
+.td-setrow input{width:42px; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:6px 3px; text-align:center; font-size:13px; -moz-appearance:textfield}
+.td-setrow input::-webkit-outer-spin-button,.td-setrow input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.td-setrow .tsw{width:52px}
+.td-setrow input:focus{outline:none; border-color:var(--accent)}
 .mut{color:var(--dim); font-size:13.5px}
 .chip.wk-now::after{content:"•"; color:var(--accent); margin-left:5px}
 /* per-set logging grid */
@@ -4275,6 +4286,26 @@ function actMoveList(a, idx, ai){
     const m = live || applyStyle([{...lib}], style)[0];
     const dn = !!(live && live.done);
     const hk = `${idx}|${ai}|${n}`;
+    /* v22.7: the tracker lives right under the movement — weight + a cell per
+       set, prefilled from today, ghosted from last time, saved as you type */
+    let grid = "";
+    const sp = setsPlanned(m);
+    if(sp){
+      const bw = m.eq==="Bodyweight" && !m.cap && !m.lift;
+      const today = ((S.setLog||{})[n]||[]).find(e=>e.d===dayKey());
+      const last = lastSetEntry(n);
+      const tw = today ? Math.max(0,...today.sets.map(s=>s.w||0)) : 0;
+      const gw = (last ? Math.max(0,...last.sets.map(s=>s.w||0)) : 0) || (S.logs&&S.logs[n]) || "";
+      grid = `<div class="td-setrow" data-exlog="${idx}|${ai}|${esc(n)}">
+        ${bw ? `<span class="mut" style="font-size:11px; font-weight:600">bw ×</span>`
+             : `<input type="number" inputmode="decimal" class="tsw" placeholder="${gw||"lb"}" value="${tw||""}" aria-label="weight"><span class="mut" style="font-size:11px">lb ×</span>`}
+        ${Array.from({length:sp},(_,k)=>{
+          const tr = today && today.sets[k] ? (today.sets[k].r||"") : "";
+          const gr = last && last.sets[k] ? (last.sets[k].r||"") : (last && last.sets.length ? (last.sets[last.sets.length-1].r||"") : "");
+          return `<input type="number" inputmode="numeric" class="tsr" placeholder="${gr||"–"}" value="${tr||""}" aria-label="set ${k+1} reps">`; }).join("")}
+        ${last?`<span class="mut" style="font-size:10px; flex-basis:100%; margin-top:1px">last: ${esc(fmtSets(last.sets))}</span>`:""}
+      </div>`;
+    }
     return `<div class="td-move ${dn?'done':''}">
       <div class="checkbox" data-tcheck="${idx}|${ai}|${esc(n)}">${dn?'✓':''}</div>
       <div class="ex-meta"><div class="ex-name" style="font-size:13.5px">${esc(n)}</div>
@@ -4282,8 +4313,8 @@ function actMoveList(a, idx, ai){
       <button class="chip" data-thow="1" style="padding:4px 10px; font-size:11px">how</button></div>
     <div class="td-how" style="display:${openHow.has(hk)?'block':'none'}"><p>${esc(lib.how)}</p>
       ${lib.mod?`<p class="mut" style="margin-top:6px">🟢 Easier: ${esc(lib.mod.e)} · 🔴 Harder: ${esc(lib.mod.h)}</p>`:""}
-      <a class="btn sm ghost" style="text-decoration:none; margin-top:6px" href="${ytSearch(n)}" target="_blank" rel="noopener">▶ Demo</a></div>`;
-  }).join("") + `</div>`;
+      <a class="btn sm ghost" style="text-decoration:none; margin-top:6px" href="${ytSearch(n)}" target="_blank" rel="noopener">▶ Demo</a></div>${grid}`;
+  }).join("") + (D.life || a.done ? "" : `<button class="chip" data-exaddopen="${idx}:${ai}" style="margin-top:8px; font-size:12px">＋ Add exercise</button>`) + `</div>`;
 }
 function renderTodayPage(){
   const now = new Date();
@@ -4366,7 +4397,8 @@ function renderTodayPage(){
             const names = ensureActNames(S.plan.days[pt.idx].acts[ai2]);
             const n2 = names.splice(evt.oldIndex,1)[0];
             names.splice(evt.newIndex,0,n2);
-            save(); renderTodayPage(); toast("Order saved"); } })); }catch(e){}
+            persistActEdit(S.plan.days[pt.idx].acts[ai2]);
+            save(); renderTodayPage(); toast("Order saved to your split"); } })); }catch(e){}
       });
     }
     /* one add button at a time — the static row hides while editing */
@@ -4885,6 +4917,15 @@ function ensureActNames(act){
   if(!act.names){ const n = actNames(act); act.names = (n||[]).slice(); }
   return act.names;
 }
+/* v22.7: your split REMEMBERS. Any exercise edit (add / remove / swap /
+   reorder) writes back to the day's template, so every future day of that
+   same split carries your adjustment — no re-editing every week. */
+function persistActEdit(act){
+  try{
+    if(act && act.tpl && S.plan && S.plan.templates && S.plan.templates[act.tpl] && act.names)
+      S.plan.templates[act.tpl].names = act.names.slice();
+  }catch(e){}
+}
 function actEditPool(act, target){
   const eqOk = m => m.eq==="Bodyweight" || S.sel.eq.includes(m.eq) || (S.profile && S.profile.eq.includes(m.eq));
   const cur = act.names||[];
@@ -4914,6 +4955,65 @@ function openExPicker(di, ai, ni){
     $$("#pkBody .as-move").forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none"; }); });
   $("#pickSheet").classList.add("show"); SFX.play("select");
 }
+/* v22.7: add an exercise straight from the expanded workout — no arrange mode */
+function openExAdd(di, ai){
+  const act = S.plan && S.plan.days[di] && S.plan.days[di].acts[ai]; if(!act) return;
+  ensureActNames(act);
+  const pool = actEditPool(act, null);
+  if(!pool.length){ toast("Nothing else fits your gear"); return; }
+  $("#pkBody").innerHTML = `<h3>＋ Add exercise</h3>
+    <p class="mut" style="margin-top:4px">Lands in this workout — and your split remembers it for every future ${esc(act.label||DTYPES[act.type].t)}.</p>
+    <input id="pkSearch" placeholder="🔍 Search ${pool.length} movements…" style="width:100%; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:9px 12px">
+    <div style="max-height:52vh; overflow-y:auto; margin-top:6px">${pool.map(m=>
+      `<div class="as-move">${esc(m.n)}<span class="mut" style="font-size:11px"> · ${esc(m.d)} · ${esc(m.eq)}</span>
+        <button class="sw" data-exadd="${di}:${ai}:${esc(m.n)}">＋ add</button></div>`).join("")}</div>
+    <div class="sheet-foot"><button class="btn ghost" id="pkClose" style="flex:1">Close</button></div>`;
+  const inp2 = $("#pkSearch");
+  if(inp2) inp2.addEventListener("input", ()=>{ const q = inp2.value.toLowerCase();
+    $$("#pkBody .as-move").forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none"; }); });
+  $("#pickSheet").classList.add("show"); SFX.play("select");
+}
+/* v22.7: realtime set tracking — every keystroke in a Today set row lands in
+   the same ledger the session player writes, debounced, PRs announced once */
+let TSL_T = null;
+function commitTodayRow(row){
+  const parts = row.dataset.exlog.split("|");
+  const name = parts.slice(2).join("|"); if(!name) return;
+  const wEl = row.querySelector(".tsw");
+  const w = wEl ? (parseFloat(wEl.value)||0) : 0;
+  const reps = [...row.querySelectorAll(".tsr")].map(i=>parseInt(i.value,10)||0);
+  const sets = reps.filter(r=>r>0).map(r=>({w, r}));
+  S.setLog = S.setLog||{};
+  const h = S.setLog[name] = S.setLog[name]||[];
+  const d = dayKey();
+  const di = h.findIndex(e=>e.d===d);
+  if(!sets.length){ if(di>=0){ h.splice(di,1); save(); } return; }
+  const prevBest = (()=>{ let b=null; h.filter(e=>e.d!==d).forEach(e=>(e.sets||[]).forEach(s=>{
+    if(s.w>0 && (!b || s.w>b.w || (s.w===b.w && s.r>b.r))) b=s; })); return b; })();
+  const prF = di>=0 && h[di].prF;
+  if(di>=0) h.splice(di,1);
+  const entry = { d, t:Date.now(), sets };
+  if(prF) entry.prF = 1;
+  h.push(entry);
+  if(h.length>30) h.splice(0, h.length-30);
+  if(w>0){
+    S.logs[name] = w;
+    const lib = allMoves().find(x=>x.n===name);
+    if(lib && lib.lift && S.profile){ S.profile.lifts = S.profile.lifts||{}; S.profile.lifts[lib.lift] = w; }
+  }
+  if(prevBest && w > prevBest.w && !entry.prF){
+    entry.prF = 1;
+    SFX.play("levelup"); try{ popEmote("epic"); }catch(e){}
+    toast(`🏆 PR — ${name} at ${w} lb!`);
+  }
+  save();
+}
+document.addEventListener("input", ev=>{
+  const row = ev.target && ev.target.closest && ev.target.closest(".td-setrow");
+  if(!row) return;
+  clearTimeout(TSL_T);
+  TSL_T = setTimeout(()=>{ try{ commitTodayRow(row); }catch(e){ console.error("set track failed:", e); } }, 450);
+});
 /* ================= v9: MORNING INTENTION → EVENING LOOP =================
    LifeXP's best loop: say one thing in the morning, rate it honestly at night.
    Kept intentions earn XP — follow-through is a trainable skill. */
@@ -6774,13 +6874,22 @@ document.addEventListener("click", ev=>{
     const act = S.plan.days[di] && S.plan.days[di].acts[ai6]; if(!act) return;
     const names = ensureActNames(act);
     if(names.length<=1){ toast("Keep at least one movement"); return; }
-    names.splice(ni2,1); save(); renderTodayPage(); return; }
+    names.splice(ni2,1); persistActEdit(act); save(); renderTodayPage(); return; }
   const exp2 = t.closest("[data-expick]");
   if(exp2){ const parts = exp2.dataset.expick.split(":");
     const di = +parts[0], ai7 = +parts[1], ni3 = +parts[2], nm = parts.slice(3).join(":");
     const act = S.plan.days[di] && S.plan.days[di].acts[ai7]; if(!act) return;
     const names = ensureActNames(act); names[ni3] = nm;
-    save(); closePickSheet(); renderTodayPage(); SFX.play("select"); toast("Swapped in "+nm); return; }
+    persistActEdit(act); save(); closePickSheet(); renderTodayPage(); SFX.play("select"); toast("Swapped in "+nm+" — split updated"); return; }
+  const exao = t.closest("[data-exaddopen]");
+  if(exao){ const [di,ai8] = exao.dataset.exaddopen.split(":").map(Number); openExAdd(di, ai8); return; }
+  const exad = t.closest("[data-exadd]");
+  if(exad){ const parts = exad.dataset.exadd.split(":");
+    const di = +parts[0], ai9 = +parts[1], nm = parts.slice(2).join(":");
+    const act = S.plan.days[di] && S.plan.days[di].acts[ai9]; if(!act) return;
+    const names = ensureActNames(act); names.push(nm);
+    persistActEdit(act); save(); closePickSheet(); renderTodayPage(); renderPlan();
+    SFX.play("select"); toast("＋ "+nm+" — split updated"); return; }
   if(t.closest("[data-tdadd]")){ const pt2 = planToday(); if(pt2) openTypePicker(pt2.idx); return; }
   const arradd = t.closest("[data-arradd]");
   if(arradd){ openTypePicker(+arradd.dataset.arradd); return; }
@@ -7035,7 +7144,7 @@ try{
    the app now announces its version, checks for updates on every open, and
    reloads itself once when a new build takes over. More → Update app nukes
    every cache layer by hand for the stubborn cases. */
-const APP_VERSION = "v22.6";
+const APP_VERSION = "v22.7";
 try{ const vs = document.getElementById("verStamp"); if(vs) vs.textContent = APP_VERSION; }catch(e){}
 try{ console.log("Momentum", APP_VERSION); }catch(e){}
 try{
