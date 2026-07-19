@@ -2842,13 +2842,12 @@ function applyOnboarding(skip){
      the tour teaches where to change or mute (More → Ambience, or the 🔊 pill) */
   if(!skip && (!S.settings.amb || S.settings.amb==="off")) S.settings.amb = "lofi";
   S.sel.eq = a.eq.slice(); S.sel.time = [15,30,45,60].includes(a.len)?a.len:45;
-  /* v22.3: plan creation is crash-proof — if makePlan ever hiccups, the boot
-     self-heal below rebuilds it, so the survey never ends in an empty Plan tab */
+  /* v22.9: plan generation involves weighted RANDOM picks — a bad draw can
+     throw once and succeed on the next roll (which is why "Regenerate" always
+     seemed to fix it). So the survey retries the build itself, up to 4 rolls,
+     and nobody ever has to find that button again. */
   S.plan = null;
-  if(!skip && S.profile.style==="coach"){
-    try{ S.plan = makePlan(S.profile); }
-    catch(e){ console.error("makePlan failed after survey:", e); }
-  }
+  if(!skip && S.profile.style==="coach") S.plan = makePlanSafe(S.profile);
   save();
   const doClose = ()=>{
     $("#onb").classList.remove("show");
@@ -4271,7 +4270,7 @@ function actMoveList(a, idx, ai){
   const ref = S.session && S.session.actRef;
   const sess = (ref && ref.idx===idx && ref.ai===ai) ? S.session : null;
   const seen = {};
-  return `<div class="td-moves">` + names.map(n=>{
+  return `<div class="td-moves">` + names.map((n,ni)=>{
     const lib = allMoves().find(x=>x.n===n); if(!lib) return "";
     let live = null;
     if(sess){ const from = seen[n]||0;
@@ -4306,7 +4305,8 @@ function actMoveList(a, idx, ai){
       <div class="checkbox" data-tcheck="${idx}|${ai}|${esc(n)}">${dn?'✓':''}</div>
       <div class="ex-meta"><div class="ex-name" style="font-size:13.5px">${esc(n)}</div>
         <div class="ex-sub">${esc(m.d)}${m.rest?` · rest ${m.rest}s`:""} · ${esc(m.eq)}</div></div>
-      <button class="chip" data-thow="1" style="padding:4px 10px; font-size:11px">how</button></div>
+      <button class="chip" data-thow="1" style="padding:4px 10px; font-size:11px">how</button>
+      ${dn?"":`<button data-exrm="${idx}:${ai}:${ni}" aria-label="Remove ${esc(n)}" style="color:var(--faint); padding:4px 6px; font-size:13px; line-height:1">✕</button>`}</div>
     <div class="td-how" style="display:${openHow.has(hk)?'block':'none'}"><p>${esc(lib.how)}</p>
       ${lib.mod?`<p class="mut" style="margin-top:6px">🟢 Easier: ${esc(lib.mod.e)} · 🔴 Harder: ${esc(lib.mod.h)}</p>`:""}
       <a class="btn sm ghost" style="text-decoration:none; margin-top:6px" href="${ytSearch(n)}" target="_blank" rel="noopener">▶ Demo</a></div>${grid}`;
@@ -6880,7 +6880,8 @@ document.addEventListener("click", ev=>{
     const act = S.plan.days[di] && S.plan.days[di].acts[ai6]; if(!act) return;
     const names = ensureActNames(act);
     if(names.length<=1){ toast("Keep at least one movement"); return; }
-    names.splice(ni2,1); persistActEdit(act); save(); renderTodayPage(); return; }
+    const goneEx = names.splice(ni2,1)[0]; persistActEdit(act); save(); renderTodayPage();
+    toast("✕ "+goneEx+" — split updated"); return; }
   const exp2 = t.closest("[data-expick]");
   if(exp2){ const parts = exp2.dataset.expick.split(":");
     const di = +parts[0], ai7 = +parts[1], ni3 = +parts[2], nm = parts.slice(3).join(":");
@@ -7061,9 +7062,20 @@ $("#advTour").addEventListener("click", ()=>{ runTour(ADV_STEPS); });
    interview still seeds starting lifts for load suggestions on day one. */
 /* ---- destructive-action protection: completed + locked work is never silently lost ---- */
 function planHasWork(){ return !!(S.plan && S.plan.days && S.plan.days.some(d=>(d.acts||[]).some(a=>a.done||a.lock))); }
+/* v22.9: makePlan's weighted-random picks can throw on an unlucky roll —
+   every caller goes through this retry wrapper so one bad draw is invisible */
+function makePlanSafe(p){
+  for(let i=0; i<4; i++){
+    try{ const pl = makePlan(p); if(pl) return pl; }
+    catch(e){ console.error("makePlan roll "+(i+1)+" failed:", e); }
+  }
+  return null;
+}
 function regeneratePlan(blank){
   const old = S.plan;
-  S.plan = makePlan(S.profile);
+  const fresh = makePlanSafe(S.profile);
+  if(!fresh){ toast("Plan build hit a snag — tap again"); return; }
+  S.plan = fresh;
   if(blank) S.plan.days.forEach(d=>{ d.acts=[]; d.note="Your call — tap ＋ Add activity to design this day."; });
   if(old && old.days){
     S.plan.days.forEach((day,i)=>{
@@ -7134,9 +7146,8 @@ renderAll(); pushWidgets(); checkMonthChapter(); applyTodayOrder();
    nobody has to discover the Regenerate button to get their plan */
 try{
   if(S.profile && S.profile.style==="coach" && !S.plan){
-    S.plan = makePlan(S.profile); save();
-    renderPlan(); renderTodayPage();
-    toast("Plan built from your survey ✓");
+    S.plan = makePlanSafe(S.profile);
+    if(S.plan){ save(); renderPlan(); renderTodayPage(); toast("Plan built from your survey ✓"); }
   }
 }catch(e){ console.error("plan self-heal failed:", e); }
 /* ================= v18: INSTALL + NATIVE BRIDGE =================
@@ -7148,7 +7159,7 @@ try{
    the app now announces its version, checks for updates on every open, and
    reloads itself once when a new build takes over. More → Update app nukes
    every cache layer by hand for the stubborn cases. */
-const APP_VERSION = "v22.8";
+const APP_VERSION = "v22.9";
 try{ const vs = document.getElementById("verStamp"); if(vs) vs.textContent = APP_VERSION; }catch(e){}
 try{ console.log("Momentum", APP_VERSION); }catch(e){}
 try{
