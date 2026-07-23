@@ -628,9 +628,9 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       </div>
       <div data-tsec="journal">
       <div id="otdCard"></div>
-      <div class="sec-label">Journal & voice notes</div>
+      <div class="sec-label">Journal</div>
       <div class="card">
-        <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="Type or talk — &quot;Did a 25 min kettlebell workout&quot;. Lifter shorthand logs real sets: &quot;bench 225 - 8,8,6&quot;"></textarea>
+        <textarea id="jrnText" style="width:100%; min-height:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; resize:vertical" placeholder="&quot;Did a 25 min kettlebell workout&quot; — or lifter shorthand to log real sets: &quot;bench 225 - 8,8,6&quot;"></textarea>
         <div style="display:flex; gap:8px; margin-top:10px; align-items:center">
           <button class="btn sm" id="jrnSave">📓 Log it</button>
           <span class="mut" style="font-size:11.5px">Auto-tags activity, duration & effort — completed work counts toward your streak. @mention people or places and they become memory cards.</span>
@@ -769,7 +769,7 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <div class="card">
         <div class="pv-row"><span class="ic">🔒</span><span><b>100% on this device.</b> No server, no account, no analytics. There is no copy of you anywhere else — your saga lives here.</span></div>
         <div class="pv-row"><span class="ic">📴</span><span><b>Works offline.</b> Plans, XP, sounds and celebrations are all generated locally.</span></div>
-        <div class="pv-row"><span class="ic">🗣️</span><span><b>The exceptions, named:</b> fonts &amp; fallback avatar art load from a CDN; Spotify/YouTube embeds load only if you add links; the optional HD voices download their model once from a public CDN, then speak entirely on your device — nothing you read or write ever leaves it.</span></div>
+        <div class="pv-row"><span class="ic">🗣️</span><span><b>The exceptions, named:</b> fonts &amp; fallback avatar art load from a CDN; Spotify/YouTube embeds load only if you add links — nothing you read or write ever leaves this device.</span></div>
         <div class="pv-row"><span class="ic">⚠️</span><span><b>One honest warning:</b> browser storage can be cleared by your device. Export a backup now and then — it's one tap.</span></div>
         <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
           <button class="btn sm" id="expBackup">⬇️ Export backup</button>
@@ -789,14 +789,12 @@ button:focus-visible, .chip:focus-visible, .opt:focus-visible, input:focus-visib
       <p class="mut" style="margin-bottom:10px">Taps, transitions, completions and celebrations — all generated on-device.</p>
       <div class="chips" id="soundChips"></div>
       <div class="sec-label">Ambience</div>
-      <p class="mut" style="margin-bottom:10px">Bundled loops — lofi beats. They play offline, no streaming. The floating 🔊 pill lowers or pauses from anywhere.</p>
+      <p class="mut" style="margin-bottom:10px">Bundled lofi loops, offline. Music lives in the calm places — the interview, a short welcome when you open the app, and the Plan, Memories and More screens. Training stays quiet for your own playlist. The 🔊 pill lowers or pauses it.</p>
       <div class="chips" id="ambChips"></div>
       <div class="sec-label">Music</div>
       <div class="field"><label>Spotify playlist link</label><input id="spotifyUrl" placeholder="https://open.spotify.com/playlist/…"></div>
       <div class="field"><label>YouTube link (music or video)</label><input id="ytUrl" placeholder="https://youtube.com/watch?v=…"></div>
       <button class="btn sm" id="saveMusic">Save music</button>
-      <div class="sec-label">Brief voice</div>
-      <div id="voiceCard"></div>
       <div class="sec-label">Tours</div>
       <button class="btn sm ghost" id="replayTour">↻ Replay the intro tour</button>
       <button class="btn sm ghost" id="advTour">🎓 Pro tour — tracking, custom sessions & best practices</button>
@@ -1827,6 +1825,27 @@ const AMBIENCE = [
   { id:"tape", n:"📼 Midnight Tape", file:"amb-lofi-2.mp3" }
 ];
 let _amb = null, _ambLevel = "full";   // full → low → paused (the 🔊 pill cycles)
+/* v23.0: music has PLACES now — the interview, a welcome window of ~2 loops
+   when the app opens, and the reflective screens (Plan · Memories · More).
+   Everywhere else stays quiet: training screens belong to your own playlist. */
+let _ambBoot = true, _ambLoops = 0, _ambLastT = 0;
+setTimeout(()=>{ if(_ambBoot){ _ambBoot = false; try{ ambSyncPlayback(); }catch(e){} } }, 240000);   // welcome window hard cap
+function ambAllowed(){
+  try{
+    const onb = document.getElementById("onb");
+    if(onb && onb.classList.contains("show")) return true;
+    if(["plan","mem","more"].some(p=>{ const el = document.getElementById("page-"+p); return el && el.classList.contains("on"); })) return true;
+    return _ambBoot;
+  }catch(e){ return false; }
+}
+function ambSyncPlayback(){
+  const want = S && S.settings && S.settings.amb && S.settings.amb!=="off" && ambAllowed();
+  if(want){
+    if(!_amb) playAmbience(S.settings.amb);
+    else if(_ambLevel!=="paused" && _amb.paused){ const p = _amb.play(); if(p && p.catch) p.catch(()=>{}); }
+  } else if(_amb && !_amb.paused){ _amb.pause(); }
+  ambPillSync();
+}
 function ambPillSync(){
   const pill = document.getElementById("ambPill"); if(!pill) return;
   if(!_amb){ pill.style.display = "none"; return; }
@@ -1841,6 +1860,13 @@ function playAmbience(id){
     const tr = AMBIENCE.find(a=>a.id===id); if(!tr){ ambPillSync(); return; }
     _amb = new Audio(tr.file);
     _amb.loop = true; _amb.volume = 0.45; _ambLevel = "full";
+    /* count loop wraps — the boot welcome window closes after two */
+    _ambLoops = 0; _ambLastT = 0;
+    _amb.addEventListener("timeupdate", ()=>{ try{
+      if(_amb.currentTime < _ambLastT - 1){ _ambLoops++;
+        if(_ambBoot && _ambLoops >= 2){ _ambBoot = false; ambSyncPlayback(); } }
+      _ambLastT = _amb.currentTime;
+    }catch(e){} });
     const p = _amb.play(); if(p && p.catch) p.catch(()=>{});
     ambPillSync();
   }catch(e){}
@@ -1854,9 +1880,10 @@ function ambPillTap(){
   else { _amb.volume = 0.45; _ambLevel = "full"; const p = _amb.play(); if(p && p.catch) p.catch(()=>{}); }
   ambPillSync();
 }
-/* saved ambience resumes on the first tap of the session (autoplay rules) */
+/* saved ambience resumes on the first tap of the session (autoplay rules) —
+   but only in the places music is allowed to live */
 document.addEventListener("pointerdown", ()=>{
-  try{ if(!_amb && S && S.settings && S.settings.amb && S.settings.amb!=="off") playAmbience(S.settings.amb); }catch(e){}
+  try{ if(!_amb && S && S.settings && S.settings.amb && S.settings.amb!=="off" && ambAllowed()) playAmbience(S.settings.amb); }catch(e){}
 });
 function ambChips(){
   const cur = (S.settings && S.settings.amb) || "off";
@@ -1895,40 +1922,27 @@ const HERO_STAGES = [
   { lvl:15, n:"Jarl",           img:"hero-5_min.png" },
   { lvl:21, n:"Saga-Born",      img:"hero-6_min.png" }
 ];
-/* v7: five avatar identities — picked at onboarding, switchable any time on Levels.
-   Each carries its own growth stages and its own spoken-brief voice character.
-   Art: local _min files first, generated-art CDN fallback (same pattern as BG_ART). */
+/* v23.0: the cast is three — Mini, Owlbear, Lil Buddy. Viking, Rose and the
+   buildable Custom hero are retired (owner call); saved states migrate to
+   Owlbear at boot. Art: local _min files first, CDN fallback. */
 const HFCDN = "https://d8j0ntlcm91z4.cloudfront.net/user_3G02vheAy7dkvtuuACHYQOUG6Gv/";
 const AVATAR_STYLES = [
-  { id:"viking",  n:"Viking",    icon:"⚔️", d:"The classic saga — grim and glorious", voice:{pitch:.75, rate:.96, pref:"male"}, el:"VR6AewLTigWG4xSOukaG", stages:HERO_STAGES },
-  { id:"buddy",   n:"Lil Buddy", icon:"🐣", d:"Cute, silly, surprisingly jacked",     voice:{pitch:1.45, rate:1.06, pref:"female"}, el:"MF3mGyEYCl7XYWbV9V6O",
-    stages:[ { lvl:1, n:"Squishling",     img:"hero-buddy-1_min.png", cdn:HFCDN+"hf_20260710_041607_cefca1e2-7994-4870-8ca2-44baa4b552e2_min.png", roast:"90% snack, 10% athlete." },
-             { lvl:8, n:"Absolute Unit",  img:"hero-buddy-2_min.png", cdn:HFCDN+"hf_20260710_041609_fa4332c8-7a11-4109-9fea-81a524965f83_min.png" } ] },
-  { id:"rose",    n:"Rose",      icon:"🎀", d:"Girly, radiant, seriously strong",     voice:{pitch:1.15, rate:1.03, pref:"female"}, el:"21m00Tcm4TlvDq8ikWAM",
-    stages:[ { lvl:1, n:"Rookie Rose",    img:"hero-rose-1_min.png", cdn:HFCDN+"hf_20260710_041729_1eacdeb8-816a-465d-a9dc-a17ed9d2807d_min.png", roast:"So far the sparkles are doing the reps." },
-             { lvl:8, n:"Star Champion",  img:"hero-rose-2_min.png", cdn:HFCDN+"hf_20260710_042153_9a37b983-e18c-4c03-bb93-957d58cdc104_min.png" } ] },
-  { id:"mini",    n:"Mini",      icon:"⚪", d:"Simple. Clean. Focused.",               voice:{pitch:1, rate:1, pref:null}, el:"EXAVITQu4vr4xnSDxMaL",
+  { id:"mini",    n:"Mini",      icon:"⚪", d:"Simple. Clean. Focused.",
     stages:[ { lvl:1, n:"Mini",           img:"hero-mini-1_min.png", cdn:HFCDN+"hf_20260710_042156_1b7a151f-1651-4a41-a326-62fae8b8110d_min.png", roast:"A bean with a dream." },
              { lvl:8, n:"Mega Mini",      img:"hero-mini-2_min.png", cdn:HFCDN+"hf_20260710_042159_fa785d65-e6f3-4505-b326-c9462ed38a1d_min.png" } ] },
-  /* owlbear ships as FULL-SCENE art (owner's nano-banana renders come with their
-     own worlds — portrait at stage 1, epic forest at stage 2). scene:true makes the
-     image fill the hero card and the habitat layer step aside. Drop the two files
-     beside index.html as hero-owl-1.jpg / hero-owl-2.jpg and it lights up;
-     🦉 fallback until then. */
-  { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",  voice:{pitch:.82, rate:.94, pref:"male"}, el:"TxGEqnHWrfWFTfGW9XjX",
+  /* owlbear ships as FULL-SCENE art with -cut.png cutouts beside it */
+  { id:"owlbear", n:"Owlbear",   icon:"🦉", d:"Fantasy and awesome — hoot then hit",
     stages:[ { lvl:1, n:"Owlbear Cub",    img:"hero-owl-1.jpg", scene:true, roast:"Hoots first. Lifts eventually." },
              { lvl:8, n:"Guardian Owlbear", img:"hero-owl-2.jpg", scene:true } ] },
-  /* v12: the buildable hero — smooth vector art, every trait its own layer */
-  { id:"custom",  n:"Custom",    icon:"🎨", d:"Built by you — skin, hair, face, the works", voice:{},
-    stages:[ { lvl:1,  n:"Self-Made",     hv:true, roast:"Assembled to spec. Reps sold separately." },
-             { lvl:8,  n:"Self-Made +",   hv:true },
-             { lvl:15, n:"Caped Original",hv:true } ] }
+  { id:"buddy",   n:"Lil Buddy", icon:"🐣", d:"Cute, silly, surprisingly jacked",
+    stages:[ { lvl:1, n:"Squishling",     img:"hero-buddy-1_min.png", cdn:HFCDN+"hf_20260710_041607_cefca1e2-7994-4870-8ca2-44baa4b552e2_min.png", roast:"90% snack, 10% athlete." },
+             { lvl:8, n:"Absolute Unit",  img:"hero-buddy-2_min.png", cdn:HFCDN+"hf_20260710_041609_fa4332c8-7a11-4109-9fea-81a524965f83_min.png" } ] }
 ];
-function avatarStyle(){ const id = (S.avatar && S.avatar.style) || "viking";
+function avatarStyle(){ const id = (S.avatar && S.avatar.style) || "owlbear";
   return AVATAR_STYLES.find(a=>a.id===id) || AVATAR_STYLES[0]; }
+/* v23.0: Muddy Yard retired — Longhouse Gym is the starting ground */
 const HABITATS = [
-  { id:"yard",      n:"Muddy Yard",     lvl:1,  img:"hab-1_min.webp", roast:"A puddle with ambitions." },
-  { id:"longhouse", n:"Longhouse Gym",  lvl:5,  img:"hab-2_min.webp" },
+  { id:"longhouse", n:"Longhouse Gym",  lvl:1,  img:"hab-2_min.webp", roast:"Smells like effort." },
   { id:"fjord",     n:"Fjord Grounds",  lvl:10, img:"hab-3_min.webp" },
   { id:"arena",     n:"Mountain Arena", lvl:18, img:"hab-4_min.webp" }
 ];
@@ -2327,13 +2341,18 @@ const DEF = { profile:null, xp:0, sys:{strength:0,motor:0,armor:0,skill:0,fuel:0
   checkins:{}, journal:[], areaXP:{}, streak2:{ freezes:1, best:0, milestones:[], comeback:0 },
   daySys:{}, evening:{}, intent:{}, health:{}, codex:[], fuelLog:{}, aliases:{},
   sel:{time:30, eq:["Bands","Kettlebells"], focus:"Full Body", mg:[], areas:[], style:""},
-  avatar:{ habitat:"yard", companion:null }, tutorialDone:0,
+  avatar:{ habitat:"longhouse", companion:null }, tutorialDone:0,
   session:null, plan:null, habitLog:{}, settings:{theme:"glass", spotify:"", yt:"", sound:"low", amb:"off"} };
 let S = Object.assign({}, DEF, store.get("mo_state", {}));
 S.sys = Object.assign({}, DEF.sys, S.sys||{}); S.sel = Object.assign({}, DEF.sel, S.sel||{});
 S.avatar = Object.assign({}, DEF.avatar, S.avatar||{});
 ["bannerUrl","avatarUrl","bgUrl","bgv"].forEach(k=>{ if(S.settings) delete S.settings[k]; });   // v6: custom art URLs + backdrop video retired
 S.settings = Object.assign({}, DEF.settings, S.settings||{}); S.moveMeta = S.moveMeta||{};
+/* v23.0 migration: retired cast members and grounds map to living ones */
+if(S.avatar){
+  if(["viking","rose","custom"].includes(S.avatar.style)) S.avatar.style = "owlbear";
+  if(S.avatar.habitat==="yard") S.avatar.habitat = "longhouse";
+}
 const save = () => { store.set("mo_state", S); pushWidgets(); };
 
 const need = lvl => Math.round(120 * lvl * (1 + lvl*0.35));
@@ -2708,8 +2727,8 @@ function onbRender(){
     <div class="sec-label">Daily boosters</div>
     <div class="tour-card" style="--tc:var(--c-armor); margin-bottom:10px"><div class="tour-ico">✨</div><span><b>What's a booster?</b><small>A tiny 10–15 minute bonus session — stretching, mobility or rehab — that lands on EVERY day of your plan, even rest days. Example: a "12-min desk reset" after lunch. Boosters stack XP and close rings, but never count (or guilt you) as full workouts.</small></span></div>
     <div class="chips">${[[0,"None"],[1,"✨ +1 a day"],[2,"✨✨ +2 a day"]].map(([n,l])=>`<button class="chip alt ${a.boost===n?'on':''}" data-oboost="${n}">${l}</button>`).join("")}</div>`;
-  if(step==="avatar") h = `<h1>Pick your <em>champion</em>.</h1><p class="lead">Your avatar levels up as you train — new forms, weapons, habitats and companions. Its voice reads your daily brief. Switch any time on the Levels tab.</p>` +
-    AVATAR_STYLES.map(s=>`<div class="opt ${(a.avatarStyle||"viking")===s.id?'on':''}" data-oavatar="${s.id}"><span class="oi">${s.icon}</span><span>${s.n}<br><small style="color:var(--dim); font-weight:500">${s.d}</small></span><span class="pip"></span></div>`).join("");
+  if(step==="avatar") h = `<h1>Pick your <em>champion</em>.</h1><p class="lead">Your avatar levels up as you train — new forms, weapons, habitats and companions. Switch any time on the Levels tab.</p>` +
+    AVATAR_STYLES.map(s=>`<div class="opt ${(a.avatarStyle||"owlbear")===s.id?'on':''}" data-oavatar="${s.id}"><span class="oi">${s.icon}</span><span>${s.n}<br><small style="color:var(--dim); font-weight:500">${s.d}</small></span><span class="pip"></span></div>`).join("");
   if(step==="mode") h = `<h1>How do you want to be <em>coached</em>?</h1>` +
     [["coach","🗓️","Full Coach","Workouts, activities, mobility and habits — all planned, all editable."],
      ["hybrid","🎛️","Guided Hybrid","Structured workouts planned for you; sports & activities stay on your terms."],
@@ -2788,7 +2807,7 @@ const ADV_STEPS = [
   { page:"today", sel:"#checkinCard", t:"Honest data beats hard plans",    s:"Three-tap check-ins adapt rough days. The journal understands plain sentences — 'did a 25-minute kettlebell workout' credits your rings, minutes and streak." },
   { page:"home",  sel:"#systems",     t:"Where progress is tracked",       s:"Six systems level from everything you log. Armor shields fill for your problem areas. Streak freezes are earned at milestones, so one missed day never zeroes you." },
   { page:"more",  sel:"#customList",  t:"Build your own movements",        s:"Add custom movements with your own demo — a GIF, a photo, or an Instagram/TikTok/YouTube link. They join the library, the builder and your plan." },
-  { page:"more",  sel:"#ambChips",    t:"Make it yours",                   s:"Ambience, Spotify, brief voice (plug in ElevenLabs for the Jarvis feel), themes, weights. The more it sounds like you, the more you come back." }
+  { page:"more",  sel:"#ambChips",    t:"Make it yours",                   s:"Ambience, Spotify, themes, custom movements. The more it feels like you, the more you come back." }
 ];
 let TOUR = null;
 function runTour(steps){ TOUR = { i:0, steps: steps||TOUR_STEPS }; tourStep(); }
@@ -2837,7 +2856,7 @@ function applyOnboarding(skip){
     runFocus:a.runFocus, eq:a.eq.slice(), lifts:a.lifts||{}, caps:a.caps||{},
     days:a.days, len:a.len, weeks:a.weeks, boost:a.boost||0, hiit:!!a.hiit,
     mode:a.mode, style:(a.mode==="companion") ? "flex" : "coach" };
-  S.avatar = Object.assign({}, S.avatar||{}, { style:a.avatarStyle||"viking" });
+  S.avatar = Object.assign({}, S.avatar||{}, { style:a.avatarStyle||"owlbear" });
   /* v9: the experience starts with sound ON — lofi beats greet the new plan;
      the tour teaches where to change or mute (More → Ambience, or the 🔊 pill) */
   if(!skip && (!S.settings.amb || S.settings.amb==="off")) S.settings.amb = "lofi";
@@ -2851,6 +2870,7 @@ function applyOnboarding(skip){
   save();
   const doClose = ()=>{
     $("#onb").classList.remove("show");
+    try{ ambSyncPlayback(); }catch(e){}
     renderAll();
     toast(skip ? "Welcome — build it your way" : "Plan created — every session is already built.");
     if(S.plan) go("plan");   // fresh plan: show the block; daily reopens land on Today
@@ -3813,7 +3833,7 @@ document.addEventListener("click", ev=>{
 function renderHeroScene(){
   const L = levelFromXp(S.xp);
   const stage = heroStage(L.lvl);
-  const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const A = S.avatar = Object.assign({ habitat:"longhouse", companion:null }, S.avatar||{});
   const hab = unlockedHabitats(L.lvl).find(h=>h.id===A.habitat) || HABITATS[0];
   $("#hsStreak").textContent = "🔥 " + (S.streak||0);
   $("#hsLvl").textContent = L.lvl;
@@ -3872,7 +3892,7 @@ function renderHeroScene(){
 function scenePrev(el, opts={}){
   if(!el) return;
   const L = levelFromXp(S.xp);
-  const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const A = S.avatar = Object.assign({ habitat:"longhouse", companion:null }, S.avatar||{});
   const hab = unlockedHabitats(L.lvl).find(h=>h.id===A.habitat) || HABITATS[0];
   const stage = heroStage(L.lvl);
   const id = avatarStyle().id;
@@ -3917,7 +3937,7 @@ function popEmote(kind){
 let LOOK_OPEN = false;
 function renderLook(){
   const L = levelFromXp(S.xp);
-  const A = S.avatar = Object.assign({ habitat:"yard", companion:null }, S.avatar||{});
+  const A = S.avatar = Object.assign({ habitat:"longhouse", companion:null }, S.avatar||{});
   const cur = avatarStyle();
   const stage = heroStage(L.lvl);
   /* collapsed by default: the composed preview + a pencil. Options unfold on ✎. */
@@ -3947,7 +3967,7 @@ function renderLook(){
     <p class="mut" style="font-size:10.5px; margin:7px 0 0">Live preview — every pick below updates it.</p>
     <div class="sec-label">Avatar</div><div class="chips">${styles}</div>
     <div style="display:flex; gap:12px; align-items:center; margin-top:10px">
-      <button class="btn sm" data-avopen="${cur.id}">🎨 Customize ${esc(cur.n)} — ${cur.id==="viking"?"beard, helm, war paint":cur.id==="buddy"?"fluff, eyes, topper":cur.id==="rose"?"hair, ribbon, outfit":cur.id==="mini"?"colorways of the original":cur.id==="owlbear"?"plumage colorways":"skin, hair, face, outfit"}</button></div>
+      <button class="btn sm" data-avopen="${cur.id}">🎨 Customize ${esc(cur.n)} — ${cur.id==="buddy"?"fluff, eyes, topper":cur.id==="mini"?"colorways of the original":"owl & bear species"}</button></div>
     ${AV_TRAITS[cur.id] && !avCustomized(cur.id) ? `<p class="mut" style="font-size:11px; margin-top:7px">Classic art stays until you change something — and one tap brings it back.</p>` : ""}
     <div class="sec-label">Habitat</div><div class="chips">${habs}</div>
     <div class="sec-label">Companion</div><div class="chips">${pets}</div>
@@ -4060,187 +4080,9 @@ function todayBriefCore(){
   }
   return text.trim();
 }
-/* the spoken brief speaks in your avatar's voice — pitch/rate per identity plus
-   a best-effort voice match. Quality ladder (v9):
-   1. ElevenLabs, when a key is saved in More (runs in YOUR browser, per-avatar voices)
-   2. best available system voice — premium/enhanced/Siri-class voices score highest
-   3. any English system voice */
-let _voices = [];
-function refreshVoices(){ try{ _voices = speechSynthesis.getVoices()||[]; }catch(e){} }
-if(typeof speechSynthesis!=="undefined"){ refreshVoices();
-  /* iOS hands the voice list over late — and sometimes not until speech has
-     been poked once from a user gesture. Poll early, kick on first touch,
-     re-render the picker whenever the list lands or grows. */
-  try{ speechSynthesis.onvoiceschanged = ()=>{ refreshVoices(); try{ renderVoice(); }catch(e){} }; }catch(e){}
-  [400, 1200, 3000].forEach(ms=>setTimeout(()=>{ const n=_voices.length; refreshVoices();
-    if(_voices.length!==n){ try{ renderVoice(); }catch(e){} } }, ms));
-  let _vkick = false;
-  document.addEventListener("touchstart", function vk(){
-    if(_vkick) return; _vkick = true;
-    try{ if(!_voices.length){ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); speechSynthesis.cancel(); } }catch(e){}
-    setTimeout(()=>{ refreshVoices(); try{ renderVoice(); }catch(e){} }, 400);
-  }, {once:true, passive:true});
-}
-function deviceVoices(){
-  if(!_voices.length) refreshVoices();
-  const en = _voices.filter(v=>/^en/i.test(v.lang||""));
-  /* iOS truth: Apple never shares Siri-branded voices with websites — but the
-     Premium/Enhanced voices downloaded from the same Settings page DO appear
-     (their voiceURI carries .premium. / .enhanced.). Front those. */
-  const sig = v => (v.name||"") + " " + (v.voiceURI||"");
-  const score = v => (/siri/i.test(sig(v))?9:0) + (/premium/i.test(sig(v))?7:0) +
-    (/enhanced|natural|neural/i.test(sig(v))?5:0) + (v.localService?1:0);
-  return en.slice().sort((a,b)=>score(b)-score(a));
-}
-/* v13: Siri-first catalog — when the device exposes English Siri voices, they're
-   the whole list, numbered Voice 1…N (the new ones are the good ones). Otherwise
-   the best English voices available get the same clean numbering. */
-function voiceCatalog(){
-  const all = deviceVoices();
-  const sig = v => (v.name||"") + " " + (v.voiceURI||"");
-  const hq = all.filter(v=>/siri|premium|enhanced|natural|neural/i.test(sig(v)));
-  const pool = (hq.length >= 2 ? hq : all).slice(0,8);
-  return pool.map((v,i)=>({ v, label:"Voice "+(i+1), siri:/siri/i.test(sig(v)),
-    hq:/siri|premium|enhanced|natural|neural/i.test(sig(v)) }));
-}
-function briefVoice(){
-  /* v12: your picked voice, else the best one the device has. No personas. */
-  if(S.settings.voiceName){
-    const hit = _voices.find(v=>v.name===S.settings.voiceName) ||
-      (refreshVoices(), _voices.find(v=>v.name===S.settings.voiceName));
-    if(hit) return hit;
-  }
-  return deviceVoices()[0] || null;
-}
-let _briefAudio = null;
-/* ================= v11: HD VOICE — free, no account, on-device =================
-   Kokoro-82M (Apache-2.0) running locally via WASM/WebGPU. One ~90 MB download,
-   cached by the browser, then it speaks offline forever. No key, no signup,
-   nothing you read or write leaves the device. */
-const HD_VOICES = [
-  ["af_heart",   "Heart",   "warm & real"],
-  ["af_bella",   "Bella",   "bright & upbeat"],
-  ["af_nicole",  "Nicole",  "soft, close-mic"],
-  ["af_sky",     "Sky",     "easy & clear"],
-  ["am_fenrir",  "Fenrir",  "bold — born for the Viking"],
-  ["am_michael", "Michael", "steady coach"],
-  ["am_onyx",    "Onyx",    "deep & calm"],
-  ["bm_george",  "George",  "British, unbothered"]
-];
-function hdVoiceFor(){ return S.settings.hdVoice || "af_heart"; }
-let KOKORO = null, KOKORO_LOADING = null;
-function loadKokoro(onProgress){
-  if(KOKORO) return Promise.resolve(KOKORO);
-  if(KOKORO_LOADING) return KOKORO_LOADING;
-  KOKORO_LOADING = (async ()=>{
-    const mod = await import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm");
-    const tts = await mod.KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",
-      { dtype:"q8", device:"wasm", progress_callback:onProgress });   // q8+wasm: ~90 MB, runs on every phone
-    KOKORO = tts; return tts;
-  })();
-  return KOKORO_LOADING.catch(e=>{ KOKORO_LOADING = null; throw e; });
-}
-async function speakHD(text, voice){
-  try{
-    if(_briefAudio){ _briefAudio.pause(); _briefAudio = null; return true; }   // tap again = stop
-    if(!KOKORO && !S.settings.hdOn) return false;
-    if(!KOKORO) toast("HD voice warming up…");
-    const tts = await loadKokoro();
-    /* sentence-chunk + pipeline: chunk N plays while N+1 synthesizes */
-    const sents = String(text).match(/[^.!?]+[.!?]*\s*/g) || [String(text)];
-    const parts = []; let cur = "";
-    sents.forEach(sn=>{ if((cur+sn).length > 260){ if(cur) parts.push(cur); cur = sn; } else cur += sn; });
-    if(cur.trim()) parts.push(cur);
-    const v = voice || hdVoiceFor();
-    let next = tts.generate(parts[0], { voice:v });
-    for(let i=0; i<parts.length; i++){
-      const audio = await next;
-      if(i+1 < parts.length) next = tts.generate(parts[i+1], { voice:v });
-      const stopped = await new Promise(res=>{
-        const a = _briefAudio = new Audio(URL.createObjectURL(audio.toBlob()));
-        a.onended = ()=>{ if(_briefAudio===a) _briefAudio = null; res(false); };
-        a.onpause = ()=>{ if(!a.ended && a.currentTime>0) res(true); };
-        const p = a.play(); if(p && p.catch) p.catch(()=>res(true));
-      });
-      if(stopped) break;
-    }
-    return true;
-  }catch(e){ return false; }
-}
-function speakSys(text, voiceName){
-  try{
-    if(typeof speechSynthesis==="undefined" || typeof SpeechSynthesisUtterance==="undefined"){ toast("Speech isn't available here"); return; }
-    if(speechSynthesis.speaking){ speechSynthesis.cancel(); return; }
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.02;
-    const picked = voiceName && _voices.find(v=>v.name===voiceName);
-    const v = picked || briefVoice(); if(v) u.voice = v;
-    speechSynthesis.speak(u);
-  }catch(e){}
-}
-function speakBrief(){
-  const text = todayBrief().replace(/[·✓]/g,"");
-  (async ()=>{
-    if(S.settings.hdOn && await speakHD(text)) return;   // free HD voices, on-device
-    speakSys(text);                                      // best voice on this device
-  })();
-}
-/* ---- voice picker (More → Brief voice) ---- */
-function renderVoice(){
-  const box = $("#voiceCard"); if(!box) return;
-  const hd = !!S.settings.hdOn;
-  const cat = voiceCatalog();
-  const anySiri = cat.some(c=>c.siri);
-  const chosen = S.settings.voiceName || (cat[0] && cat[0].v.name) || "";
-  const shortName = n => esc(String(n).replace(/\s*\(.*\)\s*/g," ").trim());
-  box.innerHTML = `<div class="card">
-    <p class="mut" style="font-size:11.5px; margin-bottom:9px">${anySiri
-      ? "Your iPhone's Siri voices — the newer ones sound the best. ▶ to hear each, then pick."
-      : "The best voices on this device — ▶ to hear each, then pick."}</p>
-    ${cat.length ? cat.map(c=>`
-      <div class="as-move"><b>${c.label}</b><span class="mut" style="font-size:11px"> · ${shortName(c.v.name)}${c.siri?" ✨":c.hq?" · ✨":""}</span>
-        <span style="display:flex; gap:6px"><button class="sw" data-vprev="${esc(c.v.name)}">▶</button>
-        <button class="sw" data-vpick="${esc(c.v.name)}">${chosen===c.v.name?"✓ chosen":"use"}</button></span></div>`).join("")
-      : `<p class="mut" style="font-size:11.5px">Your device's voices show up here once it shares them.</p>`}
-    <div style="display:flex; gap:8px; align-items:center; margin-top:9px">
-      <button class="btn sm ghost" id="vRescan">↻ Rescan voices</button>
-      <span class="mut" style="font-size:10.5px">device shared ${deviceVoices().length} English voice${deviceVoices().length===1?"":"s"}</span></div>
-    <p class="mut" style="font-size:10.5px; margin-top:8px">Straight talk: Apple doesn't share Siri-branded voices with websites. What DOES work: same Settings page → pick a name like Ava, Zoe or Evan → download its <b>Premium</b>/<b>Enhanced</b> version. Just downloaded one and it's not here? Fully close and reopen ${"Safari"} (or restart the phone) — iOS refreshes its voice list on relaunch, then tap Rescan. The HD voices below skip all of this.</p>
-  </div>
-  <div class="card" style="margin-top:8px">
-    ${hd ? `<div style="display:flex; align-items:center; gap:8px"><b style="font-family:'Chakra Petch'; font-size:13px">✨ HD voices</b><span class="tag" style="color:var(--c-skill)">downloaded · work offline</span></div>
-      <div class="chips" style="margin-top:9px">${HD_VOICES.map(([id,n,d])=>`
-        <button class="chip ${(S.settings.hdVoice||"af_heart")===id?'on':''}" data-hdpick="${id}" title="${esc(d)}">${n}</button>`).join("")}</div>
-      <div style="display:flex; gap:8px; margin-top:9px; flex-wrap:wrap">
-        <button class="btn sm ghost" data-hdprev="1">▶ Preview</button>
-        <button class="btn sm ghost" id="hdOff">Use device voices instead</button></div>
-      <p class="mut" style="font-size:10.5px; margin-top:7px">Runs 100% on this device. ${esc((HD_VOICES.find(x=>x[0]===(S.settings.hdVoice||"af_heart"))||[])[2]||"")}</p>`
-    : `<b style="font-family:'Chakra Petch'; font-size:13px">✨ Want more? Download the HD voices — free</b>
-      <p class="mut" style="font-size:11.5px; margin-top:5px">Eight studio-grade neural voices that run on your phone. One ~90 MB download, cached forever, work offline. No account, and nothing you read or write leaves the device.</p>
-      <button class="btn sm" id="hdGet" style="margin-top:9px">⬇️ Download HD voices</button>
-      <div id="hdProg" class="mut" style="font-size:11px; margin-top:7px"></div>`}
-  </div>`;
-}
-async function hdDownload(){
-  const btn = $("#hdGet"), prog = $("#hdProg");
-  if(btn){ btn.disabled = true; btn.textContent = "Downloading…"; }
-  const seen = {};
-  try{
-    await loadKokoro(ev=>{
-      try{
-        if(ev && ev.file && ev.total){ seen[ev.file] = (ev.loaded||0)/ev.total; }
-        const big = Object.entries(seen).sort((a,b)=>b[1]-a[1]);
-        const pct = Math.round(Math.min(1, Object.values(seen).reduce((s,x)=>s+x,0)/Math.max(1,Object.keys(seen).length))*100);
-        if(prog) prog.textContent = `Downloading — ${pct}% · one time only, cached after`;
-      }catch(e){}
-    });
-    S.settings.hdOn = 1; if(!S.settings.hdVoice) S.settings.hdVoice = "af_heart"; save(); renderVoice();
-    SFX.play("complete"); toast("HD voices ready — yours forever, offline ✨");
-  }catch(e){
-    if(btn){ btn.disabled = false; btn.textContent = "⬇️ Get the HD voice"; }
-    if(prog) prog.textContent = "Download didn't finish — check your connection and tap again.";
-  }
-}
+/* v23.0: VOICES REMOVED. The spoken brief, device-voice picker, and Kokoro HD
+   engine are gone by owner decision — the brief is for reading, not hearing.
+   Old settings keys (voiceName, hdOn, hdVoice) are simply ignored. */
 /* build (or reuse) the session behind a plan act — Today check-offs and Start share this */
 function ensureActSession(idx, ai, force){
   const ref = S.session && S.session.actRef;
@@ -4319,8 +4161,7 @@ function renderTodayPage(){
   const acts = pt ? pt.day.acts : null;
   $("#tdBrief").innerHTML = `<div class="today-card" style="margin-top:10px">
     <div class="today-eyebrow">Today's brief</div>
-    <p style="margin:6px 0 10px; line-height:1.55; font-size:13.5px">${esc(todayBrief())}</p>
-    <button class="btn sm ghost" id="briefSpeak">🔊 Speak today</button></div>`;
+    <p style="margin:6px 0 2px; line-height:1.55; font-size:13.5px">${esc(todayBrief())}</p></div>`;
   /* quad rings: activities · XP · time · habits */
   const dk = dayKey(); const log = S.habitLog[dk] || {}; const hs = habitSet();
   const ringDefs = [
@@ -6358,7 +6199,7 @@ function renderMore(){
   $("#spotifyUrl").value = S.settings.spotify||""; $("#ytUrl").value = S.settings.yt||"";
   $("#fEq").innerHTML = ALL_EQ.map(e=>`<option>${e}</option>`).join("");
   $("#fSys").innerHTML = Object.entries(SYS).filter(([k])=>!["fuel","recharge"].includes(k)).map(([k,P])=>`<option value="${k}">${P.icon} ${P.name}</option>`).join("");
-  renderVoice(); renderStatsCard();
+  renderStatsCard();
   const c = S.custom||[];
   $("#customList").innerHTML = c.length ? c.map((m,i)=>`<div class="lib-item"><div class="lib-ico">${SYS[m.p].icon}</div>
     <div class="ex-meta"><div class="ex-name">${esc(m.n)}</div><div class="ex-sub">${esc(m.d)} · ${esc(m.eq)}</div></div>
@@ -6418,6 +6259,7 @@ function go(page){
   /* video decodes only while its page is on screen — battery + compositor courtesy */
   try{ const hv = $("#hsBgVid");
     if(hv){ if(page==="home"){ const p=hv.play(); if(p&&p.catch)p.catch(()=>{}); } else hv.pause(); } }catch(e){}
+  try{ ambSyncPlayback(); }catch(e){}
 }
 $$(".nav button").forEach(b=>b.addEventListener("click", ()=>go(b.dataset.page)));
 
@@ -6427,7 +6269,7 @@ function openOnb(){ const P = S.profile;
   goals:[], areas:["ankle"], areaInfo:{}, runFocus:"both",
   eq:(P&&P.eq.slice())||[],
   lifts:(P&&P.lifts)||{}, caps:(P&&P.caps)||{},
-  days:3, len:30, weeks:6, boost:0, hiit:false, mode:"coach", avatarStyle:(S.avatar&&S.avatar.style)||"viking" }, P ? { name:P.name, age:P.age, gender:P.gender,
+  days:3, len:30, weeks:6, boost:0, hiit:false, mode:"coach", avatarStyle:(S.avatar&&S.avatar.style)||"owlbear" }, P ? { name:P.name, age:P.age, gender:P.gender,
   hiit:!!(P.hiit || (P.activities&&P.activities.hiit)),
   exps:Object.assign({}, P.exps||{}),
   activities:Object.assign({}, P.activities||{}),
@@ -6600,7 +6442,6 @@ document.addEventListener("click", ev=>{
     else delete S.habitLog[today][id];
     save(); renderHabits(); renderHero(); return; }
 
-  if(t.id==="briefSpeak"){ speakBrief(); return; }
   const tex = t.closest("[data-texpand]");
   if(tex && !t.closest("button")){ const card = tex.closest(".pday"), body = card && card.querySelector(".td-body");
     if(body){ body.style.display = body.style.display==="none" ? "block" : "none";
@@ -6727,23 +6568,7 @@ document.addEventListener("click", ev=>{
                         ht: Math.max(0, +($("#stHt").value||0)) || undefined };
     save(); renderStatsCard(); renderTodayPage(); SFX.play("select");
     toast(S.profile.stats.wt ? "Stats saved — goals computed on Today 💧🥩" : "Stats cleared"); return; }
-  /* ---- v12: voice picker ---- */
-  const vp = t.closest("[data-vpick]");
-  if(vp){ S.settings.voiceName = vp.dataset.vpick;
-    save(); renderVoice(); speakSys("This is how your brief will sound. Let's bank an easy win today.", vp.dataset.vpick); return; }
-  const vv = t.closest("[data-vprev]");
-  if(vv){ speakSys("Good morning. Week two, day three. On deck: push day, about thirty minutes.", vv.dataset.vprev); return; }
-  if(t.id==="hdGet"){ hdDownload(); return; }
-  if(t.id==="vRescan"){ try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); speechSynthesis.cancel(); }catch(e){}
-    setTimeout(()=>{ refreshVoices(); renderVoice(); toast(`Found ${deviceVoices().length} English voices`); }, 450); return; }
   if(t.id==="qsToggle"){ S.settings.qsOpen = S.settings.qsOpen ? 0 : 1; save(); renderPickers(); buzz(); return; }
-  if(t.id==="hdOff"){ delete S.settings.hdOn; save(); renderVoice(); toast("Back to device voices — the HD download stays cached"); return; }
-  const hp = t.closest("[data-hdpick]");
-  if(hp){ S.settings.hdVoice = hp.dataset.hdpick; buzz(); save(); renderVoice(); return; }
-  if(t.closest("[data-hdprev]")){
-    speakHD("Good morning. Week two, day three. On deck: push day, about thirty minutes. Let's bank an easy win.",
-      null).then(ok=>{ if(!ok) toast("Download the HD voices first — one tap above"); });
-    return; }
   /* ---- v10: quick rest timer + finish early ---- */
   const qt = t.closest("[data-qtstart]");
   if(qt){ startTimer(+qt.dataset.qtstart, "REST"); SFX.play("select"); return; }
@@ -7106,7 +6931,14 @@ $("#blankPlan").addEventListener("click", ()=>{ if(!S.profile) { openOnb(); retu
   else { regeneratePlan(true); toast("Blank canvas — design each day"); } });
 
 /* ================= BOOT ================= */
-function renderAll(){ renderHero(); renderTodayPage(); renderHabits(); renderPickers(); renderSession(); renderPlan(); renderLib(); renderMedia(); renderMore(); renderMusic(); }
+/* v23.0: every boot renderer is isolated — one bad apple can no longer blank
+   every page after it (the "nothing loads until I hit Regenerate" bug: the
+   Regenerate button just happened to re-run the two renderers that died) */
+function renderAll(){
+  [renderHero, renderTodayPage, renderHabits, renderPickers, renderSession,
+   renderPlan, renderLib, renderMedia, renderMore, renderMusic]
+    .forEach(f=>{ try{ f(); }catch(e){ console.error("boot render failed:", f.name, e); } });
+}
 migrateProfile(); migratePlan();
 (function applyArt(){
   /* celebration video behind the level-up card, webp art as fallback */
@@ -7159,7 +6991,7 @@ try{
    the app now announces its version, checks for updates on every open, and
    reloads itself once when a new build takes over. More → Update app nukes
    every cache layer by hand for the stubborn cases. */
-const APP_VERSION = "v22.9";
+const APP_VERSION = "v23.0";
 try{ const vs = document.getElementById("verStamp"); if(vs) vs.textContent = APP_VERSION; }catch(e){}
 try{ console.log("Momentum", APP_VERSION); }catch(e){}
 try{
